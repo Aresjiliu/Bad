@@ -1,0 +1,28 @@
+../data/Huston2013/hsi/hsi_X_train.mat
+GPU is using
+Namespace(backbone='couple_cross_fc', batch_size=32, class_num=15, data_root='../data/Huston2013', gpu=0, identity='dw1', labma_unimodal=1.0, log_interval=10, log_name='hsi_lidardw1', log_root='../output/logs/dw1', lr=0.0005, lr_decrease='cos', lr_warmup=True, mixup=False, mixup_alpha=0.2, modal='multi', model_name='hsi_lidardw1', model_root='../output/models/dw1', momentum=0.9, name='hsi_lidardw1', pair_modalities=['hsi', 'lidar'], patch_size=7, retrain=False, save_interval=10, total_epoch=5, train_epoch=300, version=0, weight_decay=0.001)
+lrcos is using
+Epoch 0/300:   0%|          | 0/89 [00:00<?, ?it/s]Epoch 0/300:   1%|          | 1/89 [00:00<00:14,  5.90it/s]Epoch 0/300:  39%|███▉      | 35/89 [00:00<00:00, 157.45it/s]Epoch 0/300:  89%|████████▉ | 79/89 [00:00<00:00, 261.61it/s]Epoch 0/300: 100%|██████████| 89/89 [00:00<00:00, 201.95it/s]
+Full forward pass:   0%|          | 0/382 [00:00<?, ?it/s]Full forward pass:   0%|          | 0/382 [00:01<?, ?it/s]
+Traceback (most recent call last):
+  File "huston2013_dw.py", line 62, in <module>
+    deeppix_main(args=args)
+  File "huston2013_dw.py", line 55, in deeppix_main
+    train_mcl(model=model, cost=criterion, optimizer=optimizer,
+  File "../models1/train_model.py", line 232, in train_mcl
+    result_test = calc_accuracy_multi(model, args=args, loader=test_loader, hter=False, verbose=True)
+  File "../models1/train_model.py", line 46, in calc_accuracy_multi
+    outputs_batch = model(img_m1, img_m2)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "../models1/deepwise.py", line 152, in forward
+    x, feature = self.share_bone(fused_feature)  # [B,class_num], [B,32,1,1]
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "../models1/deepwise.py", line 134, in forward
+    x = self.fc(x)  # [B,class_num]
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/linear.py", line 114, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (32x64 and 32x15)

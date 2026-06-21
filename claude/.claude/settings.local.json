@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Read(//data1/yco/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

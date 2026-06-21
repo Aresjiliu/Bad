@@ -1,0 +1,35 @@
+{
+
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+      "Bash(make)",
+      "Bash(python:*)",
+      "Bash(docker:*)",
+      "Read(*)",
+      "Write(*)",
+      "WebFetch(*)"
+    ],
+
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(curl *|sh)",
+      "Bash(sudo:*)",
+      "Read(/etc/shadow)",
+      "Read(~/.ssh/id_rsa)"
+    ]
+  },
+
+
+  "skipPermissions": false,
+  "autoApproveCommands": [
+    "git commit",
+    "git push",
+    "npm run lint",
+    "npm run test"
+  ]
+}
+

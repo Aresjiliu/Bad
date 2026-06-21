@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//data1/yco/TGRS/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,210 @@
+import sys
+import os
+
+# 获取当前文件的绝对路径，确保路径设置正确
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.insert(0, project_root)  # 使用insert(0, ...)确保路径优先级
+
+import torchvision.transforms as tt
+import torch
+
+# 确保使用项目本地的datasets包
+try:
+    from datasets.houston2013 import Huston2013_multi, Huston2013_single, Huston2013_multi_fix
+except ImportError as e:
+    print(f"导入datasets.houston2013失败: {e}")
+    print("尝试直接导入...")
+    # 如果包导入失败，尝试直接导入文件
+    import importlib.util
+    houston_spec = importlib.util.spec_from_file_location(
+        "houston2013", os.path.join(project_root, "datasets", "houston2013.py")
+    )
+    houston_module = importlib.util.module_from_spec(houston_spec)
+    houston_spec.loader.exec_module(houston_module)
+    Huston2013_multi = houston_module.Huston2013_multi
+    Huston2013_single = houston_module.Huston2013_single
+    Huston2013_multi_fix = houston_module.Huston2013_multi_fix
+from lib.processing_utils import get_mean_std
+from datasets.dataset_proceess_utils import ToTensor_multi, RandomHorizontalFlip_multi, Normaliztion_multi, \
+    ColorAdjust_multi, RandomVerticalFlip_multi
+
+huston2013_multi_transforms_train = tt.Compose(
+    [
+        RandomHorizontalFlip_multi(),
+        RandomVerticalFlip_multi(),
+        # ColorAdjust_multi(brightness=0.3),
+        ToTensor_multi(),
+        # Normaliztion_multi(),
+    ]
+)
+
+huston2013_multi_transforms_test = tt.Compose(
+    [
+        ToTensor_multi(),
+        # Normaliztion_multi(),
+    ]
+)
+
+huston2013_single_transforms_train = tt.Compose(
+    [
+        RandomHorizontalFlip_multi(),
+        RandomVerticalFlip_multi(),
+        # ColorAdjust_multi(brightness=0.3),
+        ToTensor_multi(),
+        # Normaliztion_multi(),
+    ]
+)
+
+huston2013_single_transforms_test = tt.Compose(
+    [
+        ToTensor_multi(),
+        # Normaliztion_multi(),
+    ]
+)
+
+
+def huston2013_multi_dataloader(train, args):
+    # dataset and data loader
+    if train:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_train.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_train.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_train.mat'))
+        print(modality_path_1)
+        huston2013_multi_dataset = Huston2013_multi(modality_path_1=modality_path_1, modality_path_2=modality_path_2,
+                                                    label_path=label_train_path,
+                                                    data_transform=huston2013_multi_transforms_train, args=args)
+
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_multi_dataset,
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=4)
+    else:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_test.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_test.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_test.mat'))
+        huston2013_multi_dataset = Huston2013_multi(modality_path_1=modality_path_1, modality_path_2=modality_path_2,
+                                                    label_path=label_train_path,
+                                                    data_transform=huston2013_multi_transforms_test, args=args)
+
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_multi_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            num_workers=4)
+
+    return huston2013_data_loader
+
+
+def single_dataloader(train, args):
+    if train:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_train.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_train.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_train.mat'))
+        print(modality_path_1)
+        huston2013_multi_dataset = Huston2013_multi(modality_path_1=modality_path_1, modality_path_2=modality_path_2,
+                                                    label_path=label_train_path,
+                                                    data_transform=huston2013_multi_transforms_train, args=args)
+
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_multi_dataset,
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=4)
+    else:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_test.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_test.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_test.mat'))
+        huston2013_multi_dataset = Huston2013_multi(modality_path_1=modality_path_1, modality_path_2=modality_path_2,
+                                                    label_path=label_train_path,
+                                                    data_transform=huston2013_multi_transforms_test, args=args)
+
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_multi_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            num_workers=4)
+
+    return huston2013_data_loader
+
+
+def huston2013_multi_dataloader_fix(train, args):
+    # dataset and data loader
+    if train:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_train.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_train.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_train.mat'))
+        huston2013_multi_dataset = Huston2013_multi_fix(modality_path_1=modality_path_1,
+                                                        modality_path_2=modality_path_2,
+                                                        label_path=label_train_path,
+                                                        data_transform=huston2013_multi_transforms_train, args=args)
+    else:
+        # print(args)
+        modality_path_1 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_X_test.mat'))
+        modality_path_2 = os.path.join(args.data_root,
+                                       os.path.join(args.pair_modalities[1], args.pair_modalities[1] + '_X_test.mat'))
+        label_train_path = os.path.join(args.data_root,
+                                        os.path.join(args.pair_modalities[0], args.pair_modalities[0] + '_Y_test.mat'))
+        huston2013_multi_dataset = Huston2013_multi(modality_path_1=modality_path_1,
+                                                    modality_path_2=modality_path_2,
+                                                    label_path=label_train_path,
+                                                    data_transform=huston2013_multi_transforms_test, args=args)
+
+    huston2013_data_loader = torch.utils.data.DataLoader(
+        dataset=huston2013_multi_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=4)
+
+    return huston2013_data_loader
+
+
+def huston2013_single_dataloader(train, args):
+    # dataset and data loader
+    if train:
+
+        single_train_path = os.path.join(args.data_root, os.path.join(args.modal, args.modal + '_X_train.mat'))
+        label_train_path = os.path.join(args.data_root, os.path.join(args.modal, args.modal + '_Y_train.mat'))
+        huston2013_single_dataset = Huston2013_single(modality_path_1=single_train_path,
+                                                      label_path=label_train_path,
+                                                      data_transform=huston2013_single_transforms_train, args=args)
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_single_dataset,
+            batch_size=args.batch_size,
+            shuffle=True)
+    else:
+        single_train_path = os.path.join(args.data_root, os.path.join(args.modal, args.modal + '_X_test.mat'))
+        label_train_path = os.path.join(args.data_root, os.path.join(args.modal, args.modal + '_Y_test.mat'))
+        # print(single_train_path, label_train_path)
+        huston2013_single_dataset = Huston2013_single(modality_path_1=single_train_path,
+                                                      label_path=label_train_path,
+                                                      data_transform=huston2013_single_transforms_test, args=args)
+
+        huston2013_data_loader = torch.utils.data.DataLoader(
+            dataset=huston2013_single_dataset,
+            batch_size=args.batch_size,
+            shuffle=False)
+
+    return huston2013_data_loader

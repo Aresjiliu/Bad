@@ -1,0 +1,1 @@
+python huston2013_multi_share_unimodal_center.py "hsi+lidar" --l1_loss 0.5 -q DSQ --quan_bit 4 > huston_teacher13.out 2>&1
