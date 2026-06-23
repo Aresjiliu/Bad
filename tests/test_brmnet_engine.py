@@ -16,6 +16,7 @@ class BRMNetEngineTest(unittest.TestCase):
 
         tuple_batch = unpack_batch((main, aux, labels), torch.device("cpu"))
         dict_batch = unpack_batch({"main": main, "aux": aux, "label": labels}, torch.device("cpu"))
+        legacy_batch = unpack_batch({"m_1": main, "m_2": aux, "label": labels}, torch.device("cpu"))
 
         self.assertTrue(torch.equal(tuple_batch.main, main))
         self.assertTrue(torch.equal(tuple_batch.aux, aux))
@@ -23,6 +24,9 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertTrue(torch.equal(dict_batch.main, main))
         self.assertTrue(torch.equal(dict_batch.aux, aux))
         self.assertTrue(torch.equal(dict_batch.labels, labels))
+        self.assertTrue(torch.equal(legacy_batch.main, main))
+        self.assertTrue(torch.equal(legacy_batch.aux, aux))
+        self.assertTrue(torch.equal(legacy_batch.labels, labels))
 
     def test_train_one_epoch_updates_model_and_reports_metrics(self):
         torch.manual_seed(0)

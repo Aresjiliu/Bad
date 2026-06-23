@@ -31,8 +31,8 @@ def unpack_batch(batch: object, device: torch.device | str) -> BRMNetBatch:
     quality_targets = None
 
     if isinstance(batch, Mapping):
-        main = _first_present(batch, ("main", "main_input", "hsi", "x_main"))
-        aux = _first_present(batch, ("aux", "aux_input", "lidar", "sar", "ms", "x_aux"))
+        main = _first_present(batch, ("main", "main_input", "hsi", "x_main", "m_1"))
+        aux = _first_present(batch, ("aux", "aux_input", "lidar", "sar", "ms", "x_aux", "m_2"))
         labels = _first_present(batch, ("labels", "label", "target", "y"))
         if "q_main" in batch and "q_aux" in batch:
             quality_targets = (batch["q_main"], batch["q_aux"])
