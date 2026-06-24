@@ -17,7 +17,7 @@
 - Create: `tests/test_hard_concrete.py`
 - Modify: `brmnet_core/__init__.py`
 
-- [ ] **Step 1: Write failing probability and initialization tests**
+- [x] **Step 1: Write failing probability and initialization tests**
 
 ```python
 gate = HardConcreteGate(4, initial_retention=0.65)
@@ -30,7 +30,7 @@ self.assertTrue(torch.allclose(
 
 Also assert invalid channel counts, retention, temperature and stretch bounds raise `ValueError`.
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run:
 
@@ -40,7 +40,7 @@ D:\software\anaconda3\envs\hslinets\python.exe -m unittest tests.test_hard_concr
 
 Expected: import failure because `HardConcreteGate` does not exist.
 
-- [ ] **Step 3: Implement initialization and expected probability**
+- [x] **Step 3: Implement initialization and expected probability**
 
 Implement:
 
@@ -62,7 +62,7 @@ class HardConcreteGate(nn.Module):
 
 Initialize `log_alpha` by inverting this equation.
 
-- [ ] **Step 4: Write failing forward-mode tests**
+- [x] **Step 4: Write failing forward-mode tests**
 
 Test that:
 
@@ -73,14 +73,14 @@ Test that:
 - gradients reach `log_alpha`;
 - `set_inference_mode` rejects unknown modes.
 
-- [ ] **Step 5: Implement soft sampling, hard masks and forward**
+- [x] **Step 5: Implement soft sampling, hard masks and forward**
 
 Use reparameterized binary concrete sampling in training. In evaluation:
 
 - `soft`: stretched sigmoid clamped to `[0,1]`;
 - `hard`: `expected_active_probability() >= threshold`.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 Run the focused test and then:
 
@@ -98,7 +98,7 @@ git commit -m "Add hard concrete channel gates"
 - Modify: `brmnet_core/model.py`
 - Create: `tests/test_structured_brmnet.py`
 
-- [ ] **Step 1: Write failing block-order test**
+- [x] **Step 1: Write failing block-order test**
 
 Construct `HardConcreteConvBlock` and assert its registered children are ordered:
 
@@ -108,15 +108,15 @@ Construct `HardConcreteConvBlock` and assert its registered children are ordered
 
 Verify output shape and that gate receives the BN output by registering forward hooks.
 
-- [ ] **Step 2: Run test and verify RED**
+- [x] **Step 2: Run test and verify RED**
 
 Expected: `HardConcreteConvBlock` import failure.
 
-- [ ] **Step 3: Implement focused block**
+- [x] **Step 3: Implement focused block**
 
 The block owns `conv`, `bn`, optional `gate`, and ReLU. It must accept an externally supplied gate so the model can reuse `shared_fusion_gate`.
 
-- [ ] **Step 4: Write failing model topology tests**
+- [x] **Step 4: Write failing model topology tests**
 
 Construct:
 
@@ -132,11 +132,11 @@ Assert:
 - exactly seven unique `HardConcreteGate` instances exist;
 - legacy model still contains `BudgetGatedConv2d`.
 
-- [ ] **Step 5: Implement hard-concrete encoder, head and model path**
+- [x] **Step 5: Implement hard-concrete encoder, head and model path**
 
 Add `gate_type` with values `hard_concrete` and `legacy_sigmoid`. Preserve legacy constructors and state layout in the legacy path. New forward behavior remains output-compatible.
 
-- [ ] **Step 6: Run focused and regression tests**
+- [x] **Step 6: Run focused and regression tests**
 
 Run:
 
@@ -144,7 +144,7 @@ Run:
 D:\software\anaconda3\envs\hslinets\python.exe -m unittest tests.test_hard_concrete tests.test_structured_brmnet tests.test_brmnet_engine -v
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add brmnet_core tests\test_structured_brmnet.py
@@ -160,11 +160,11 @@ git commit -m "Add BN-after structured BRMNet gates"
 - Modify: `brmnet_core/engine.py`
 - Modify: `brmnet_core/__init__.py`
 
-- [ ] **Step 1: Write failing baseline resource test**
+- [x] **Step 1: Write failing baseline resource test**
 
 For a small fixed-width model, independently calculate Conv/BN/Linear parameters and MACs at patch size 7. Assert `estimate_brmnet_resources(..., mode="baseline")` matches.
 
-- [ ] **Step 2: Write failing expected and hard resource tests**
+- [x] **Step 2: Write failing expected and hard resource tests**
 
 Set gate probabilities to known values and assert:
 
@@ -173,11 +173,11 @@ Set gate probabilities to known values and assert:
 - reducing one gate decreases resources;
 - shared fusion channels affect both encoder output convolutions and classifier input.
 
-- [ ] **Step 3: Run tests and verify RED**
+- [x] **Step 3: Run tests and verify RED**
 
 Expected: resource estimator import failure.
 
-- [ ] **Step 4: Implement `BRMNetResourceStats`**
+- [x] **Step 4: Implement `BRMNetResourceStats`**
 
 Expose:
 
@@ -188,7 +188,7 @@ resource_budget_loss(model, target_budget, patch_size, metric)
 
 Modes are `baseline`, `expected`, and `hard`; metrics are `params` and `macs`. Include quality-estimator and classifier Linear costs.
 
-- [ ] **Step 5: Replace hard-concrete loss metrics**
+- [x] **Step 5: Replace hard-concrete loss metrics**
 
 For `gate_type="hard_concrete"`, `brmnet_loss` must use `resource_budget_loss`. Return:
 
@@ -197,11 +197,11 @@ For `gate_type="hard_concrete"`, `brmnet_loss` must use `resource_budget_loss`. 
 - `expected_macs_ratio`;
 - legacy retention metrics for legacy models only.
 
-- [ ] **Step 6: Extend engine meters and run tests**
+- [x] **Step 6: Extend engine meters and run tests**
 
 Update scalar accumulation without changing classification metrics. Run all focused tests.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add brmnet_core tests\test_resources.py tests\test_brmnet_engine.py
@@ -216,19 +216,19 @@ git commit -m "Add differentiable BRMNet resource budgets"
 - Create: `tests/test_compact_export.py`
 - Modify: `brmnet_core/__init__.py`
 
-- [ ] **Step 1: Write failing compact topology test**
+- [x] **Step 1: Write failing compact topology test**
 
 Construct `CompactBRMNet` with asymmetric branch widths and assert forward output shape. Assert it contains no `HardConcreteGate` and no `BudgetGatedConv2d`.
 
-- [ ] **Step 2: Implement compact model**
+- [x] **Step 2: Implement compact model**
 
 Use ordinary Conv/BN/ReLU blocks and preserve the existing MQE/RGF/classifier output contract.
 
-- [ ] **Step 3: Write failing exporter shape-copy tests**
+- [x] **Step 3: Write failing exporter shape-copy tests**
 
 Set explicit masks for all seven gates. Export and assert every Conv, BN, MQE Linear and final Linear dimension matches selected indices.
 
-- [ ] **Step 4: Implement channel-copy helpers and exporter**
+- [x] **Step 4: Implement channel-copy helpers and exporter**
 
 Implement:
 
@@ -238,7 +238,7 @@ export_compact_brmnet(model, threshold=0.5)
 
 Each mask must retain at least the highest-probability channel. Return model plus serializable width/index metadata.
 
-- [ ] **Step 5: Write failing numerical equivalence test**
+- [x] **Step 5: Write failing numerical equivalence test**
 
 Set source model to evaluation hard mode, export it, feed identical random inputs, and assert:
 
@@ -246,11 +246,11 @@ Set source model to evaluation hard mode, export it, feed identical random input
 torch.testing.assert_close(source_logits, compact_logits, atol=1e-5, rtol=1e-5)
 ```
 
-- [ ] **Step 6: Fix exporter until equivalence passes**
+- [x] **Step 6: Fix exporter until equivalence passes**
 
 Copy all Conv/BN/Linear weights and running statistics using the exact selected indices.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add brmnet_core tests\test_compact_export.py
@@ -266,7 +266,7 @@ git commit -m "Export compact structured BRMNet models"
 - Modify: `tests/test_summarize_brmnet_experiments.py`
 - Modify: `docs/BRMNET_REAL_DATA_RUNBOOK_ZH.md`
 
-- [ ] **Step 1: Write failing CLI and path tests**
+- [x] **Step 1: Write failing CLI and path tests**
 
 Add expectations:
 
@@ -278,11 +278,11 @@ Add expectations:
 
 Run names must include gate type, budget and budget metric.
 
-- [ ] **Step 2: Implement parser, model construction and loss kwargs**
+- [x] **Step 2: Implement parser, model construction and loss kwargs**
 
 Legacy stochastic/deterministic mode applies only to `legacy_sigmoid`. Hard-concrete evaluation defaults to soft mode and export uses hard mode.
 
-- [ ] **Step 3: Write failing artifact test**
+- [x] **Step 3: Write failing artifact test**
 
 Extract an artifact-writing helper, call it with a temporary directory and a real small `BRMNet`, and require:
 
@@ -292,17 +292,17 @@ compact_model.pt
 compact_config.json
 ```
 
-- [ ] **Step 4: Implement export and artifact writing**
+- [x] **Step 4: Implement export and artifact writing**
 
 Record baseline/expected/hard/compact Params and MACs, ratios, active channels and numerical equivalence error.
 
-- [ ] **Step 5: Update summary grouping**
+- [x] **Step 5: Update summary grouping**
 
 Group by `gate_type`, `target_budget`, and `budget_metric`. Add compact Params/MACs ratios to summary output.
 
-- [ ] **Step 6: Run runner and summary tests**
+- [x] **Step 6: Run runner and summary tests**
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add scripts tests docs\BRMNET_REAL_DATA_RUNBOOK_ZH.md
@@ -317,7 +317,7 @@ git commit -m "Integrate structured pruning experiment runner"
 - Modify: `D:\Academic\findings.md`
 - Modify: `D:\Academic\progress.md`
 
-- [ ] **Step 1: Run all tests with real Houston data**
+- [x] **Step 1: Run all tests with real Houston data**
 
 ```powershell
 $env:BRMNET_HOUSTON_DATA_ROOT='D:\Academic\HSLiNets-main\Dataset'
@@ -326,18 +326,18 @@ D:\software\anaconda3\envs\hslinets\python.exe -m unittest discover -s tests -v
 
 Expected: zero failures and zero skips.
 
-- [ ] **Step 2: Run static checks**
+- [x] **Step 2: Run static checks**
 
 ```powershell
 git diff --check
 D:\software\anaconda3\envs\hslinets\python.exe -m py_compile brmnet_core\*.py scripts\run_brmnet_houston.py
 ```
 
-- [ ] **Step 3: Run CUDA seed-0 experiments**
+- [x] **Step 3: Run CUDA seed-0 experiments**
 
 Run official split, 20 epochs, MACs budgets 0.65/0.80/0.90. Execute sequentially to avoid GPU contention.
 
-- [ ] **Step 4: Verify acceptance criteria**
+- [x] **Step 4: Verify acceptance criteria**
 
 Check:
 
@@ -347,11 +347,11 @@ Check:
 - report actual OA difference between 65% and 90%;
 - do not start three-seed experiments unless criteria pass.
 
-- [ ] **Step 5: Write verification report and update planning files**
+- [x] **Step 5: Write verification report and update planning files**
 
 Record failed criteria explicitly; do not relabel soft or expected ratios as real compression.
 
-- [ ] **Step 6: Final verification and commit**
+- [x] **Step 6: Final verification and commit**
 
 Run the full suite again, inspect `git diff --check`, then commit:
 
