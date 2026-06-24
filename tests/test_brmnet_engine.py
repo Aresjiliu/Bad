@@ -5,10 +5,18 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from brmnet_core import BRMNet
+from brmnet_core.budget_gates import iter_budget_gates, set_gate_stochastic
 from brmnet_core.engine import evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
 
 
 class BRMNetEngineTest(unittest.TestCase):
+    def test_set_gate_stochastic_updates_all_budget_gates(self):
+        model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
+
+        set_gate_stochastic(model, False)
+
+        self.assertTrue(all(not gate.stochastic for gate in iter_budget_gates(model)))
+
     def test_unpack_batch_accepts_tuple_and_dict(self):
         main = torch.randn(2, 4, 7, 7)
         aux = torch.randn(2, 1, 7, 7)

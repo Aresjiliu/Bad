@@ -14,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from brmnet_core import BRMNet
+from brmnet_core import BRMNet, set_gate_stochastic
 from brmnet_core.data import (
     build_houston_raw_loaders,
     load_houston_scene,
@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--lambda-budget", type=float, default=1e-3)
     parser.add_argument("--lambda-quality", type=float, default=0.0)
+    parser.add_argument(
+        "--gate-mode",
+        choices=("stochastic", "deterministic"),
+        default="stochastic",
+    )
     parser.add_argument("--aux-noise-std", type=float, default=0.1)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--seed", type=int, default=0)
@@ -64,9 +69,12 @@ def build_run_paths(
     pair_modalities: str,
     protocol: str,
     split_seed: int,
+    gate_mode: str = "stochastic",
 ) -> dict[str, Path]:
     pair_name = "-".join(normalize_pair_modalities(pair_modalities))
     run_name = f"houston2013_{pair_name}_{protocol}_seed{split_seed}"
+    if gate_mode != "stochastic":
+        run_name += f"_gate{gate_mode}"
     run_dir = Path(output_dir) / run_name
     return {
         "run_dir": run_dir,
@@ -134,6 +142,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         cli_args.pair_modalities,
         cli_args.split_protocol,
         cli_args.split_seed,
+        cli_args.gate_mode,
     )
     paths["run_dir"].mkdir(parents=True, exist_ok=True)
     paths["config"].write_text(
@@ -180,6 +189,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         aux_channels=aux_channels,
         num_classes=cli_args.class_num,
     )
+    set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
     model.to(device)
     load_checkpoint_if_present(model, cli_args.checkpoint, device)
 

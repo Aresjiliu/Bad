@@ -71,6 +71,11 @@ def iter_budget_gates(module: nn.Module) -> Iterable[BudgetGatedConv2d]:
             yield child
 
 
+def set_gate_stochastic(module: nn.Module, enabled: bool) -> None:
+    for gate in iter_budget_gates(module):
+        gate.stochastic = bool(enabled)
+
+
 def collect_budget_loss(module: nn.Module, reduction: str = "mean") -> torch.Tensor:
     gates = [gate.gate_prob().sum() for gate in iter_budget_gates(module)]
     if not gates:
@@ -90,4 +95,3 @@ def update_gate_temperature(module: nn.Module, gamma: float = 1.01, t_max: float
         sampled = sample_bernoulli(probs)
         new_temperature = gate.temperature * torch.pow(torch.as_tensor(gamma, device=probs.device), sampled)
         gate.set_temperature(torch.clamp(new_temperature, max=t_max))
-
