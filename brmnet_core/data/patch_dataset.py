@@ -50,8 +50,12 @@ class NormalizedScene:
     lidar: np.ndarray
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "hsi", _readonly_float32(self.hsi))
-        object.__setattr__(self, "lidar", _readonly_float32(self.lidar))
+        hsi = np.ascontiguousarray(self.hsi, dtype=np.float32)
+        lidar = np.ascontiguousarray(self.lidar, dtype=np.float32)
+        hsi.setflags(write=False)
+        lidar.setflags(write=False)
+        object.__setattr__(self, "hsi", hsi)
+        object.__setattr__(self, "lidar", lidar)
 
 
 def normalize_scene(
@@ -73,8 +77,22 @@ def normalize_scene(
     hsi_std = np.where(hsi_std < 1e-8, 1.0, hsi_std)
     lidar_std = np.where(lidar_std < 1e-8, 1.0, lidar_std)
 
-    normalized_hsi = (hsi_array.astype(np.float64) - hsi_mean) / hsi_std
-    normalized_lidar = (lidar_array.astype(np.float64) - lidar_mean) / lidar_std
+    normalized_hsi = np.empty(hsi_array.shape, dtype=np.float32)
+    normalized_lidar = np.empty(lidar_array.shape, dtype=np.float32)
+    np.subtract(
+        hsi_array,
+        hsi_mean.astype(np.float32),
+        out=normalized_hsi,
+        casting="unsafe",
+    )
+    np.divide(normalized_hsi, hsi_std.astype(np.float32), out=normalized_hsi)
+    np.subtract(
+        lidar_array,
+        lidar_mean.astype(np.float32),
+        out=normalized_lidar,
+        casting="unsafe",
+    )
+    np.divide(normalized_lidar, lidar_std.astype(np.float32), out=normalized_lidar)
     if not np.isfinite(normalized_hsi).all() or not np.isfinite(normalized_lidar).all():
         raise ValueError("scene normalization produced non-finite values")
 
@@ -137,20 +155,30 @@ class HoustonPatchDataset(Dataset):
         self.labels = np.array(labels_array, copy=True)
         self.patch_size = int(patch_size)
         self.augment = bool(augment)
-        half = self.patch_size // 2
-        padding = ((half, half), (half, half), (0, 0))
-        self.hsi = np.pad(hsi_array.astype(np.float32, copy=False), padding, mode="reflect")
-        self.lidar = np.pad(lidar_array.astype(np.float32, copy=False), padding, mode="reflect")
+        self.hsi = hsi_array.astype(np.float32, copy=False)
+        self.lidar = lidar_array.astype(np.float32, copy=False)
 
     def __len__(self) -> int:
         return len(self.coords)
 
     def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
         row, col = self.coords[index]
-        row_end = row + self.patch_size
-        col_end = col + self.patch_size
-        hsi_patch = self.hsi[row:row_end, col:col_end]
-        lidar_patch = self.lidar[row:row_end, col:col_end]
+        half = self.patch_size // 2
+        height, width = self.hsi.shape[:2]
+        row_start = max(0, row - half)
+        row_end = min(height, row + half + 1)
+        col_start = max(0, col - half)
+        col_end = min(width, col + half + 1)
+        hsi_patch = self.hsi[row_start:row_end, col_start:col_end]
+        lidar_patch = self.lidar[row_start:row_end, col_start:col_end]
+        padding = (
+            (max(0, half - row), max(0, row + half + 1 - height)),
+            (max(0, half - col), max(0, col + half + 1 - width)),
+            (0, 0),
+        )
+        if any(before or after for before, after in padding[:2]):
+            hsi_patch = np.pad(hsi_patch, padding, mode="reflect")
+            lidar_patch = np.pad(lidar_patch, padding, mode="reflect")
 
         main = torch.from_numpy(np.ascontiguousarray(hsi_patch.transpose(2, 0, 1)))
         aux = torch.from_numpy(np.ascontiguousarray(lidar_patch.transpose(2, 0, 1)))

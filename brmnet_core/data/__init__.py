@@ -18,6 +18,11 @@ from .patch_dataset import (
     NormalizedScene,
     normalize_scene,
 )
+from .factory import (
+    HoustonDataBundle,
+    build_houston_raw_loaders,
+    write_houston_data_artifacts,
+)
 from .splits import (
     CoordinateSplit,
     build_official_split,
@@ -48,6 +53,9 @@ __all__ = [
     "NormalizationStats",
     "NormalizedScene",
     "normalize_scene",
+    "HoustonDataBundle",
+    "build_houston_raw_loaders",
+    "write_houston_data_artifacts",
     "parse_envi_roi_records",
     "save_coordinate_split",
 ]
