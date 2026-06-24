@@ -17,3 +17,8 @@ output/gpu_smoke/
 output/gpu_experiments/
 output/budget_retention/
 output/budget_retention_unaligned/
+output/structured_smoke/
+output/structured_probe/
+output/structured_projected/
+output/structured_candidate/
+output/structured_pruning/

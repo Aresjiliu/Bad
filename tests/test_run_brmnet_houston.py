@@ -2,7 +2,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.run_brmnet_houston import build_parser, build_run_paths, retention_to_gate_score
+import torch
+
+from brmnet_core import BRMNet
+from scripts.run_brmnet_houston import (
+    build_parser,
+    build_run_paths,
+    retention_to_gate_score,
+    write_structured_pruning_artifacts,
+)
 
 
 class BRMNetHoustonRunnerTest(unittest.TestCase):
@@ -40,6 +48,10 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.split_seed, 42)
         self.assertEqual(args.output_dir, "output/experiments")
         self.assertEqual(args.gate_mode, "deterministic")
+        self.assertEqual(args.gate_type, "hard_concrete")
+        self.assertEqual(args.budget_metric, "macs")
+        self.assertIsNone(args.gate_threshold)
+        self.assertEqual(args.compact_finetune_epochs, 10)
         self.assertEqual(args.target_budget, 1.0)
         self.assertEqual(args.lambda_budget, 1.0)
         self.assertIsNone(args.gate_init_retention)
@@ -66,17 +78,23 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 split_seed=42,
                 train_seed=0,
                 target_budget=0.65,
+                gate_type="hard_concrete",
+                budget_metric="macs",
             )
 
             self.assertEqual(
                 paths["run_dir"].name,
-                "houston2013_hsi-lidar_random_splitseed42_trainseed0_gatedeterministic_budget65",
+                "houston2013_hsi-lidar_random_splitseed42_trainseed0_gatehard_concrete_budget65_metricmacs",
             )
             self.assertEqual(paths["metrics"].name, "metrics.csv")
             self.assertEqual(paths["checkpoint"].name, "checkpoint.pt")
             self.assertEqual(paths["config"].name, "config.json")
             self.assertEqual(paths["history"].name, "history.json")
             self.assertEqual(paths["metrics_json"].name, "metrics.json")
+            self.assertEqual(paths["compact_metrics_json"].name, "compact_metrics.json")
+            self.assertEqual(paths["resource_stats"].name, "resource_stats.json")
+            self.assertEqual(paths["compact_model"].name, "compact_model.pt")
+            self.assertEqual(paths["compact_history"].name, "compact_history.json")
             self.assertEqual(paths["run_dir"].parent, Path(tmp))
 
             deterministic = build_run_paths(
@@ -87,11 +105,39 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 train_seed=1,
                 gate_mode="deterministic",
                 target_budget=0.9,
+                gate_type="legacy_sigmoid",
+                budget_metric="params",
             )
             self.assertEqual(
                 deterministic["run_dir"].name,
-                "houston2013_hsi-lidar_random_splitseed42_trainseed1_gatedeterministic_budget90",
+                "houston2013_hsi-lidar_random_splitseed42_trainseed1_gatelegacy_sigmoid-deterministic_budget90_metricparams",
             )
+
+    def test_structured_artifact_writer_creates_compact_outputs(self):
+        model = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+            initial_retention=0.8,
+        )
+        model.eval()
+        with tempfile.TemporaryDirectory() as tmp:
+            compact, stats = write_structured_pruning_artifacts(
+                model=model,
+                run_dir=Path(tmp),
+                patch_size=7,
+                threshold=0.5,
+                sample_main=torch.randn(2, 4, 7, 7),
+                sample_aux=torch.randn(2, 1, 7, 7),
+            )
+
+            self.assertTrue((Path(tmp) / "resource_stats.json").is_file())
+            self.assertTrue((Path(tmp) / "compact_model.pt").is_file())
+            self.assertTrue((Path(tmp) / "compact_config.json").is_file())
+            self.assertLess(stats["equivalence_max_abs_error"], 1e-5)
+            self.assertLess(stats["equivalence_l2_relative_error"], 1e-5)
+            self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
 
 
 if __name__ == "__main__":

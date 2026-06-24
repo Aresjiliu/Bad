@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import torch
 
-from .hard_concrete import HardConcreteGate
+from .hard_concrete import HardConcreteGate, iter_hard_concrete_gates
 
 
 Scalar = int | float | torch.Tensor
@@ -160,3 +160,169 @@ def resource_budget_loss(
     if not isinstance(ratio, torch.Tensor):
         ratio = torch.as_tensor(float(ratio))
     return torch.square(ratio - float(target_budget)), stats
+
+
+def initialize_uniform_resource_budget(
+    model,
+    target_budget: float,
+    patch_size: int,
+    metric: str = "macs",
+    tolerance: float = 1e-6,
+    max_iterations: int = 60,
+) -> float:
+    if not 0.0 < target_budget <= 1.0:
+        raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
+    if metric not in {"params", "macs"}:
+        raise ValueError(f"Unsupported budget metric: {metric}")
+    gates = list(iter_hard_concrete_gates(model))
+    if not gates:
+        raise ValueError("Uniform resource initialization requires HardConcreteGate modules.")
+
+    def set_retention(value: float) -> float:
+        for gate in gates:
+            gate.set_expected_active_probability(value)
+        stats = estimate_brmnet_resources(model, patch_size=patch_size, mode="expected")
+        ratio = stats.params_ratio if metric == "params" else stats.macs_ratio
+        return float(ratio.detach().cpu())
+
+    low = max(gate.epsilon for gate in gates)
+    high = 1.0 - low
+    minimum = set_retention(low)
+    maximum = set_retention(high)
+    endpoint_tolerance = max(tolerance, 1e-5)
+    if target_budget >= maximum and target_budget - maximum <= endpoint_tolerance:
+        set_retention(high)
+        return high
+    if target_budget <= minimum and minimum - target_budget <= endpoint_tolerance:
+        set_retention(low)
+        return low
+    if target_budget < minimum - tolerance or target_budget > maximum + tolerance:
+        raise ValueError(
+            f"target_budget {target_budget} is outside achievable {metric} ratio "
+            f"[{minimum:.6f}, {maximum:.6f}]"
+        )
+
+    for _ in range(max_iterations):
+        midpoint = (low + high) / 2.0
+        ratio = set_retention(midpoint)
+        if abs(ratio - target_budget) <= tolerance:
+            return midpoint
+        if ratio < target_budget:
+            low = midpoint
+        else:
+            high = midpoint
+    retention = (low + high) / 2.0
+    set_retention(retention)
+    return retention
+
+
+def estimate_compact_resources(model, patch_size: int) -> BRMNetResourceStats:
+    if patch_size <= 0:
+        raise ValueError(f"patch_size must be positive, got {patch_size}")
+    main_blocks = model.main_encoder.net
+    aux_blocks = model.aux_encoder.net
+    head_blocks = model.classifier.net
+
+    params = 0
+    macs = 0
+    for blocks in (main_blocks, aux_blocks):
+        spatial = patch_size
+        for block in blocks:
+            spatial = _conv_output_size(spatial, block.conv)
+            block_params, block_macs = _conv_cost(
+                block.conv,
+                block.conv.in_channels,
+                block.conv.out_channels,
+                spatial,
+            )
+            params += int(block_params) + 2 * block.conv.out_channels
+            macs += int(block_macs)
+
+    shared_width = main_blocks[-1].conv.out_channels
+    for estimator in (model.main_quality, model.aux_quality):
+        for linear in (estimator.net[2], estimator.net[4]):
+            linear_params, linear_macs = _linear_cost(
+                linear.in_features,
+                linear.out_features,
+                linear.bias is not None,
+            )
+            params += int(linear_params)
+            macs += int(linear_macs)
+
+    spatial = patch_size
+    for block in main_blocks:
+        spatial = _conv_output_size(spatial, block.conv)
+    for block in head_blocks:
+        spatial = _conv_output_size(spatial, block.conv)
+        block_params, block_macs = _conv_cost(
+            block.conv,
+            block.conv.in_channels,
+            block.conv.out_channels,
+            spatial,
+        )
+        params += int(block_params) + 2 * block.conv.out_channels
+        macs += int(block_macs)
+
+    final_linear = model.classifier.linear
+    linear_params, linear_macs = _linear_cost(
+        final_linear.in_features,
+        final_linear.out_features,
+        final_linear.bias is not None,
+    )
+    params += int(linear_params)
+    macs += int(linear_macs)
+    return BRMNetResourceStats(
+        params=params,
+        macs=macs,
+        params_ratio=1.0,
+        macs_ratio=1.0,
+    )
+
+
+def find_resource_budget_threshold(
+    model,
+    target_budget: float,
+    patch_size: int,
+    metric: str = "macs",
+) -> tuple[float, BRMNetResourceStats]:
+    if not 0.0 < target_budget <= 1.0:
+        raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
+    if metric not in {"params", "macs"}:
+        raise ValueError(f"Unsupported budget metric: {metric}")
+    gates = list(iter_hard_concrete_gates(model))
+    if not gates:
+        raise ValueError("Resource threshold search requires HardConcreteGate modules.")
+
+    probabilities = sorted(
+        {
+            float(value)
+            for gate in gates
+            for value in gate.expected_active_probability().detach().cpu().tolist()
+        }
+    )
+    candidates = [0.0]
+    candidates.extend(
+        (left + right) / 2.0
+        for left, right in zip(probabilities, probabilities[1:])
+    )
+    candidates.append(1.0)
+
+    best_threshold = 0.0
+    best_stats = None
+    best_error = float("inf")
+    for threshold in candidates:
+        for gate in gates:
+            gate.hard_threshold = threshold
+        stats = estimate_brmnet_resources(model, patch_size=patch_size, mode="hard")
+        ratio = stats.params_ratio if metric == "params" else stats.macs_ratio
+        error = abs(float(ratio) - target_budget)
+        if error < best_error:
+            best_threshold = threshold
+            best_stats = stats
+            best_error = error
+
+    for gate in gates:
+        gate.hard_threshold = best_threshold
+    if best_stats is None:
+        raise RuntimeError("Unable to determine a resource budget threshold.")
+    return best_threshold, best_stats

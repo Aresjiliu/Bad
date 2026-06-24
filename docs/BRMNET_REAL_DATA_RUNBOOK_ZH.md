@@ -141,3 +141,30 @@ output/experiments/houston2013_hsi-lidar_<protocol>_splitseed<split_seed>_trains
 - 随机划分用于分析空间自相关和划分敏感性。
 - 1 epoch 输出只用于验证代码闭环，不能作为论文结果。
 - 不得使用 GT 填充分类图中的未预测区域。
+# 结构化 Hard-Concrete 实验
+
+当前默认门控为 `hard_concrete`，预算按 MACs 计算。训练完成后 Runner 会自动搜索满足目标资源比例的全局硬阈值、导出 compact 模型，并进行 10 epochs 微调：
+
+```powershell
+D:\software\anaconda3\envs\hslinets\python.exe scripts\run_brmnet_houston.py `
+  --data-root D:\Academic\HSLiNets-main\Dataset `
+  --data-format raw `
+  --split-protocol official `
+  --epochs 20 `
+  --target-budget 0.65 `
+  --budget-metric macs `
+  --gate-type hard_concrete `
+  --gate-mode deterministic `
+  --compact-finetune-epochs 10 `
+  --device cuda
+```
+
+新增输出：
+
+- `resource_stats.json`：baseline、expected、hard、compact 的 Params/MACs；
+- `compact_model.pt`：微调后的无门控紧凑模型；
+- `compact_config.json`：保留通道索引与宽度；
+- `compact_history.json`：紧凑模型微调历史；
+- `compact_metrics.json/csv`：紧凑模型四种模态状态指标。
+
+未显式指定 `--gate-threshold` 时，Runner 根据学习到的通道概率搜索使实际资源最接近目标预算的阈值。论文压缩主结果必须使用 `compact_metrics` 和 `resource_stats.compact`，不能使用 expected ratio 替代真实压缩率。

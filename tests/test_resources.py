@@ -3,7 +3,13 @@ import unittest
 import torch
 
 from brmnet_core.model import BRMNet
-from brmnet_core.resources import estimate_brmnet_resources, resource_budget_loss
+from brmnet_core.resources import (
+    estimate_brmnet_resources,
+    estimate_compact_resources,
+    find_resource_budget_threshold,
+    initialize_uniform_resource_budget,
+    resource_budget_loss,
+)
 
 
 def _manual_baseline_resources() -> tuple[int, int]:
@@ -109,6 +115,69 @@ class BRMNetResourceTest(unittest.TestCase):
         torch.testing.assert_close(loss, torch.square(stats.macs_ratio - 0.65))
         with self.assertRaisesRegex(ValueError, "metric"):
             resource_budget_loss(self.model, 0.65, patch_size=7, metric="latency")
+
+    def test_uniform_initialization_matches_resource_budget(self):
+        retention = initialize_uniform_resource_budget(
+            self.model,
+            target_budget=0.65,
+            patch_size=7,
+            metric="macs",
+        )
+        stats = estimate_brmnet_resources(self.model, patch_size=7, mode="expected")
+
+        self.assertGreater(retention, 0.65)
+        self.assertAlmostEqual(float(stats.macs_ratio), 0.65, places=4)
+
+    def test_uniform_initialization_accepts_full_budget_endpoint(self):
+        retention = initialize_uniform_resource_budget(
+            self.model,
+            target_budget=1.0,
+            patch_size=7,
+            metric="macs",
+        )
+        stats = estimate_brmnet_resources(self.model, patch_size=7, mode="expected")
+
+        self.assertGreater(retention, 0.999)
+        self.assertAlmostEqual(float(stats.macs_ratio), 1.0, places=5)
+
+    def test_compact_resource_count_matches_full_baseline(self):
+        from brmnet_core.compact import CompactBRMNet
+
+        compact = CompactBRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            main_width=(32, 64, 128),
+            aux_width=(32, 64, 128),
+            head_width=(128, 64),
+        )
+        compact_stats = estimate_compact_resources(compact, patch_size=7)
+        baseline = estimate_brmnet_resources(self.model, patch_size=7, mode="baseline")
+
+        self.assertEqual(compact_stats.params, baseline.params)
+        self.assertEqual(compact_stats.macs, baseline.macs)
+
+    def test_global_threshold_projects_hard_resources_toward_budget(self):
+        with torch.no_grad():
+            for index, gate in enumerate(
+                module
+                for module in self.model.modules()
+                if hasattr(module, "log_alpha") and hasattr(module, "hard_mask")
+            ):
+                gate.log_alpha.copy_(
+                    torch.linspace(-3.0 + index * 0.1, 3.0 + index * 0.1, gate.channels)
+                )
+
+        threshold, stats = find_resource_budget_threshold(
+            self.model,
+            target_budget=0.65,
+            patch_size=7,
+            metric="macs",
+        )
+
+        self.assertGreaterEqual(threshold, 0.0)
+        self.assertLessEqual(threshold, 1.0)
+        self.assertLess(abs(float(stats.macs_ratio) - 0.65), 0.03)
 
     def test_rejects_legacy_models_and_invalid_modes(self):
         legacy = BRMNet(main_channels=4, aux_channels=1, num_classes=3)

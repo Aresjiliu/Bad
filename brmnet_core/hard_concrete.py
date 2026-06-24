@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 
 import torch
 from torch import nn
@@ -39,6 +40,7 @@ class HardConcreteGate(nn.Module):
         self.epsilon = float(epsilon)
         self.inference_mode = "soft"
         self.hard_threshold = 0.5
+        self.stochastic = True
 
         retention = min(float(initial_retention), 1.0 - self.epsilon)
         retention_logit = math.log(retention / (1.0 - retention))
@@ -50,6 +52,15 @@ class HardConcreteGate(nn.Module):
     def expected_active_probability(self) -> torch.Tensor:
         stretch_offset = self.temperature * math.log(-self.lower / self.upper)
         return torch.sigmoid(self.log_alpha - stretch_offset)
+
+    @torch.no_grad()
+    def set_expected_active_probability(self, probability: float) -> None:
+        if not 0.0 < probability <= 1.0:
+            raise ValueError(f"probability must be in (0, 1], got {probability}")
+        bounded = min(float(probability), 1.0 - self.epsilon)
+        probability_logit = math.log(bounded / (1.0 - bounded))
+        stretch_offset = self.temperature * math.log(-self.lower / self.upper)
+        self.log_alpha.fill_(probability_logit + stretch_offset)
 
     def soft_gate(self) -> torch.Tensor:
         stretched = torch.sigmoid(self.log_alpha) * (self.upper - self.lower) + self.lower
@@ -74,7 +85,7 @@ class HardConcreteGate(nn.Module):
         return stretched.clamp(0.0, 1.0)
 
     def gate_values(self) -> torch.Tensor:
-        if self.training:
+        if self.training and self.stochastic:
             return self._sample_gate()
         if self.inference_mode == "hard":
             return self.hard_mask().to(dtype=self.log_alpha.dtype)
@@ -87,3 +98,19 @@ class HardConcreteGate(nn.Module):
             )
         view_shape = (1, self.channels) + (1,) * (inputs.ndim - 2)
         return inputs * self.gate_values().view(view_shape)
+
+
+def iter_hard_concrete_gates(module: nn.Module) -> Iterable[HardConcreteGate]:
+    for child in module.modules():
+        if isinstance(child, HardConcreteGate):
+            yield child
+
+
+def set_hard_concrete_inference_mode(module: nn.Module, mode: str) -> None:
+    for gate in iter_hard_concrete_gates(module):
+        gate.set_inference_mode(mode)
+
+
+def set_hard_concrete_stochastic(module: nn.Module, enabled: bool) -> None:
+    for gate in iter_hard_concrete_gates(module):
+        gate.stochastic = bool(enabled)

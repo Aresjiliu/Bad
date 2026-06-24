@@ -15,13 +15,25 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from brmnet_core import BRMNet, collect_budget_stats, set_gate_stochastic
+from brmnet_core import (
+    BRMNet,
+    collect_budget_stats,
+    estimate_brmnet_resources,
+    estimate_compact_resources,
+    export_compact_brmnet,
+    find_resource_budget_threshold,
+    initialize_uniform_resource_budget,
+    iter_hard_concrete_gates,
+    set_gate_stochastic,
+    set_hard_concrete_inference_mode,
+    set_hard_concrete_stochastic,
+)
 from brmnet_core.data import (
     build_houston_raw_loaders,
     load_houston_scene,
     write_houston_data_artifacts,
 )
-from brmnet_core.engine import evaluate_degradation_matrix, train_one_epoch
+from brmnet_core.engine import evaluate_degradation_matrix, train_one_epoch, unpack_batch
 from brmnet_core.legacy import (
     build_houston_args,
     get_houston_loaders,
@@ -56,6 +68,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--lambda-quality", type=float, default=0.0)
     parser.add_argument(
+        "--gate-type",
+        choices=("hard_concrete", "legacy_sigmoid"),
+        default="hard_concrete",
+    )
+    parser.add_argument("--budget-metric", choices=("params", "macs"), default="macs")
+    parser.add_argument(
+        "--gate-threshold",
+        type=float,
+        default=None,
+        help="Hard export threshold. Defaults to an automatic target-resource projection.",
+    )
+    parser.add_argument("--compact-finetune-epochs", type=int, default=10)
+    parser.add_argument(
         "--gate-mode",
         choices=("stochastic", "deterministic"),
         default="deterministic",
@@ -87,11 +112,19 @@ def build_run_paths(
     train_seed: int,
     gate_mode: str = "deterministic",
     target_budget: float = 1.0,
+    gate_type: str = "hard_concrete",
+    budget_metric: str = "macs",
 ) -> dict[str, Path]:
     pair_name = "-".join(normalize_pair_modalities(pair_modalities))
+    gate_label = (
+        gate_type
+        if gate_type == "hard_concrete"
+        else f"{gate_type}-{gate_mode}"
+    )
     run_name = (
         f"houston2013_{pair_name}_{protocol}_splitseed{split_seed}"
-        f"_trainseed{train_seed}_gate{gate_mode}_budget{round(target_budget * 100):02d}"
+        f"_trainseed{train_seed}_gate{gate_label}"
+        f"_budget{round(target_budget * 100):02d}_metric{budget_metric}"
     )
     run_dir = Path(output_dir) / run_name
     return {
@@ -102,6 +135,12 @@ def build_run_paths(
         "config": run_dir / "config.json",
         "history": run_dir / "history.json",
         "gate_stats": run_dir / "gate_stats.json",
+        "resource_stats": run_dir / "resource_stats.json",
+        "compact_model": run_dir / "compact_model.pt",
+        "compact_config": run_dir / "compact_config.json",
+        "compact_metrics": run_dir / "compact_metrics.csv",
+        "compact_metrics_json": run_dir / "compact_metrics.json",
+        "compact_history": run_dir / "compact_history.json",
     }
 
 
@@ -122,15 +161,157 @@ def load_checkpoint_if_present(model: torch.nn.Module, checkpoint: str, device: 
     model.load_state_dict(state)
 
 
+def _as_float(value: object) -> float:
+    if isinstance(value, torch.Tensor):
+        return float(value.detach().cpu())
+    return float(value)
+
+
+def write_structured_pruning_artifacts(
+    model: torch.nn.Module,
+    run_dir: str | Path,
+    patch_size: int,
+    threshold: float | None,
+    sample_main: torch.Tensor,
+    sample_aux: torch.Tensor,
+    target_budget: float | None = None,
+    budget_metric: str = "macs",
+) -> tuple[torch.nn.Module, dict[str, object]]:
+    run_dir = Path(run_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    baseline = estimate_brmnet_resources(model, patch_size=patch_size, mode="baseline")
+    expected = estimate_brmnet_resources(model, patch_size=patch_size, mode="expected")
+    if threshold is None:
+        if target_budget is None:
+            raise ValueError("target_budget is required for automatic threshold projection")
+        threshold, hard = find_resource_budget_threshold(
+            model,
+            target_budget=target_budget,
+            patch_size=patch_size,
+            metric=budget_metric,
+        )
+    else:
+        for gate in iter_hard_concrete_gates(model):
+            gate.hard_threshold = float(threshold)
+        hard = estimate_brmnet_resources(model, patch_size=patch_size, mode="hard")
+    set_hard_concrete_inference_mode(model, "hard")
+    model.eval()
+    compact, metadata = export_compact_brmnet(model, threshold=threshold)
+    compact.eval()
+    compact_resources = estimate_compact_resources(compact, patch_size=patch_size)
+
+    with torch.no_grad():
+        source_logits = model(sample_main, sample_aux)["logits"]
+        compact_logits = compact(sample_main, sample_aux)["logits"]
+    logit_delta = source_logits - compact_logits
+    equivalence_error = float(logit_delta.abs().max().detach().cpu())
+    equivalence_l2_relative = float(
+        (logit_delta.norm() / source_logits.norm().clamp_min(1e-12)).detach().cpu()
+    )
+
+    gate_records = []
+    seen = set()
+    for name, module in model.named_modules():
+        if id(module) in seen or not hasattr(module, "expected_active_probability"):
+            continue
+        seen.add(id(module))
+        probabilities = module.expected_active_probability()
+        active = int(module.hard_mask(threshold).sum().detach().cpu())
+        gate_records.append(
+            {
+                "name": name,
+                "expected_retention": float(probabilities.mean().detach().cpu()),
+                "active_channels": active,
+                "total_channels": int(probabilities.numel()),
+            }
+        )
+
+    stats: dict[str, object] = {
+        "threshold": float(threshold),
+        "baseline": {
+            "params": int(baseline.params),
+            "macs": int(baseline.macs),
+            "params_ratio": 1.0,
+            "macs_ratio": 1.0,
+        },
+        "expected": {
+            "params": _as_float(expected.params),
+            "macs": _as_float(expected.macs),
+            "params_ratio": _as_float(expected.params_ratio),
+            "macs_ratio": _as_float(expected.macs_ratio),
+        },
+        "hard": {
+            "params": int(hard.params),
+            "macs": int(hard.macs),
+            "params_ratio": _as_float(hard.params_ratio),
+            "macs_ratio": _as_float(hard.macs_ratio),
+        },
+        "compact": {
+            "params": int(compact_resources.params),
+            "macs": int(compact_resources.macs),
+            "params_ratio": int(compact_resources.params) / int(baseline.params),
+            "macs_ratio": int(compact_resources.macs) / int(baseline.macs),
+        },
+        "equivalence_max_abs_error": equivalence_error,
+        "equivalence_l2_relative_error": equivalence_l2_relative,
+        "gates": gate_records,
+        "structure": metadata,
+    }
+    (run_dir / "resource_stats.json").write_text(
+        json.dumps(stats, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (run_dir / "compact_config.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    torch.save(
+        {"model": compact.state_dict(), "config": metadata},
+        run_dir / "compact_model.pt",
+    )
+    return compact, stats
+
+
+def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNet, float, float | None]:
+    if cli_args.gate_type == "legacy_sigmoid":
+        retention = (
+            cli_args.target_budget
+            if cli_args.gate_init_retention is None
+            else cli_args.gate_init_retention
+        )
+        score = retention_to_gate_score(retention)
+        model = BRMNet(
+            main_channels=main_channels,
+            aux_channels=aux_channels,
+            num_classes=cli_args.class_num,
+            init_score=score,
+            gate_type="legacy_sigmoid",
+        )
+        return model, retention, score
+
+    initial_retention = (
+        0.9 if cli_args.gate_init_retention is None else cli_args.gate_init_retention
+    )
+    model = BRMNet(
+        main_channels=main_channels,
+        aux_channels=aux_channels,
+        num_classes=cli_args.class_num,
+        gate_type="hard_concrete",
+        initial_retention=initial_retention,
+    )
+    if cli_args.gate_init_retention is None:
+        initial_retention = initialize_uniform_resource_budget(
+            model,
+            target_budget=cli_args.target_budget,
+            patch_size=cli_args.patch_size,
+            metric=cli_args.budget_metric,
+        )
+    return model, initial_retention, None
+
+
 def main(argv: list[str] | None = None) -> dict[str, object]:
     cli_args = build_parser().parse_args(argv)
     seed_everything(cli_args.seed)
-    gate_init_retention = (
-        cli_args.target_budget
-        if cli_args.gate_init_retention is None
-        else cli_args.gate_init_retention
-    )
-    gate_init_score = retention_to_gate_score(gate_init_retention)
 
     device = torch.device(cli_args.device)
     pair_modalities = normalize_pair_modalities(cli_args.pair_modalities)
@@ -142,6 +323,11 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         num_workers=cli_args.num_workers,
     )
     main_channels, aux_channels = infer_channels(legacy_args.pair_modalities)
+    model, gate_init_retention, gate_init_score = _build_model(
+        cli_args,
+        main_channels,
+        aux_channels,
+    )
 
     if cli_args.dry_run:
         summary = {
@@ -154,13 +340,9 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "class_num": cli_args.class_num,
             "target_budget": cli_args.target_budget,
             "gate_init_retention": gate_init_retention,
+            "gate_type": cli_args.gate_type,
+            "budget_metric": cli_args.budget_metric,
         }
-        model = BRMNet(
-            main_channels=main_channels,
-            aux_channels=aux_channels,
-            num_classes=cli_args.class_num,
-            init_score=gate_init_score,
-        )
         summary["parameters"] = sum(param.numel() for param in model.parameters())
         print(json.dumps(summary, ensure_ascii=False))
         return {"dry_run": summary}
@@ -173,6 +355,8 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         cli_args.seed,
         cli_args.gate_mode,
         cli_args.target_budget,
+        cli_args.gate_type,
+        cli_args.budget_metric,
     )
     paths["run_dir"].mkdir(parents=True, exist_ok=True)
     config = vars(cli_args).copy()
@@ -217,13 +401,10 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         print(json.dumps(result, ensure_ascii=False))
         return result
 
-    model = BRMNet(
-        main_channels=main_channels,
-        aux_channels=aux_channels,
-        num_classes=cli_args.class_num,
-        init_score=gate_init_score,
-    )
-    set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
+    if cli_args.gate_type == "legacy_sigmoid":
+        set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
+    else:
+        set_hard_concrete_stochastic(model, cli_args.gate_mode == "stochastic")
     model.to(device)
     load_checkpoint_if_present(model, cli_args.checkpoint, device)
 
@@ -233,6 +414,13 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         "lambda_quality": cli_args.lambda_quality,
         "target_budget": cli_args.target_budget,
     }
+    if cli_args.gate_type == "hard_concrete":
+        loss_kwargs.update(
+            {
+                "patch_size": cli_args.patch_size,
+                "budget_metric": cli_args.budget_metric,
+            }
+        )
 
     history = []
     for epoch in range(cli_args.epochs):
@@ -260,31 +448,95 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     metrics_path = Path(cli_args.metrics_csv) if cli_args.metrics_csv else paths["metrics"]
     write_metrics_csv(metrics_path, metrics_by_mode)
     write_metrics_json(paths["metrics_json"], metrics_by_mode)
-    gate_stats = collect_budget_stats(model)
-    paths["gate_stats"].write_text(
-        json.dumps(
+    compact_metrics_by_mode = None
+    resource_stats = None
+    if cli_args.gate_type == "hard_concrete":
+        sample_batch = unpack_batch(next(iter(test_loader)), device)
+        compact_model, resource_stats = write_structured_pruning_artifacts(
+            model=model,
+            run_dir=paths["run_dir"],
+            patch_size=cli_args.patch_size,
+            threshold=cli_args.gate_threshold,
+            sample_main=sample_batch.main,
+            sample_aux=sample_batch.aux,
+            target_budget=cli_args.target_budget,
+            budget_metric=cli_args.budget_metric,
+        )
+        compact_optimizer = torch.optim.AdamW(
+            compact_model.parameters(),
+            lr=cli_args.lr,
+            weight_decay=cli_args.weight_decay,
+        )
+        compact_history = []
+        for compact_epoch in range(cli_args.compact_finetune_epochs):
+            epoch_start = time.perf_counter()
+            compact_train_metrics = train_one_epoch(
+                compact_model,
+                train_loader,
+                compact_optimizer,
+                device,
+                loss_kwargs={
+                    "lambda_budget": 0.0,
+                    "lambda_quality": cli_args.lambda_quality,
+                },
+            )
+            compact_record = {
+                "epoch": compact_epoch + 1,
+                "elapsed_seconds": time.perf_counter() - epoch_start,
+                "train": compact_train_metrics,
+            }
+            compact_history.append(compact_record)
+            paths["compact_history"].write_text(
+                json.dumps(compact_history, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(json.dumps({"compact_finetune": compact_record}, ensure_ascii=False))
+        torch.save(
             {
-                "target_budget": cli_args.target_budget,
-                "soft_retention": float(gate_stats.soft_retention.detach().cpu()),
-                "hard_retention": gate_stats.hard_retention,
-                "active_channels": gate_stats.active_channels,
-                "total_channels": gate_stats.total_channels,
-                "layers": [
-                    {
-                        "name": layer.name,
-                        "soft_retention": layer.soft_retention,
-                        "hard_retention": layer.hard_retention,
-                        "active_channels": layer.active_channels,
-                        "total_channels": layer.total_channels,
-                    }
-                    for layer in gate_stats.layers
-                ],
+                "model": compact_model.state_dict(),
+                "config": resource_stats["structure"],
+                "finetune_epochs": cli_args.compact_finetune_epochs,
             },
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
+            paths["compact_model"],
+        )
+        compact_metrics_by_mode = evaluate_degradation_matrix(
+            compact_model,
+            test_loader,
+            device,
+            loss_kwargs={
+                "lambda_budget": 0.0,
+                "lambda_quality": cli_args.lambda_quality,
+            },
+            aux_noise_std=cli_args.aux_noise_std,
+        )
+        write_metrics_csv(paths["compact_metrics"], compact_metrics_by_mode)
+        write_metrics_json(paths["compact_metrics_json"], compact_metrics_by_mode)
+    else:
+        gate_stats = collect_budget_stats(model)
+        paths["gate_stats"].write_text(
+            json.dumps(
+                {
+                    "target_budget": cli_args.target_budget,
+                    "soft_retention": float(gate_stats.soft_retention.detach().cpu()),
+                    "hard_retention": gate_stats.hard_retention,
+                    "active_channels": gate_stats.active_channels,
+                    "total_channels": gate_stats.total_channels,
+                    "layers": [
+                        {
+                            "name": layer.name,
+                            "soft_retention": layer.soft_retention,
+                            "hard_retention": layer.hard_retention,
+                            "active_channels": layer.active_channels,
+                            "total_channels": layer.total_channels,
+                        }
+                        for layer in gate_stats.layers
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
     checkpoint_path = (
         Path(cli_args.save_checkpoint)
@@ -308,11 +560,13 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 "metrics_csv": str(metrics_path),
                 "checkpoint": str(checkpoint_path),
                 "metrics": metrics_by_mode,
+                "compact_metrics": compact_metrics_by_mode,
+                "resource_stats": resource_stats,
             },
             ensure_ascii=False,
         )
     )
-    return metrics_by_mode
+    return compact_metrics_by_mode or metrics_by_mode
 
 
 if __name__ == "__main__":

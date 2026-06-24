@@ -29,7 +29,17 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             continue
         config = json.loads(config_path.read_text(encoding="utf-8"))
         history = json.loads(history_path.read_text(encoding="utf-8"))
-        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        compact_metrics_path = run_dir / "compact_metrics.json"
+        selected_metrics_path = (
+            compact_metrics_path if compact_metrics_path.is_file() else metrics_path
+        )
+        metrics = json.loads(selected_metrics_path.read_text(encoding="utf-8"))
+        resource_path = run_dir / "resource_stats.json"
+        resource_stats = (
+            json.loads(resource_path.read_text(encoding="utf-8"))
+            if resource_path.is_file()
+            else {}
+        )
         train_accuracy = float(history[-1]["train"]["accuracy"]) if history else 0.0
         train_seconds = sum(float(item["elapsed_seconds"]) for item in history)
         for mode, values in metrics.items():
@@ -37,7 +47,9 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                 config["split_protocol"],
                 int(config["split_seed"]),
                 config.get("gate_mode", "stochastic"),
+                config.get("gate_type", "legacy_sigmoid"),
                 float(config.get("target_budget", -1.0)),
+                config.get("budget_metric", "channels"),
                 int(config["epochs"]),
                 mode,
             )
@@ -49,6 +61,12 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                     "train_seconds": train_seconds,
                     "soft_retention": float(values.get("soft_retention", 0.0)),
                     "hard_retention": float(values.get("hard_retention", 0.0)),
+                    "compact_params_ratio": float(
+                        resource_stats.get("compact", {}).get("params_ratio", 0.0)
+                    ),
+                    "compact_macs_ratio": float(
+                        resource_stats.get("compact", {}).get("macs_ratio", 0.0)
+                    ),
                 }
             train_seed = int(config["seed"])
             modified = metrics_path.stat().st_mtime_ns
@@ -58,13 +76,24 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
 
     rows = []
     for key, runs_by_seed in sorted(groups.items()):
-        protocol, split_seed, gate_mode, target_budget, epochs, mode = key
+        (
+            protocol,
+            split_seed,
+            gate_mode,
+            gate_type,
+            target_budget,
+            budget_metric,
+            epochs,
+            mode,
+        ) = key
         runs = [item[1] for item in runs_by_seed.values()]
         row: dict[str, object] = {
             "protocol": protocol,
             "split_seed": split_seed,
             "gate_mode": gate_mode,
+            "gate_type": gate_type,
             "target_budget": target_budget,
+            "budget_metric": budget_metric,
             "epochs": epochs,
             "mode": mode,
             "runs": len(runs),
@@ -77,6 +106,8 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             "train_seconds",
             "soft_retention",
             "hard_retention",
+            "compact_params_ratio",
+            "compact_macs_ratio",
         ):
             values = [run[metric] for run in runs]
             row[f"{metric}_mean"] = _mean(values)
@@ -99,16 +130,18 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
 
     with md_path.open("w", encoding="utf-8") as handle:
         handle.write("# BRM-Net Experiment Summary\n\n")
-        handle.write("| Protocol | Gate | Budget | Epochs | Mode | Runs | OA | AA | Kappa | Soft Ret. | Hard Ret. |\n")
-        handle.write("|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|\n")
+        handle.write("| Protocol | Gate | Metric | Budget | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio |\n")
+        handle.write("|---|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|\n")
         for row in rows:
             handle.write(
-                f"| {row['protocol']} | {row['gate_mode']} | {row['target_budget']:.2f} | {row['epochs']} | "
+                f"| {row['protocol']} | {row['gate_type']} | {row['budget_metric']} | "
+                f"{row['target_budget']:.2f} | {row['epochs']} | "
                 f"{row['mode']} | {row['runs']} | "
                 f"{row['oa_mean']:.4f} +/- {row['oa_std']:.4f} | "
                 f"{row['aa_mean']:.4f} +/- {row['aa_std']:.4f} | "
                 f"{row['kappa_mean']:.4f} +/- {row['kappa_std']:.4f} | "
-                f"{row['soft_retention_mean']:.4f} | {row['hard_retention_mean']:.4f} |\n"
+                f"{row['compact_params_ratio_mean']:.4f} | "
+                f"{row['compact_macs_ratio_mean']:.4f} |\n"
             )
 
 

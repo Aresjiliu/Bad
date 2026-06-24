@@ -12,12 +12,24 @@ from .engine import BRMNetBatch, apply_degradation, evaluate, evaluate_degradati
 from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
 from .gated_blocks import HardConcreteConvBlock
-from .hard_concrete import HardConcreteGate
+from .hard_concrete import (
+    HardConcreteGate,
+    iter_hard_concrete_gates,
+    set_hard_concrete_inference_mode,
+    set_hard_concrete_stochastic,
+)
 from .legacy import MODALITY_CHANNELS, build_houston_args, get_houston_loaders, infer_channels
 from .model import BRMNet
 from .reporting import write_metrics_csv, write_metrics_json
 from .export import export_compact_brmnet
-from .resources import BRMNetResourceStats, estimate_brmnet_resources, resource_budget_loss
+from .resources import (
+    BRMNetResourceStats,
+    estimate_brmnet_resources,
+    estimate_compact_resources,
+    find_resource_budget_threshold,
+    initialize_uniform_resource_budget,
+    resource_budget_loss,
+)
 
 __all__ = [
     "BudgetGatedConv2d",
@@ -37,6 +49,9 @@ __all__ = [
     "BudgetGatedFusionHead",
     "HardConcreteGate",
     "HardConcreteConvBlock",
+    "iter_hard_concrete_gates",
+    "set_hard_concrete_inference_mode",
+    "set_hard_concrete_stochastic",
     "BRMNet",
     "BRMNetBatch",
     "apply_degradation",
@@ -53,5 +68,8 @@ __all__ = [
     "BRMNetResourceStats",
     "estimate_brmnet_resources",
     "resource_budget_loss",
+    "estimate_compact_resources",
+    "initialize_uniform_resource_budget",
+    "find_resource_budget_threshold",
     "export_compact_brmnet",
 ]

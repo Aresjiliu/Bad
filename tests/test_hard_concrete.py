@@ -42,6 +42,17 @@ class HardConcreteGateTest(unittest.TestCase):
         self.assertIsNotNone(gate.log_alpha.grad)
         self.assertGreater(float(gate.log_alpha.grad.abs().sum()), 0.0)
 
+    def test_deterministic_training_mode_disables_sampling(self):
+        gate = HardConcreteGate(3, initial_retention=0.8)
+        gate.train()
+        gate.stochastic = False
+        inputs = torch.ones(2, 3, 4, 4)
+
+        first = gate(inputs)
+        second = gate(inputs)
+
+        torch.testing.assert_close(first, second)
+
     def test_soft_evaluation_is_deterministic(self):
         gate = HardConcreteGate(3, initial_retention=0.8)
         gate.eval()
@@ -53,6 +64,20 @@ class HardConcreteGateTest(unittest.TestCase):
 
         torch.testing.assert_close(first, second)
         self.assertEqual(gate.soft_gate().shape, (3,))
+
+    def test_can_set_expected_active_probability(self):
+        gate = HardConcreteGate(3, initial_retention=0.8)
+
+        gate.set_expected_active_probability(0.42)
+
+        torch.testing.assert_close(
+            gate.expected_active_probability(),
+            torch.full((3,), 0.42),
+            atol=1e-5,
+            rtol=0.0,
+        )
+        with self.assertRaisesRegex(ValueError, "probability"):
+            gate.set_expected_active_probability(0.0)
 
     def test_hard_evaluation_uses_binary_mask(self):
         gate = HardConcreteGate(3, initial_retention=0.8)
