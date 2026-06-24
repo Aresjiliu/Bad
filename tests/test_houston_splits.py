@@ -179,15 +179,25 @@ class RandomSplitTest(unittest.TestCase):
                 seed=True,
             )
 
+    def test_rejects_missing_or_extra_train_count_classes(self):
+        gt = np.array([[1, 1], [2, 2]])
+        cases = (
+            ("missing=\\[2\\].*extra=\\[\\]", {1: 1}),
+            ("missing=\\[\\].*extra=\\[3\\]", {1: 1, 2: 1, 3: 1}),
+        )
+        for message, counts in cases:
+            with self.subTest(counts=counts):
+                with self.assertRaisesRegex(ValueError, message):
+                    build_random_split(gt, counts, seed=1)
+
     def test_rejects_invalid_gt_class_counts_and_insufficient_samples(self):
         valid_gt = np.array([[1, 1], [2, 2]])
         invalid_cases = (
             ("2-D", np.array([1, 1]), {1: 1}),
             ("class id", valid_gt, {0: 1}),
-            ("class id", valid_gt, {3: 1}),
-            ("count", valid_gt, {1: 0}),
-            ("count", valid_gt, {1: 1.5}),
-            ("samples", valid_gt, {1: 3}),
+            ("count", valid_gt, {1: 0, 2: 1}),
+            ("count", valid_gt, {1: 1.5, 2: 1}),
+            ("samples", valid_gt, {1: 3, 2: 1}),
         )
         for message, gt, counts in invalid_cases:
             with self.subTest(message=message, counts=counts):

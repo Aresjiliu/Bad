@@ -85,6 +85,25 @@ def build_random_split(
     ):
         raise ValueError("seed must be an integer")
 
+    count_class_ids = set()
+    for class_id in train_counts:
+        if (
+            isinstance(class_id, (bool, np.bool_))
+            or not isinstance(class_id, (int, np.integer))
+            or class_id <= 0
+        ):
+            raise ValueError(f"invalid class id: {class_id!r}")
+        count_class_ids.add(int(class_id))
+    gt_class_ids = {
+        int(class_id) for class_id in np.unique(gt_array) if class_id > 0
+    }
+    missing = sorted(gt_class_ids - count_class_ids)
+    extra = sorted(count_class_ids - gt_class_ids)
+    if missing or extra:
+        raise ValueError(
+            f"train_counts class mismatch: missing={missing}, extra={extra}"
+        )
+
     train_parts = []
     train_label_parts = []
     test_parts = []
@@ -93,13 +112,6 @@ def build_random_split(
 
     for class_id in sorted(train_counts):
         count = train_counts[class_id]
-        if (
-            isinstance(class_id, (bool, np.bool_))
-            or not isinstance(class_id, (int, np.integer))
-            or class_id <= 0
-            or not np.any(gt_array == class_id)
-        ):
-            raise ValueError(f"invalid class id: {class_id!r}")
         if (
             isinstance(count, (bool, np.bool_))
             or not isinstance(count, (int, np.integer))
