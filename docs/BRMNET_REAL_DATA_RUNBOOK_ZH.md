@@ -2,6 +2,14 @@
 
 本说明对应 `brmnet-core-extraction` 分支，支持原始 Houston2013 数据的官方固定划分与随机像素划分。
 
+## 推荐环境
+
+```powershell
+conda activate hslinets
+```
+
+该环境使用 PyTorch 2.5.1、CUDA 12.1，可识别 RTX 4060。`base` 环境中的 PyTorch 是 CPU-only，不应用于 GPU 实验。
+
 ## 原始数据
 
 `--data-root` 目录需要包含：
@@ -73,6 +81,7 @@ python scripts\run_brmnet_houston.py `
   --batch-size 64 `
   --num-workers 0 `
   --device cpu `
+  --gate-mode deterministic `
   --output-dir output\smoke
 ```
 
@@ -84,12 +93,14 @@ python scripts\run_brmnet_houston.py `
 
 有 CUDA 时将 `--device cpu` 改为 `--device cuda`。正式对比必须保持两套协议的模型、训练随机种子、epoch、batch size 和优化器参数一致。
 
+当前默认门控为 `deterministic`。原 `stochastic` 门控存在训练/推理通道缩放分布不一致，仅保留作消融实验。
+
 ## 输出目录
 
 默认命名：
 
 ```text
-output/experiments/houston2013_hsi-lidar_<protocol>_seed<split_seed>/
+output/experiments/houston2013_hsi-lidar_<protocol>_splitseed<split_seed>_trainseed<seed>_gate<mode>/
 ```
 
 每次 raw 实验包含：
