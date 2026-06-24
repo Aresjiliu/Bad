@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -166,6 +167,26 @@ class HoustonDataTest(unittest.TestCase):
                     ):
                         load_houston_scene(root, require_roi=False)
 
+    def test_rejects_hsi_and_lidar_values_outside_float32_range(self):
+        too_large = np.finfo(np.float64).max
+        invalid_arrays = (
+            ("HSI", {"hsi": np.full((3, 4, 2), too_large)}),
+            ("LiDAR", {"lidar": np.full((3, 4), too_large)}),
+        )
+        for modality, overrides in invalid_arrays:
+            with self.subTest(modality=modality), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                self._write_required_files(root, **overrides)
+
+                with warnings.catch_warnings(record=True) as caught:
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        rf"{modality}.*float32.*range",
+                    ):
+                        load_houston_scene(root, require_roi=False)
+
+                self.assertEqual(caught, [])
+
     def test_rejects_invalid_gt_values_before_integer_conversion(self):
         invalid_gt = (
             ("finite", np.full((3, 4), np.nan)),
@@ -191,6 +212,19 @@ class HoustonDataTest(unittest.TestCase):
 
             with self.assertRaisesRegex(FileNotFoundError, "Samples_TR"):
                 load_houston_scene(root, require_roi=True)
+
+    def test_missing_roi_is_reported_before_reading_required_mat_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._write_required_files(root)
+            savemat(root / HSI_FILENAME, {"wrong": np.ones((3, 4, 2))})
+
+            with self.assertRaises(FileNotFoundError) as context:
+                load_houston_scene(root, require_roi=True)
+
+            message = str(context.exception)
+            self.assertIn("ROI", message)
+            self.assertIn(ROI_FILENAME, message)
 
     def test_loads_roi_records_when_required(self):
         with tempfile.TemporaryDirectory() as tmp:

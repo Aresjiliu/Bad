@@ -88,6 +88,12 @@ def _validate_gt_values(gt: np.ndarray) -> None:
         raise ValueError("GT values must be within 0..15")
 
 
+def _validate_float32_range(array: np.ndarray, name: str) -> None:
+    limit = np.finfo(np.float32).max
+    if array.size and ((array < -limit).any() or (array > limit).any()):
+        raise ValueError(f"{name} values must be within float32 range")
+
+
 def load_houston_scene(
     root: str | Path,
     require_roi: bool = True,
@@ -98,6 +104,9 @@ def load_houston_scene(
         "lidar": root_path / HOUSTON_LIDAR_FILENAME,
         "gt": root_path / HOUSTON_GT_FILENAME,
     }
+    if require_roi:
+        source_paths["roi"] = root_path / HOUSTON_ROI_FILENAME
+
     missing = [
         f"{modality.upper()}: {path}"
         for modality, path in source_paths.items()
@@ -114,6 +123,8 @@ def load_houston_scene(
 
     _validate_real_finite(hsi, "HSI")
     _validate_real_finite(lidar, "LiDAR")
+    _validate_float32_range(hsi, "HSI")
+    _validate_float32_range(lidar, "LiDAR")
     _validate_gt_values(gt)
 
     if hsi.ndim != 3:
@@ -139,11 +150,9 @@ def load_houston_scene(
 
     roi_records = None
     if require_roi:
-        roi_path = root_path / HOUSTON_ROI_FILENAME
-        if not roi_path.is_file():
-            raise FileNotFoundError(f"Required Houston ROI file not found: {roi_path}")
-        roi_records = np.asarray(_load_known_key(roi_path, HOUSTON_ROI_KEY))
-        source_paths["roi"] = roi_path
+        roi_records = np.asarray(
+            _load_known_key(source_paths["roi"], HOUSTON_ROI_KEY)
+        )
 
     return HoustonScene(
         hsi=hsi,
