@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,8 +7,11 @@ import numpy as np
 
 from brmnet_core.data import (
     CoordinateSplit as PublicCoordinateSplit,
+    HOUSTON_CLASS_NAMES,
+    HOUSTON_TRAIN_COUNTS,
     build_official_split as public_build_official_split,
     build_random_split as public_build_random_split,
+    load_houston_scene,
     load_coordinate_split as public_load_coordinate_split,
     parse_envi_roi_records as public_parse_envi_roi_records,
     save_coordinate_split as public_save_coordinate_split,
@@ -48,6 +52,27 @@ class CoordinateSplitTest(unittest.TestCase):
         self.assertFalse(split.test_labels.flags.writeable)
         with self.assertRaises(ValueError):
             split.train_coords[0, 0] = 3
+
+    def test_array_writeability_cannot_be_restored(self):
+        split = CoordinateSplit(
+            protocol="official",
+            seed=None,
+            train_coords=np.array([[0, 0]]),
+            train_labels=np.array([1]),
+            test_coords=np.array([[0, 1]]),
+            test_labels=np.array([1]),
+        )
+
+        for field in (
+            "train_coords",
+            "train_labels",
+            "test_coords",
+            "test_labels",
+        ):
+            with self.subTest(field=field):
+                array = getattr(split, field)
+                with self.assertRaises(ValueError):
+                    array.setflags(write=True)
 
     def test_rejects_invalid_shapes_lengths_and_protocol(self):
         valid = {
@@ -145,6 +170,14 @@ class RandomSplitTest(unittest.TestCase):
         actual = np.random.random(4)
 
         np.testing.assert_array_equal(actual, expected)
+
+    def test_rejects_boolean_seed(self):
+        with self.assertRaisesRegex(ValueError, "seed"):
+            build_random_split(
+                np.array([[1, 1]]),
+                {1: 1},
+                seed=True,
+            )
 
     def test_rejects_invalid_gt_class_counts_and_insufficient_samples(self):
         valid_gt = np.array([[1, 1], [2, 2]])
@@ -316,15 +349,29 @@ class CoordinateSplitPersistenceTest(unittest.TestCase):
                 test_coords=np.array([[1, 1]]),
                 test_labels=np.array([2]),
             ),
+            CoordinateSplit(
+                protocol="random",
+                seed=-1,
+                train_coords=np.array([[2, 0]]),
+                train_labels=np.array([3]),
+                test_coords=np.array([[2, 1]]),
+                test_labels=np.array([3]),
+            ),
         )
         with tempfile.TemporaryDirectory() as tmp:
-            for split in splits:
-                with self.subTest(protocol=split.protocol):
-                    path = Path(tmp) / split.protocol / "split.npz"
+            for index, split in enumerate(splits):
+                with self.subTest(protocol=split.protocol, seed=split.seed):
+                    path = Path(tmp) / str(index) / "split.npz"
                     save_coordinate_split(path, split)
                     loaded = load_coordinate_split(path)
 
                     self.assertTrue(path.is_file())
+                    with np.load(path, allow_pickle=False) as data:
+                        self.assertIn("seed_is_none", data.files)
+                        self.assertEqual(
+                            bool(data["seed_is_none"].item()),
+                            split.seed is None,
+                        )
                     self.assertEqual(loaded.protocol, split.protocol)
                     self.assertEqual(loaded.seed, split.seed)
                     for field in (
@@ -344,7 +391,8 @@ class CoordinateSplitPersistenceTest(unittest.TestCase):
             np.savez_compressed(
                 path,
                 protocol=np.array("official"),
-                seed=np.array(-1, dtype=np.int64),
+                seed=np.array(0, dtype=np.int64),
+                seed_is_none=np.array(True, dtype=np.bool_),
                 train_coords=np.array([[0, 0]], dtype=np.int64),
                 train_labels=np.array([1], dtype=np.int64),
                 test_coords=np.array([[0, 0]], dtype=np.int64),
@@ -353,6 +401,30 @@ class CoordinateSplitPersistenceTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "overlap"):
                 load_coordinate_split(path)
+
+
+class HoustonRealDataIntegrationTest(unittest.TestCase):
+    def test_official_split_matches_houston_dataset_counts(self):
+        data_root = os.environ.get("BRMNET_HOUSTON_DATA_ROOT")
+        if not data_root:
+            self.skipTest("BRMNET_HOUSTON_DATA_ROOT is not set")
+
+        scene = load_houston_scene(data_root)
+        split = build_official_split(
+            scene.gt,
+            scene.roi_records,
+            HOUSTON_CLASS_NAMES,
+            HOUSTON_TRAIN_COUNTS,
+        )
+
+        self.assertEqual(int(np.count_nonzero(scene.gt)), 15029)
+        self.assertEqual(len(split.train_coords), 2832)
+        self.assertEqual(len(split.test_coords), 12197)
+        actual_counts = {
+            class_id: int(np.count_nonzero(split.train_labels == class_id))
+            for class_id in HOUSTON_TRAIN_COUNTS
+        }
+        self.assertEqual(actual_counts, HOUSTON_TRAIN_COUNTS)
 
 
 if __name__ == "__main__":

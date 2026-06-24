@@ -7,9 +7,10 @@ import numpy as np
 
 
 def _readonly_int64(array: np.ndarray) -> np.ndarray:
-    result = np.array(array, dtype=np.int64, copy=True)
-    result.setflags(write=False)
-    return result
+    contiguous = np.ascontiguousarray(array, dtype=np.int64)
+    return np.frombuffer(contiguous.tobytes(), dtype=np.int64).reshape(
+        contiguous.shape
+    )
 
 
 def _coordinate_set(coords: np.ndarray) -> set[tuple[int, int]]:
@@ -79,6 +80,10 @@ def build_random_split(
     gt_array = np.asarray(gt)
     if gt_array.ndim != 2:
         raise ValueError(f"GT must be 2-D, got shape {gt_array.shape}")
+    if isinstance(seed, (bool, np.bool_)) or not isinstance(
+        seed, (int, np.integer)
+    ):
+        raise ValueError("seed must be an integer")
 
     train_parts = []
     train_label_parts = []
@@ -330,7 +335,8 @@ def save_coordinate_split(path: str | Path, split: CoordinateSplit) -> None:
     np.savez_compressed(
         destination,
         protocol=np.array(split.protocol),
-        seed=np.array(-1 if split.seed is None else split.seed, dtype=np.int64),
+        seed=np.array(0 if split.seed is None else split.seed, dtype=np.int64),
+        seed_is_none=np.array(split.seed is None, dtype=np.bool_),
         train_coords=split.train_coords,
         train_labels=split.train_labels,
         test_coords=split.test_coords,
@@ -341,9 +347,10 @@ def save_coordinate_split(path: str | Path, split: CoordinateSplit) -> None:
 def load_coordinate_split(path: str | Path) -> CoordinateSplit:
     with np.load(Path(path), allow_pickle=False) as data:
         seed_value = int(data["seed"].item())
+        seed_is_none = bool(data["seed_is_none"].item())
         return CoordinateSplit(
             protocol=str(data["protocol"].item()),
-            seed=None if seed_value == -1 else seed_value,
+            seed=None if seed_is_none else seed_value,
             train_coords=data["train_coords"],
             train_labels=data["train_labels"],
             test_coords=data["test_coords"],
