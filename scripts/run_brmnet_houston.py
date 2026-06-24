@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 import sys
 import time
@@ -14,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from brmnet_core import BRMNet, set_gate_stochastic
+from brmnet_core import BRMNet, collect_budget_stats, set_gate_stochastic
 from brmnet_core.data import (
     build_houston_raw_loaders,
     load_houston_scene,
@@ -45,7 +46,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-3)
-    parser.add_argument("--lambda-budget", type=float, default=1e-3)
+    parser.add_argument("--lambda-budget", type=float, default=1.0)
+    parser.add_argument("--target-budget", type=float, choices=(0.65, 0.8, 0.9, 1.0), default=1.0)
+    parser.add_argument(
+        "--gate-init-retention",
+        type=float,
+        default=None,
+        help="Initial gate probability. Defaults to --target-budget.",
+    )
     parser.add_argument("--lambda-quality", type=float, default=0.0)
     parser.add_argument(
         "--gate-mode",
@@ -64,6 +72,13 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def retention_to_gate_score(retention: float, epsilon: float = 1e-4) -> float:
+    if not 0.0 < retention <= 1.0:
+        raise ValueError(f"retention must be in (0, 1], got {retention}")
+    bounded = min(float(retention), 1.0 - epsilon)
+    return math.log(bounded / (1.0 - bounded))
+
+
 def build_run_paths(
     output_dir: str | Path,
     pair_modalities: str,
@@ -71,11 +86,12 @@ def build_run_paths(
     split_seed: int,
     train_seed: int,
     gate_mode: str = "deterministic",
+    target_budget: float = 1.0,
 ) -> dict[str, Path]:
     pair_name = "-".join(normalize_pair_modalities(pair_modalities))
     run_name = (
         f"houston2013_{pair_name}_{protocol}_splitseed{split_seed}"
-        f"_trainseed{train_seed}_gate{gate_mode}"
+        f"_trainseed{train_seed}_gate{gate_mode}_budget{round(target_budget * 100):02d}"
     )
     run_dir = Path(output_dir) / run_name
     return {
@@ -85,6 +101,7 @@ def build_run_paths(
         "checkpoint": run_dir / "checkpoint.pt",
         "config": run_dir / "config.json",
         "history": run_dir / "history.json",
+        "gate_stats": run_dir / "gate_stats.json",
     }
 
 
@@ -108,6 +125,12 @@ def load_checkpoint_if_present(model: torch.nn.Module, checkpoint: str, device: 
 def main(argv: list[str] | None = None) -> dict[str, object]:
     cli_args = build_parser().parse_args(argv)
     seed_everything(cli_args.seed)
+    gate_init_retention = (
+        cli_args.target_budget
+        if cli_args.gate_init_retention is None
+        else cli_args.gate_init_retention
+    )
+    gate_init_score = retention_to_gate_score(gate_init_retention)
 
     device = torch.device(cli_args.device)
     pair_modalities = normalize_pair_modalities(cli_args.pair_modalities)
@@ -129,11 +152,14 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "pair_modalities": legacy_args.pair_modalities,
             "channels": [main_channels, aux_channels],
             "class_num": cli_args.class_num,
+            "target_budget": cli_args.target_budget,
+            "gate_init_retention": gate_init_retention,
         }
         model = BRMNet(
             main_channels=main_channels,
             aux_channels=aux_channels,
             num_classes=cli_args.class_num,
+            init_score=gate_init_score,
         )
         summary["parameters"] = sum(param.numel() for param in model.parameters())
         print(json.dumps(summary, ensure_ascii=False))
@@ -146,10 +172,14 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         cli_args.split_seed,
         cli_args.seed,
         cli_args.gate_mode,
+        cli_args.target_budget,
     )
     paths["run_dir"].mkdir(parents=True, exist_ok=True)
+    config = vars(cli_args).copy()
+    config["effective_gate_init_retention"] = gate_init_retention
+    config["effective_gate_init_score"] = gate_init_score
     paths["config"].write_text(
-        json.dumps(vars(cli_args), ensure_ascii=False, indent=2, sort_keys=True),
+        json.dumps(config, ensure_ascii=False, indent=2, sort_keys=True),
         encoding="utf-8",
     )
 
@@ -191,13 +221,18 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         main_channels=main_channels,
         aux_channels=aux_channels,
         num_classes=cli_args.class_num,
+        init_score=gate_init_score,
     )
     set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
     model.to(device)
     load_checkpoint_if_present(model, cli_args.checkpoint, device)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=cli_args.lr, weight_decay=cli_args.weight_decay)
-    loss_kwargs = {"lambda_budget": cli_args.lambda_budget, "lambda_quality": cli_args.lambda_quality}
+    loss_kwargs = {
+        "lambda_budget": cli_args.lambda_budget,
+        "lambda_quality": cli_args.lambda_quality,
+        "target_budget": cli_args.target_budget,
+    }
 
     history = []
     for epoch in range(cli_args.epochs):
@@ -225,6 +260,31 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     metrics_path = Path(cli_args.metrics_csv) if cli_args.metrics_csv else paths["metrics"]
     write_metrics_csv(metrics_path, metrics_by_mode)
     write_metrics_json(paths["metrics_json"], metrics_by_mode)
+    gate_stats = collect_budget_stats(model)
+    paths["gate_stats"].write_text(
+        json.dumps(
+            {
+                "target_budget": cli_args.target_budget,
+                "soft_retention": float(gate_stats.soft_retention.detach().cpu()),
+                "hard_retention": gate_stats.hard_retention,
+                "active_channels": gate_stats.active_channels,
+                "total_channels": gate_stats.total_channels,
+                "layers": [
+                    {
+                        "name": layer.name,
+                        "soft_retention": layer.soft_retention,
+                        "hard_retention": layer.hard_retention,
+                        "active_channels": layer.active_channels,
+                        "total_channels": layer.total_channels,
+                    }
+                    for layer in gate_stats.layers
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     checkpoint_path = (
         Path(cli_args.save_checkpoint)
@@ -236,7 +296,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         torch.save(
             {
                 "model": model.state_dict(),
-                "args": vars(cli_args),
+                "args": config,
                 "data_metadata": data_metadata,
             },
             checkpoint_path,

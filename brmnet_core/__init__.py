@@ -1,4 +1,11 @@
-from .budget_gates import BudgetGatedConv2d, collect_budget_loss, set_gate_stochastic, update_gate_temperature
+from .budget_gates import (
+    BudgetGatedConv2d,
+    collect_budget_loss,
+    collect_budget_stats,
+    set_gate_stochastic,
+    target_budget_loss,
+    update_gate_temperature,
+)
 from .data import HoustonDataBundle, build_houston_raw_loaders, load_houston_scene, write_houston_data_artifacts
 from .engine import BRMNetBatch, apply_degradation, evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
 from .encoders import BudgetGatedEncoder
@@ -14,6 +21,8 @@ __all__ = [
     "load_houston_scene",
     "write_houston_data_artifacts",
     "collect_budget_loss",
+    "collect_budget_stats",
+    "target_budget_loss",
     "set_gate_stochastic",
     "update_gate_temperature",
     "BudgetGatedEncoder",

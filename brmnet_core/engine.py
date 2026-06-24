@@ -76,12 +76,22 @@ def apply_degradation(
 
 
 def _new_meter() -> dict[str, float]:
-    return {"loss": 0.0, "cls": 0.0, "budget": 0.0, "quality": 0.0, "correct": 0.0, "samples": 0.0}
+    return {
+        "loss": 0.0,
+        "cls": 0.0,
+        "budget": 0.0,
+        "quality": 0.0,
+        "soft_retention": 0.0,
+        "hard_retention": 0.0,
+        "target_budget": 0.0,
+        "correct": 0.0,
+        "samples": 0.0,
+    }
 
 
 def _update_meter(meter: dict[str, float], losses: dict[str, torch.Tensor], logits: torch.Tensor, labels: torch.Tensor) -> None:
     batch_size = int(labels.numel())
-    for key in ("loss", "cls", "budget", "quality"):
+    for key in ("loss", "cls", "budget", "quality", "soft_retention", "hard_retention", "target_budget"):
         loss_key = "total" if key == "loss" else key
         meter[key] += float(losses[loss_key].detach().cpu()) * batch_size
     meter["correct"] += float((logits.argmax(dim=1) == labels).sum().detach().cpu())
@@ -95,6 +105,9 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
         "cls": meter["cls"] / samples,
         "budget": meter["budget"] / samples,
         "quality": meter["quality"] / samples,
+        "soft_retention": meter["soft_retention"] / samples,
+        "hard_retention": meter["hard_retention"] / samples,
+        "target_budget": meter["target_budget"] / samples,
         "accuracy": meter["correct"] / samples,
         "samples": int(meter["samples"]),
     }

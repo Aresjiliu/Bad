@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import torch
 import torch.nn.functional as F
@@ -74,6 +75,73 @@ def iter_budget_gates(module: nn.Module) -> Iterable[BudgetGatedConv2d]:
 def set_gate_stochastic(module: nn.Module, enabled: bool) -> None:
     for gate in iter_budget_gates(module):
         gate.stochastic = bool(enabled)
+
+
+@dataclass(frozen=True)
+class BudgetGateLayerStats:
+    name: str
+    soft_retention: float
+    hard_retention: float
+    active_channels: int
+    total_channels: int
+
+
+@dataclass(frozen=True)
+class BudgetGateStats:
+    soft_retention: torch.Tensor
+    hard_retention: float
+    active_channels: int
+    total_channels: int
+    layers: tuple[BudgetGateLayerStats, ...]
+
+
+def collect_budget_stats(module: nn.Module, threshold: float = 0.5) -> BudgetGateStats:
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError(f"threshold must be in [0, 1], got {threshold}")
+
+    probabilities = []
+    layer_stats = []
+    active_channels = 0
+    total_channels = 0
+    for name, child in module.named_modules():
+        if not isinstance(child, BudgetGatedConv2d):
+            continue
+        probs = child.gate_prob()
+        hard = probs >= threshold
+        layer_total = int(probs.numel())
+        layer_active = int(hard.sum().detach().cpu())
+        probabilities.append(probs.reshape(-1))
+        total_channels += layer_total
+        active_channels += layer_active
+        layer_stats.append(
+            BudgetGateLayerStats(
+                name=name,
+                soft_retention=float(probs.mean().detach().cpu()),
+                hard_retention=layer_active / layer_total,
+                active_channels=layer_active,
+                total_channels=layer_total,
+            )
+        )
+
+    if not probabilities:
+        raise ValueError("Model contains no BudgetGatedConv2d layers.")
+
+    soft_retention = torch.cat(probabilities).mean()
+    return BudgetGateStats(
+        soft_retention=soft_retention,
+        hard_retention=active_channels / total_channels,
+        active_channels=active_channels,
+        total_channels=total_channels,
+        layers=tuple(layer_stats),
+    )
+
+
+def target_budget_loss(module: nn.Module, target_budget: float) -> torch.Tensor:
+    if not 0.0 < target_budget <= 1.0:
+        raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
+    retention = collect_budget_stats(module).soft_retention
+    target = retention.new_tensor(float(target_budget))
+    return torch.square(retention - target)
 
 
 def collect_budget_loss(module: nn.Module, reduction: str = "mean") -> torch.Tensor:

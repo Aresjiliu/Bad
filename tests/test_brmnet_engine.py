@@ -50,10 +50,19 @@ class BRMNetEngineTest(unittest.TestCase):
         optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
         before = next(model.parameters()).detach().clone()
 
-        metrics = train_one_epoch(model, loader, optimizer, torch.device("cpu"))
+        metrics = train_one_epoch(
+            model,
+            loader,
+            optimizer,
+            torch.device("cpu"),
+            loss_kwargs={"target_budget": 0.8, "lambda_budget": 1.0},
+        )
 
         self.assertIn("loss", metrics)
         self.assertIn("accuracy", metrics)
+        self.assertIn("soft_retention", metrics)
+        self.assertIn("hard_retention", metrics)
+        self.assertAlmostEqual(metrics["target_budget"], 0.8)
         self.assertGreater(metrics["samples"], 0)
         self.assertFalse(torch.equal(before, next(model.parameters()).detach()))
 

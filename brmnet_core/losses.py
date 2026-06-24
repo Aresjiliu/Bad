@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 
-from .budget_gates import collect_budget_loss
+from .budget_gates import collect_budget_loss, collect_budget_stats
 
 
 def modality_quality_loss(
@@ -22,14 +22,34 @@ def brmnet_loss(
     outputs: dict[str, torch.Tensor],
     labels: torch.Tensor,
     lambda_budget: float = 1e-3,
+    target_budget: float | None = None,
     lambda_quality: float = 0.0,
     quality_targets: tuple[torch.Tensor, torch.Tensor] | None = None,
 ) -> dict[str, torch.Tensor]:
     cls = F.cross_entropy(outputs["logits"], labels)
-    budget = collect_budget_loss(model).to(device=labels.device)
+    if target_budget is None:
+        budget = collect_budget_loss(model).to(device=labels.device)
+        soft_retention = torch.zeros((), dtype=cls.dtype, device=labels.device)
+        hard_retention = torch.zeros((), dtype=cls.dtype, device=labels.device)
+        target = torch.zeros((), dtype=cls.dtype, device=labels.device)
+    else:
+        if not 0.0 < target_budget <= 1.0:
+            raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
+        stats = collect_budget_stats(model)
+        soft_retention = stats.soft_retention.to(device=labels.device)
+        target = soft_retention.new_tensor(float(target_budget))
+        hard_retention = soft_retention.new_tensor(stats.hard_retention)
+        budget = torch.square(soft_retention - target)
     quality = torch.zeros((), dtype=cls.dtype, device=labels.device)
     if quality_targets is not None:
         quality = modality_quality_loss(outputs["q_main"], outputs["q_aux"], quality_targets[0], quality_targets[1])
     total = cls + lambda_budget * budget + lambda_quality * quality
-    return {"total": total, "cls": cls, "budget": budget, "quality": quality}
-
+    return {
+        "total": total,
+        "cls": cls,
+        "budget": budget,
+        "quality": quality,
+        "soft_retention": soft_retention,
+        "hard_retention": hard_retention,
+        "target_budget": target,
+    }

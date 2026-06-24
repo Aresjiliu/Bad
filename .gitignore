@@ -15,3 +15,5 @@ output/cache/
 output/smoke/
 output/gpu_smoke/
 output/gpu_experiments/
+output/budget_retention/
+output/budget_retention_unaligned/
