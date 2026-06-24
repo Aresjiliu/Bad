@@ -7,6 +7,7 @@ from .budget_gates import (
     update_gate_temperature,
 )
 from .data import HoustonDataBundle, build_houston_raw_loaders, load_houston_scene, write_houston_data_artifacts
+from .compact import CompactBRMNet
 from .engine import BRMNetBatch, apply_degradation, evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
 from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
@@ -15,11 +16,13 @@ from .hard_concrete import HardConcreteGate
 from .legacy import MODALITY_CHANNELS, build_houston_args, get_houston_loaders, infer_channels
 from .model import BRMNet
 from .reporting import write_metrics_csv, write_metrics_json
+from .export import export_compact_brmnet
 from .resources import BRMNetResourceStats, estimate_brmnet_resources, resource_budget_loss
 
 __all__ = [
     "BudgetGatedConv2d",
     "HoustonDataBundle",
+    "CompactBRMNet",
     "build_houston_raw_loaders",
     "load_houston_scene",
     "write_houston_data_artifacts",
@@ -50,4 +53,5 @@ __all__ = [
     "BRMNetResourceStats",
     "estimate_brmnet_resources",
     "resource_budget_loss",
+    "export_compact_brmnet",
 ]
