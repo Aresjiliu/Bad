@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--gate-mode",
         choices=("stochastic", "deterministic"),
-        default="stochastic",
+        default="deterministic",
     )
     parser.add_argument("--aux-noise-std", type=float, default=0.1)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -69,12 +69,14 @@ def build_run_paths(
     pair_modalities: str,
     protocol: str,
     split_seed: int,
-    gate_mode: str = "stochastic",
+    train_seed: int,
+    gate_mode: str = "deterministic",
 ) -> dict[str, Path]:
     pair_name = "-".join(normalize_pair_modalities(pair_modalities))
-    run_name = f"houston2013_{pair_name}_{protocol}_seed{split_seed}"
-    if gate_mode != "stochastic":
-        run_name += f"_gate{gate_mode}"
+    run_name = (
+        f"houston2013_{pair_name}_{protocol}_splitseed{split_seed}"
+        f"_trainseed{train_seed}_gate{gate_mode}"
+    )
     run_dir = Path(output_dir) / run_name
     return {
         "run_dir": run_dir,
@@ -142,6 +144,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         cli_args.pair_modalities,
         cli_args.split_protocol,
         cli_args.split_seed,
+        cli_args.seed,
         cli_args.gate_mode,
     )
     paths["run_dir"].mkdir(parents=True, exist_ok=True)

@@ -39,7 +39,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.split_protocol, "official")
         self.assertEqual(args.split_seed, 42)
         self.assertEqual(args.output_dir, "output/experiments")
-        self.assertEqual(args.gate_mode, "stochastic")
+        self.assertEqual(args.gate_mode, "deterministic")
         self.assertFalse(args.dataset_only)
 
     def test_build_run_paths_names_protocol_and_seed(self):
@@ -49,9 +49,13 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 pair_modalities="hsi+lidar",
                 protocol="random",
                 split_seed=42,
+                train_seed=0,
             )
 
-            self.assertEqual(paths["run_dir"].name, "houston2013_hsi-lidar_random_seed42")
+            self.assertEqual(
+                paths["run_dir"].name,
+                "houston2013_hsi-lidar_random_splitseed42_trainseed0_gatedeterministic",
+            )
             self.assertEqual(paths["metrics"].name, "metrics.csv")
             self.assertEqual(paths["checkpoint"].name, "checkpoint.pt")
             self.assertEqual(paths["config"].name, "config.json")
@@ -64,11 +68,12 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 pair_modalities="hsi+lidar",
                 protocol="random",
                 split_seed=42,
+                train_seed=1,
                 gate_mode="deterministic",
             )
             self.assertEqual(
                 deterministic["run_dir"].name,
-                "houston2013_hsi-lidar_random_seed42_gatedeterministic",
+                "houston2013_hsi-lidar_random_splitseed42_trainseed1_gatedeterministic",
             )
 
 
