@@ -66,6 +66,43 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertGreater(metrics["samples"], 0)
         self.assertFalse(torch.equal(before, next(model.parameters()).detach()))
 
+    def test_train_one_epoch_reports_hard_concrete_resource_metrics(self):
+        torch.manual_seed(0)
+        model = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+            initial_retention=0.8,
+        )
+        loader = DataLoader(
+            TensorDataset(
+                torch.randn(4, 4, 7, 7),
+                torch.randn(4, 1, 7, 7),
+                torch.tensor([0, 1, 2, 1]),
+            ),
+            batch_size=2,
+        )
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+        metrics = train_one_epoch(
+            model,
+            loader,
+            optimizer,
+            torch.device("cpu"),
+            loss_kwargs={
+                "target_budget": 0.8,
+                "lambda_budget": 1.0,
+                "patch_size": 7,
+                "budget_metric": "macs",
+            },
+        )
+
+        self.assertGreater(metrics["resource_ratio"], 0.0)
+        self.assertGreater(metrics["expected_params_ratio"], 0.0)
+        self.assertGreater(metrics["expected_macs_ratio"], 0.0)
+        self.assertAlmostEqual(metrics["target_budget"], 0.8)
+
     def test_evaluate_supports_degradation_modes(self):
         torch.manual_seed(0)
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3, init_score=0.5)

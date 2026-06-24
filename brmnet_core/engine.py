@@ -84,6 +84,9 @@ def _new_meter() -> dict[str, float]:
         "soft_retention": 0.0,
         "hard_retention": 0.0,
         "target_budget": 0.0,
+        "resource_ratio": 0.0,
+        "expected_params_ratio": 0.0,
+        "expected_macs_ratio": 0.0,
         "correct": 0.0,
         "samples": 0.0,
     }
@@ -91,7 +94,18 @@ def _new_meter() -> dict[str, float]:
 
 def _update_meter(meter: dict[str, float], losses: dict[str, torch.Tensor], logits: torch.Tensor, labels: torch.Tensor) -> None:
     batch_size = int(labels.numel())
-    for key in ("loss", "cls", "budget", "quality", "soft_retention", "hard_retention", "target_budget"):
+    for key in (
+        "loss",
+        "cls",
+        "budget",
+        "quality",
+        "soft_retention",
+        "hard_retention",
+        "target_budget",
+        "resource_ratio",
+        "expected_params_ratio",
+        "expected_macs_ratio",
+    ):
         loss_key = "total" if key == "loss" else key
         meter[key] += float(losses[loss_key].detach().cpu()) * batch_size
     meter["correct"] += float((logits.argmax(dim=1) == labels).sum().detach().cpu())
@@ -108,6 +122,9 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
         "soft_retention": meter["soft_retention"] / samples,
         "hard_retention": meter["hard_retention"] / samples,
         "target_budget": meter["target_budget"] / samples,
+        "resource_ratio": meter["resource_ratio"] / samples,
+        "expected_params_ratio": meter["expected_params_ratio"] / samples,
+        "expected_macs_ratio": meter["expected_macs_ratio"] / samples,
         "accuracy": meter["correct"] / samples,
         "samples": int(meter["samples"]),
     }

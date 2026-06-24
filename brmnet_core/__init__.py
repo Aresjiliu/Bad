@@ -15,6 +15,7 @@ from .hard_concrete import HardConcreteGate
 from .legacy import MODALITY_CHANNELS, build_houston_args, get_houston_loaders, infer_channels
 from .model import BRMNet
 from .reporting import write_metrics_csv, write_metrics_json
+from .resources import BRMNetResourceStats, estimate_brmnet_resources, resource_budget_loss
 
 __all__ = [
     "BudgetGatedConv2d",
@@ -46,4 +47,7 @@ __all__ = [
     "infer_channels",
     "write_metrics_csv",
     "write_metrics_json",
+    "BRMNetResourceStats",
+    "estimate_brmnet_resources",
+    "resource_budget_loss",
 ]
