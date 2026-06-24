@@ -12,6 +12,12 @@ from .houston import (
     HoustonScene,
     load_houston_scene,
 )
+from .patch_dataset import (
+    HoustonPatchDataset,
+    NormalizationStats,
+    NormalizedScene,
+    normalize_scene,
+)
 from .splits import (
     CoordinateSplit,
     build_official_split,
@@ -38,6 +44,10 @@ __all__ = [
     "build_random_split",
     "load_coordinate_split",
     "load_houston_scene",
+    "HoustonPatchDataset",
+    "NormalizationStats",
+    "NormalizedScene",
+    "normalize_scene",
     "parse_envi_roi_records",
     "save_coordinate_split",
 ]

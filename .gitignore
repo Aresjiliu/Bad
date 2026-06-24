@@ -1,4 +1,6 @@
 data/
+!brmnet_core/data/
+!brmnet_core/data/**
 output/depose/
 output/models/
 __pycache__/
