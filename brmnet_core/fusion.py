@@ -4,6 +4,7 @@ import torch
 from torch import nn
 
 from .budget_gates import BudgetGatedConv2d
+from .gated_blocks import HardConcreteConvBlock
 
 
 class ModalityQualityEstimator(nn.Module):
@@ -49,20 +50,50 @@ class ReliabilityGatedFusion(nn.Module):
 class BudgetGatedFusionHead(nn.Module):
     """Budget-gated fusion classifier head."""
 
-    def __init__(self, channels: int, num_classes: int, init_score: float = 0.85) -> None:
+    def __init__(
+        self,
+        channels: int,
+        num_classes: int,
+        init_score: float = 0.85,
+        gate_type: str = "legacy_sigmoid",
+        initial_retention: float = 0.9,
+        width: tuple[int, int] = (128, 64),
+    ) -> None:
         super().__init__()
-        self.net = nn.Sequential(
-            BudgetGatedConv2d(channels, 128, kernel_size=3, stride=1, padding=1, bias=False, init_score=init_score),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-            BudgetGatedConv2d(128, 64, kernel_size=3, stride=1, padding=1, bias=False, init_score=init_score),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            nn.Linear(64, num_classes),
-        )
+        h1, h2 = width
+        self.gate_type = gate_type
+        if gate_type == "legacy_sigmoid":
+            self.net = nn.Sequential(
+                BudgetGatedConv2d(channels, h1, kernel_size=3, stride=1, padding=1, bias=False, init_score=init_score),
+                nn.BatchNorm2d(h1),
+                nn.ReLU(inplace=True),
+                BudgetGatedConv2d(h1, h2, kernel_size=3, stride=1, padding=1, bias=False, init_score=init_score),
+                nn.BatchNorm2d(h2),
+                nn.ReLU(inplace=True),
+                nn.AdaptiveAvgPool2d(1),
+                nn.Flatten(),
+                nn.Linear(h2, num_classes),
+            )
+        elif gate_type == "hard_concrete":
+            self.net = nn.ModuleList(
+                [
+                    HardConcreteConvBlock(
+                        channels, h1, kernel_size=3, padding=1, initial_retention=initial_retention
+                    ),
+                    HardConcreteConvBlock(
+                        h1, h2, kernel_size=3, padding=1, initial_retention=initial_retention
+                    ),
+                ]
+            )
+            self.pool = nn.AdaptiveAvgPool2d(1)
+            self.flatten = nn.Flatten()
+            self.linear = nn.Linear(h2, num_classes)
+        else:
+            raise ValueError(f"Unsupported gate_type: {gate_type}")
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x)
-
+        if self.gate_type == "legacy_sigmoid":
+            return self.net(x)
+        for block in self.net:
+            x = block(x)
+        return self.linear(self.flatten(self.pool(x)))
