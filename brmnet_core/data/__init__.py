@@ -12,8 +12,17 @@ from .houston import (
     HoustonScene,
     load_houston_scene,
 )
+from .splits import (
+    CoordinateSplit,
+    build_official_split,
+    build_random_split,
+    load_coordinate_split,
+    parse_envi_roi_records,
+    save_coordinate_split,
+)
 
 __all__ = [
+    "CoordinateSplit",
     "HOUSTON_CLASS_NAMES",
     "HOUSTON_GT_FILENAME",
     "HOUSTON_GT_KEY",
@@ -25,5 +34,10 @@ __all__ = [
     "HOUSTON_ROI_KEY",
     "HOUSTON_TRAIN_COUNTS",
     "HoustonScene",
+    "build_official_split",
+    "build_random_split",
+    "load_coordinate_split",
     "load_houston_scene",
+    "parse_envi_roi_records",
+    "save_coordinate_split",
 ]
