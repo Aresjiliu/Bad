@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
+from typing import Mapping
 
 import numpy as np
 from scipy.io import loadmat
@@ -58,7 +60,7 @@ class HoustonScene:
     lidar: np.ndarray
     gt: np.ndarray
     roi_records: np.ndarray | None
-    source_paths: dict[str, Path]
+    source_paths: Mapping[str, Path]
 
 
 def _load_known_key(path: Path, key: str) -> np.ndarray:
@@ -71,6 +73,21 @@ def _load_known_key(path: Path, key: str) -> np.ndarray:
     return content[key]
 
 
+def _validate_real_finite(array: np.ndarray, name: str) -> None:
+    if not np.issubdtype(array.dtype, np.number) or not np.isrealobj(array):
+        raise ValueError(f"{name} must contain real numeric values")
+    if not np.isfinite(array).all():
+        raise ValueError(f"{name} must contain only finite values")
+
+
+def _validate_gt_values(gt: np.ndarray) -> None:
+    _validate_real_finite(gt, "GT")
+    if not np.equal(gt, np.floor(gt)).all():
+        raise ValueError("GT values must be integers")
+    if gt.size and ((gt < 0).any() or (gt > 15).any()):
+        raise ValueError("GT values must be within 0..15")
+
+
 def load_houston_scene(
     root: str | Path,
     require_roi: bool = True,
@@ -81,19 +98,23 @@ def load_houston_scene(
         "lidar": root_path / HOUSTON_LIDAR_FILENAME,
         "gt": root_path / HOUSTON_GT_FILENAME,
     }
+    missing = [
+        f"{modality.upper()}: {path}"
+        for modality, path in source_paths.items()
+        if not path.is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            "Missing required Houston files:\n" + "\n".join(missing)
+        )
 
-    hsi = np.asarray(
-        _load_known_key(source_paths["hsi"], HOUSTON_HSI_KEY),
-        dtype=np.float32,
-    )
-    lidar = np.asarray(
-        _load_known_key(source_paths["lidar"], HOUSTON_LIDAR_KEY),
-        dtype=np.float32,
-    )
-    gt = np.asarray(
-        _load_known_key(source_paths["gt"], HOUSTON_GT_KEY),
-        dtype=np.int64,
-    )
+    hsi = np.asarray(_load_known_key(source_paths["hsi"], HOUSTON_HSI_KEY))
+    lidar = np.asarray(_load_known_key(source_paths["lidar"], HOUSTON_LIDAR_KEY))
+    gt = np.asarray(_load_known_key(source_paths["gt"], HOUSTON_GT_KEY))
+
+    _validate_real_finite(hsi, "HSI")
+    _validate_real_finite(lidar, "LiDAR")
+    _validate_gt_values(gt)
 
     if hsi.ndim != 3:
         raise ValueError(f"HSI must be 3-D, got shape {hsi.shape}")
@@ -112,6 +133,10 @@ def load_houston_scene(
     if len(set(spatial_shapes.values())) != 1:
         raise ValueError(f"Houston spatial shapes must match: {spatial_shapes}")
 
+    hsi = hsi.astype(np.float32, copy=False)
+    lidar = lidar.astype(np.float32, copy=False)
+    gt = gt.astype(np.int64, copy=False)
+
     roi_records = None
     if require_roi:
         roi_path = root_path / HOUSTON_ROI_FILENAME
@@ -125,5 +150,5 @@ def load_houston_scene(
         lidar=lidar,
         gt=gt,
         roi_records=roi_records,
-        source_paths=source_paths,
+        source_paths=MappingProxyType(dict(source_paths)),
     )
