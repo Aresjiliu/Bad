@@ -4,6 +4,7 @@ import argparse
 import json
 import random
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -26,7 +27,7 @@ from brmnet_core.legacy import (
     infer_channels,
     normalize_pair_modalities,
 )
-from brmnet_core.reporting import write_metrics_csv
+from brmnet_core.reporting import write_metrics_csv, write_metrics_json
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -70,8 +71,10 @@ def build_run_paths(
     return {
         "run_dir": run_dir,
         "metrics": run_dir / "metrics.csv",
+        "metrics_json": run_dir / "metrics.json",
         "checkpoint": run_dir / "checkpoint.pt",
         "config": run_dir / "config.json",
+        "history": run_dir / "history.json",
     }
 
 
@@ -183,9 +186,21 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     optimizer = torch.optim.AdamW(model.parameters(), lr=cli_args.lr, weight_decay=cli_args.weight_decay)
     loss_kwargs = {"lambda_budget": cli_args.lambda_budget, "lambda_quality": cli_args.lambda_quality}
 
+    history = []
     for epoch in range(cli_args.epochs):
+        epoch_start = time.perf_counter()
         train_metrics = train_one_epoch(model, train_loader, optimizer, device, loss_kwargs=loss_kwargs)
-        print(json.dumps({"epoch": epoch + 1, "train": train_metrics}, ensure_ascii=False))
+        epoch_record = {
+            "epoch": epoch + 1,
+            "elapsed_seconds": time.perf_counter() - epoch_start,
+            "train": train_metrics,
+        }
+        history.append(epoch_record)
+        paths["history"].write_text(
+            json.dumps(history, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print(json.dumps(epoch_record, ensure_ascii=False))
 
     metrics_by_mode = evaluate_degradation_matrix(
         model,
@@ -196,6 +211,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     )
     metrics_path = Path(cli_args.metrics_csv) if cli_args.metrics_csv else paths["metrics"]
     write_metrics_csv(metrics_path, metrics_by_mode)
+    write_metrics_json(paths["metrics_json"], metrics_by_mode)
 
     checkpoint_path = (
         Path(cli_args.save_checkpoint)

@@ -54,6 +54,8 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
             self.assertEqual(paths["metrics"].name, "metrics.csv")
             self.assertEqual(paths["checkpoint"].name, "checkpoint.pt")
             self.assertEqual(paths["config"].name, "config.json")
+            self.assertEqual(paths["history"].name, "history.json")
+            self.assertEqual(paths["metrics_json"].name, "metrics.json")
             self.assertEqual(paths["run_dir"].parent, Path(tmp))
 
 

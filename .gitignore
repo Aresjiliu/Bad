@@ -13,3 +13,5 @@ __pycache__/
 output/tmp/
 output/cache/
 output/smoke/
+output/gpu_smoke/
+output/gpu_experiments/

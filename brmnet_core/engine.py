@@ -100,6 +100,34 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
     }
 
 
+def _classification_metrics(confusion: torch.Tensor) -> dict[str, object]:
+    confusion = confusion.to(dtype=torch.float64, device="cpu")
+    total = float(confusion.sum())
+    correct = float(confusion.diag().sum())
+    oa = correct / total if total else 0.0
+    support = confusion.sum(dim=1)
+    class_accuracy = torch.where(
+        support > 0,
+        confusion.diag() / support,
+        torch.zeros_like(support),
+    )
+    present = support > 0
+    aa = float(class_accuracy[present].mean()) if bool(present.any()) else 0.0
+    expected = (
+        float((confusion.sum(dim=1) * confusion.sum(dim=0)).sum()) / (total * total)
+        if total
+        else 0.0
+    )
+    kappa = (oa - expected) / (1.0 - expected) if expected < 1.0 else 0.0
+    return {
+        "oa": oa,
+        "aa": aa,
+        "kappa": kappa,
+        "class_accuracy": class_accuracy.tolist(),
+        "confusion_matrix": confusion.to(dtype=torch.int64).tolist(),
+    }
+
+
 def train_one_epoch(
     model: nn.Module,
     loader: Iterable[object],
@@ -140,14 +168,29 @@ def evaluate(
     model.eval()
     meter = _new_meter()
     loss_kwargs = loss_kwargs or {}
+    confusion = None
 
     for raw_batch in loader:
         batch = apply_degradation(unpack_batch(raw_batch, device), degradation=degradation, aux_noise_std=aux_noise_std)
         outputs = model(batch.main, batch.aux)
         losses = brmnet_loss(model, outputs, batch.labels, quality_targets=batch.quality_targets, **loss_kwargs)
         _update_meter(meter, losses, outputs["logits"], batch.labels)
+        predictions = outputs["logits"].argmax(dim=1)
+        num_classes = int(outputs["logits"].shape[1])
+        batch_confusion = torch.bincount(
+            batch.labels * num_classes + predictions,
+            minlength=num_classes * num_classes,
+        ).reshape(num_classes, num_classes)
+        if confusion is None:
+            confusion = batch_confusion.detach().cpu()
+        else:
+            confusion += batch_confusion.detach().cpu()
 
-    return _finalize_meter(meter)
+    metrics = _finalize_meter(meter)
+    if confusion is not None:
+        metrics.update(_classification_metrics(confusion))
+        metrics["accuracy"] = metrics["oa"]
+    return metrics
 
 
 def evaluate_degradation_matrix(

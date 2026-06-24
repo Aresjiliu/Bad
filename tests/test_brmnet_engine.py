@@ -84,6 +84,43 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertEqual(set(matrix), {"full", "main_only", "aux_only", "aux_noise"})
         self.assertTrue(all(metrics["samples"] == 4 for metrics in matrix.values()))
 
+    def test_evaluate_reports_remote_sensing_classification_metrics(self):
+        class FixedModel(nn.Module):
+            def forward(self, main, aux):
+                return {
+                    "logits": main[:, :, 0, 0],
+                    "quality": torch.ones(len(main), 2),
+                }
+
+        logits = torch.tensor(
+            [
+                [4.0, 1.0, 0.0],
+                [0.0, 3.0, 1.0],
+                [0.0, 2.0, 3.0],
+                [0.0, 2.0, 3.0],
+            ]
+        ).reshape(4, 3, 1, 1)
+        loader = DataLoader(
+            TensorDataset(
+                logits,
+                torch.zeros(4, 1, 1, 1),
+                torch.tensor([0, 1, 1, 2]),
+            ),
+            batch_size=2,
+        )
+
+        metrics = evaluate(FixedModel(), loader, torch.device("cpu"))
+
+        self.assertAlmostEqual(metrics["oa"], 0.75)
+        self.assertAlmostEqual(metrics["accuracy"], 0.75)
+        self.assertAlmostEqual(metrics["aa"], (1.0 + 0.5 + 1.0) / 3.0)
+        self.assertAlmostEqual(metrics["kappa"], 0.6363636363)
+        self.assertEqual(metrics["class_accuracy"], [1.0, 0.5, 1.0])
+        self.assertEqual(
+            metrics["confusion_matrix"],
+            [[1, 0, 0], [0, 1, 1], [0, 0, 1]],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,7 +5,7 @@ from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
 from .legacy import MODALITY_CHANNELS, build_houston_args, get_houston_loaders, infer_channels
 from .model import BRMNet
-from .reporting import write_metrics_csv
+from .reporting import write_metrics_csv, write_metrics_json
 
 __all__ = [
     "BudgetGatedConv2d",
@@ -31,4 +31,5 @@ __all__ = [
     "get_houston_loaders",
     "infer_channels",
     "write_metrics_csv",
+    "write_metrics_json",
 ]
