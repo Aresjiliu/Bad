@@ -3,11 +3,14 @@ import unittest
 from pathlib import Path
 
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
 from brmnet_core import BRMNet
 from scripts.run_brmnet_houston import (
     build_parser,
     build_run_paths,
+    compact_selection_score,
+    split_loader_for_validation,
     retention_to_gate_score,
     write_structured_pruning_artifacts,
 )
@@ -54,6 +57,9 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.compact_finetune_epochs, 10)
         self.assertEqual(args.target_budget, 1.0)
         self.assertEqual(args.lambda_budget, 1.0)
+        self.assertEqual(args.min_active_ratio, 0.0)
+        self.assertEqual(args.compact_val_fraction, 0.1)
+        self.assertEqual(args.compact_selection_metric, "oa")
         self.assertIsNone(args.gate_init_retention)
         self.assertFalse(args.dataset_only)
 
@@ -130,14 +136,55 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 threshold=0.5,
                 sample_main=torch.randn(2, 4, 7, 7),
                 sample_aux=torch.randn(2, 1, 7, 7),
+                min_active_ratio=0.25,
             )
 
             self.assertTrue((Path(tmp) / "resource_stats.json").is_file())
             self.assertTrue((Path(tmp) / "compact_model.pt").is_file())
             self.assertTrue((Path(tmp) / "compact_config.json").is_file())
+            for gate in stats["gates"]:
+                self.assertGreaterEqual(
+                    gate["active_channels"],
+                    int(gate["total_channels"] * 0.25),
+                )
             self.assertLess(stats["equivalence_max_abs_error"], 1e-5)
             self.assertLess(stats["equivalence_l2_relative_error"], 1e-5)
             self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
+
+    def test_split_loader_for_validation_uses_train_subset_and_deterministic_val_subset(self):
+        dataset = TensorDataset(
+            torch.arange(20).view(10, 2).float(),
+            torch.arange(10).view(10, 1).float(),
+            torch.arange(10),
+        )
+        loader = DataLoader(dataset, batch_size=4, shuffle=False, num_workers=0)
+
+        train_loader, val_loader = split_loader_for_validation(loader, val_fraction=0.3, seed=7)
+        _train_loader_again, val_loader_again = split_loader_for_validation(loader, val_fraction=0.3, seed=7)
+
+        self.assertEqual(len(train_loader.dataset), 7)
+        self.assertEqual(len(val_loader.dataset), 3)
+        self.assertEqual(val_loader.dataset.indices, val_loader_again.dataset.indices)
+        self.assertEqual(train_loader.batch_size, 4)
+        self.assertFalse(val_loader.drop_last)
+
+    def test_split_loader_for_validation_can_be_disabled(self):
+        dataset = TensorDataset(torch.arange(6), torch.arange(6), torch.arange(6))
+        loader = DataLoader(dataset, batch_size=2)
+
+        train_loader, val_loader = split_loader_for_validation(loader, val_fraction=0.0, seed=0)
+
+        self.assertIs(train_loader, loader)
+        self.assertIsNone(val_loader)
+
+    def test_compact_selection_score_supports_accuracy_metrics_and_loss(self):
+        metrics = {"oa": 0.7, "accuracy": 0.6, "loss": 1.2}
+
+        self.assertEqual(compact_selection_score(metrics, "oa"), 0.7)
+        self.assertEqual(compact_selection_score(metrics, "accuracy"), 0.6)
+        self.assertEqual(compact_selection_score(metrics, "loss"), -1.2)
+        with self.assertRaisesRegex(KeyError, "kappa"):
+            compact_selection_score(metrics, "kappa")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 import random
@@ -10,6 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, random_split
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -33,7 +35,7 @@ from brmnet_core.data import (
     load_houston_scene,
     write_houston_data_artifacts,
 )
-from brmnet_core.engine import evaluate_degradation_matrix, train_one_epoch, unpack_batch
+from brmnet_core.engine import evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
 from brmnet_core.legacy import (
     build_houston_args,
     get_houston_loaders,
@@ -61,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lambda-budget", type=float, default=1.0)
     parser.add_argument("--target-budget", type=float, choices=(0.65, 0.8, 0.9, 1.0), default=1.0)
     parser.add_argument(
+        "--min-active-ratio",
+        type=float,
+        default=0.0,
+        help="Minimum active channel ratio per hard-concrete gate during automatic export threshold search.",
+    )
+    parser.add_argument(
         "--gate-init-retention",
         type=float,
         default=None,
@@ -80,6 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Hard export threshold. Defaults to an automatic target-resource projection.",
     )
     parser.add_argument("--compact-finetune-epochs", type=int, default=10)
+    parser.add_argument("--compact-val-fraction", type=float, default=0.1)
+    parser.add_argument(
+        "--compact-selection-metric",
+        choices=("oa", "accuracy", "loss"),
+        default="oa",
+    )
     parser.add_argument(
         "--gate-mode",
         choices=("stochastic", "deterministic"),
@@ -152,6 +166,56 @@ def seed_everything(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def split_loader_for_validation(
+    loader: DataLoader,
+    val_fraction: float,
+    seed: int,
+) -> tuple[DataLoader, DataLoader | None]:
+    if not 0.0 <= val_fraction < 1.0:
+        raise ValueError(f"val_fraction must be in [0, 1), got {val_fraction}")
+    if val_fraction == 0.0:
+        return loader, None
+
+    dataset_size = len(loader.dataset)
+    if dataset_size < 2:
+        return loader, None
+    val_size = max(1, int(round(dataset_size * val_fraction)))
+    val_size = min(val_size, dataset_size - 1)
+    train_size = dataset_size - val_size
+    generator = torch.Generator().manual_seed(int(seed))
+    train_subset, val_subset = random_split(
+        loader.dataset,
+        [train_size, val_size],
+        generator=generator,
+    )
+    train_loader = DataLoader(
+        train_subset,
+        batch_size=loader.batch_size,
+        shuffle=True,
+        num_workers=loader.num_workers,
+        collate_fn=loader.collate_fn,
+        pin_memory=loader.pin_memory,
+        drop_last=loader.drop_last,
+    )
+    val_loader = DataLoader(
+        val_subset,
+        batch_size=loader.batch_size,
+        shuffle=False,
+        num_workers=loader.num_workers,
+        collate_fn=loader.collate_fn,
+        pin_memory=loader.pin_memory,
+        drop_last=False,
+    )
+    return train_loader, val_loader
+
+
+def compact_selection_score(metrics: dict[str, float], metric: str) -> float:
+    if metric not in metrics:
+        raise KeyError(f"Missing compact selection metric: {metric}")
+    value = float(metrics[metric])
+    return -value if metric == "loss" else value
+
+
 def load_checkpoint_if_present(model: torch.nn.Module, checkpoint: str, device: torch.device) -> None:
     if not checkpoint:
         return
@@ -176,6 +240,7 @@ def write_structured_pruning_artifacts(
     sample_aux: torch.Tensor,
     target_budget: float | None = None,
     budget_metric: str = "macs",
+    min_active_ratio: float = 0.0,
 ) -> tuple[torch.nn.Module, dict[str, object]]:
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -189,6 +254,7 @@ def write_structured_pruning_artifacts(
             target_budget=target_budget,
             patch_size=patch_size,
             metric=budget_metric,
+            min_active_ratio=min_active_ratio,
         )
     else:
         for gate in iter_hard_concrete_gates(model):
@@ -228,6 +294,7 @@ def write_structured_pruning_artifacts(
 
     stats: dict[str, object] = {
         "threshold": float(threshold),
+        "min_active_ratio": float(min_active_ratio),
         "baseline": {
             "params": int(baseline.params),
             "macs": int(baseline.macs),
@@ -461,18 +528,28 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             sample_aux=sample_batch.aux,
             target_budget=cli_args.target_budget,
             budget_metric=cli_args.budget_metric,
+            min_active_ratio=cli_args.min_active_ratio,
         )
         compact_optimizer = torch.optim.AdamW(
             compact_model.parameters(),
             lr=cli_args.lr,
             weight_decay=cli_args.weight_decay,
         )
+        compact_train_loader, compact_val_loader = split_loader_for_validation(
+            train_loader,
+            val_fraction=cli_args.compact_val_fraction,
+            seed=cli_args.seed,
+        )
         compact_history = []
+        best_compact_state = copy.deepcopy(compact_model.state_dict())
+        best_compact_score = float("-inf")
+        best_compact_epoch = 0
+        best_compact_validation = None
         for compact_epoch in range(cli_args.compact_finetune_epochs):
             epoch_start = time.perf_counter()
             compact_train_metrics = train_one_epoch(
                 compact_model,
-                train_loader,
+                compact_train_loader,
                 compact_optimizer,
                 device,
                 loss_kwargs={
@@ -480,10 +557,33 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                     "lambda_quality": cli_args.lambda_quality,
                 },
             )
+            compact_validation_metrics = None
+            compact_score = None
+            if compact_val_loader is not None:
+                compact_validation_metrics = evaluate(
+                    compact_model,
+                    compact_val_loader,
+                    device,
+                    loss_kwargs={
+                        "lambda_budget": 0.0,
+                        "lambda_quality": cli_args.lambda_quality,
+                    },
+                )
+                compact_score = compact_selection_score(
+                    compact_validation_metrics,
+                    cli_args.compact_selection_metric,
+                )
+                if compact_score > best_compact_score:
+                    best_compact_score = compact_score
+                    best_compact_epoch = compact_epoch + 1
+                    best_compact_validation = compact_validation_metrics
+                    best_compact_state = copy.deepcopy(compact_model.state_dict())
             compact_record = {
                 "epoch": compact_epoch + 1,
                 "elapsed_seconds": time.perf_counter() - epoch_start,
                 "train": compact_train_metrics,
+                "validation": compact_validation_metrics,
+                "selection_score": compact_score,
             }
             compact_history.append(compact_record)
             paths["compact_history"].write_text(
@@ -491,11 +591,17 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 encoding="utf-8",
             )
             print(json.dumps({"compact_finetune": compact_record}, ensure_ascii=False))
+        if compact_val_loader is not None:
+            compact_model.load_state_dict(best_compact_state)
         torch.save(
             {
                 "model": compact_model.state_dict(),
                 "config": resource_stats["structure"],
                 "finetune_epochs": cli_args.compact_finetune_epochs,
+                "best_epoch": best_compact_epoch,
+                "selection_metric": cli_args.compact_selection_metric,
+                "selection_score": best_compact_score if compact_val_loader is not None else None,
+                "validation": best_compact_validation,
             },
             paths["compact_model"],
         )

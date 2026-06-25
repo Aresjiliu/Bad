@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import torch
 
@@ -284,11 +285,14 @@ def find_resource_budget_threshold(
     target_budget: float,
     patch_size: int,
     metric: str = "macs",
+    min_active_ratio: float = 0.0,
 ) -> tuple[float, BRMNetResourceStats]:
     if not 0.0 < target_budget <= 1.0:
         raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
     if metric not in {"params", "macs"}:
         raise ValueError(f"Unsupported budget metric: {metric}")
+    if not 0.0 <= min_active_ratio <= 1.0:
+        raise ValueError(f"min_active_ratio must be in [0, 1], got {min_active_ratio}")
     gates = list(iter_hard_concrete_gates(model))
     if not gates:
         raise ValueError("Resource threshold search requires HardConcreteGate modules.")
@@ -311,6 +315,17 @@ def find_resource_budget_threshold(
     best_stats = None
     best_error = float("inf")
     for threshold in candidates:
+        if min_active_ratio:
+            valid = True
+            for gate in gates:
+                probabilities = gate.expected_active_probability().detach()
+                active = int((probabilities >= threshold).sum().detach().cpu())
+                minimum = max(1, math.ceil(gate.channels * min_active_ratio))
+                if active < minimum:
+                    valid = False
+                    break
+            if not valid:
+                continue
         for gate in gates:
             gate.hard_threshold = threshold
         stats = estimate_brmnet_resources(model, patch_size=patch_size, mode="hard")

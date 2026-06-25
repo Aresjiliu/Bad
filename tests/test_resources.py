@@ -179,6 +179,41 @@ class BRMNetResourceTest(unittest.TestCase):
         self.assertLessEqual(threshold, 1.0)
         self.assertLess(abs(float(stats.macs_ratio) - 0.65), 0.03)
 
+    def test_threshold_search_respects_minimum_active_ratio_per_gate(self):
+        with torch.no_grad():
+            for gate in (
+                module
+                for module in self.model.modules()
+                if hasattr(module, "log_alpha") and hasattr(module, "hard_mask")
+            ):
+                gate.log_alpha.copy_(torch.linspace(-5.0, 5.0, gate.channels))
+
+        _threshold, _stats = find_resource_budget_threshold(
+            self.model,
+            target_budget=0.2,
+            patch_size=7,
+            metric="macs",
+            min_active_ratio=0.25,
+        )
+
+        for gate in (
+            module
+            for module in self.model.modules()
+            if hasattr(module, "log_alpha") and hasattr(module, "hard_mask")
+        ):
+            self.assertGreaterEqual(int(gate.hard_mask().sum()), int(gate.channels * 0.25))
+
+    def test_threshold_search_rejects_invalid_minimum_active_ratio(self):
+        for value in (-0.1, 1.1):
+            with self.assertRaisesRegex(ValueError, "min_active_ratio"):
+                find_resource_budget_threshold(
+                    self.model,
+                    target_budget=0.65,
+                    patch_size=7,
+                    metric="macs",
+                    min_active_ratio=value,
+                )
+
     def test_rejects_legacy_models_and_invalid_modes(self):
         legacy = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
 
