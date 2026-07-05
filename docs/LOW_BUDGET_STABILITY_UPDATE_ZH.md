@@ -92,3 +92,49 @@ D:\software\anaconda3\envs\hslinets\python.exe scripts\run_brmnet_houston.py ^
 
 如果 65% 仍然明显低于 90%，下一步再做逐层敏感度分配，而不是盲目提高模型复杂度。
 
+## 5. Seed 0 短实验结果
+
+已在 Houston2013 official split、train seed 0、20 epoch 主模型训练、10 epoch compact 微调下复跑 65%、80% 和 90%。
+
+| 目标 MACs | 实际 MACs | 实际 Params | Source OA | Compact OA | AA | Kappa | 最佳 compact epoch | 结构宽度 |
+|---:|---:|---:|---:|---:|---:|---:|---|
+| 65% | 64.89% | 66.32% | 86.00% | 85.89% | 88.59% | 84.77% | 1 | main 24/45/101, aux 21/43/101, head 111/64 |
+| 80% | 80.02% | 80.57% | 85.89% | 87.28% | 89.37% | 86.23% | 3 | main 29/57/112, aux 23/47/112, head 121/64 |
+| 90% | 90.24% | 92.20% | 84.99% | 86.96% | 89.13% | 85.90% | 5 | main 29/61/124, aux 27/55/124, head 127/64 |
+
+相对上一轮结果：
+
+- 65% compact OA 从 `84.73%` 提升到 `85.89%`，提升 `+1.16 pp`；
+- 80% compact OA 从 `84.90%` 提升到 `87.28%`，提升 `+2.38 pp`；
+- 65% 与 80% 的差距为 `1.39 pp`，说明最佳 checkpoint 与最小通道约束对低预算稳定性有实际收益；
+- 65% 与上一轮 90% compact OA `87.13%` 的差距约 `1.24 pp`，已经进入原先希望的 2 pp 范围。
+- 90% 同配置 compact OA 为 `86.96%`，低于 80% 的 `87.28%`，但 source OA 本身也只有 `84.99%`，说明这一轮 90% 的主要问题是单 seed 训练波动，而不是资源投影或 compact 导出失效。
+
+当前判断：
+
+1. 可以将“低预算稳定性补强”写入汇报材料，作为一次明确的实验推进；
+2. 资源命中、Params/MACs 和结构宽度已经单调，可以支撑“可控预算导出”的工程结论；
+3. OA 非严格单调，不能把当前 seed-0 三档直接作为最终主实验，需要做训练稳定性补强；
+4. 下一步优先实现 class-balanced compact validation split，并加入 source best checkpoint；随后复跑 80%/90% 或 seed 1 验证波动来源。
+
+## 6. Seed 1 复核
+
+为判断 90% 结果是否只是 seed 0 偶然波动，补跑 Houston2013 official split、train seed 1、90% 预算。
+
+| 目标 MACs | Train seed | 实际 MACs | 实际 Params | Source OA | Compact OA | AA | Kappa | 最佳 compact epoch | 结构宽度 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 90% | 1 | 89.94% | 92.26% | 85.16% | 86.40% | 88.50% | 85.31% | 1 | main 29/60/126, aux 24/59/126, head 123/64 |
+
+复核结论：
+
+- 90% seed 1 的 compact OA 为 `86.40%`，仍低于 seed 0 的 80% compact OA `87.28%`；
+- 90% 两个 seed 的 source OA 分别为 `84.99%` 和 `85.16%`，说明问题主要出现在源模型训练阶段，而不是 compact 导出阶段；
+- compact 微调的验证集 OA 很容易达到 1.0，说明当前随机 10% train validation 太小、太容易饱和，不适合继续作为唯一模型选择依据；
+- 下一步不应继续堆更多预算档，而应先补两个稳定性机制：主模型 best checkpoint、class-balanced validation split。
+
+推荐下一步实验顺序：
+
+1. 实现主模型训练期间的 validation split 与 best checkpoint；
+2. 将 compact validation split 改为 class-balanced，避免 283 个样本的小验证集过易饱和；
+3. 用 seed 0 复跑 80% 和 90%，检查源模型 OA 是否恢复合理顺序；
+4. 若 80%/90% 稳定后，再启动 65/80/90 三随机种子主实验。

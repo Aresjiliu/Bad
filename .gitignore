@@ -22,3 +22,4 @@ output/structured_probe/
 output/structured_projected/
 output/structured_candidate/
 output/structured_pruning/
+output/structured_pruning_stability/
