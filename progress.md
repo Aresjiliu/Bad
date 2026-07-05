@@ -7,3 +7,5 @@
 - 已读取当前实验报告、架构审查、改进方向调研、论文架构升级文档、投稿工程文档。
 - 已核查核心代码：当前已有 MQE/RGF、Hard-Concrete、compact export，但缺少模态可用性训练闭环。
 - 已补充外部调研：missing modality survey、RingMoE、MAPEX、MaMOL、高光谱压缩 benchmark、星上推理综述、会议截稿信息。
+- 已输出决策文档 `docs/NEXT_DIRECTION_DECISION_ZH.md`。
+- 本地提交已完成；推送 GitHub 两次失败，错误分别为无法连接 443 端口和连接被重置。
