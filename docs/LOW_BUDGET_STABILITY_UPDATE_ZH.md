@@ -138,3 +138,36 @@ D:\software\anaconda3\envs\hslinets\python.exe scripts\run_brmnet_houston.py ^
 2. 将 compact validation split 改为 class-balanced，避免 283 个样本的小验证集过易饱和；
 3. 用 seed 0 复跑 80% 和 90%，检查源模型 OA 是否恢复合理顺序；
 4. 若 80%/90% 稳定后，再启动 65/80/90 三随机种子主实验。
+
+## 7. Source best checkpoint 与 class-balanced validation 更新
+
+日期：2026-07-05
+
+本轮按上一节建议补齐了两个稳定性机制：
+
+1. 主模型训练阶段新增 `--val-fraction`、`--val-split-strategy`、`--selection-metric`，默认从训练集按类别均衡切出 10% validation，并保存 validation OA 最优的 source checkpoint。
+2. Compact finetune 阶段新增 `--compact-val-split-strategy`，默认同样使用 class-balanced validation split，避免随机小验证集漏类。
+3. `checkpoint.pt` 现在记录 `best_epoch`、`selection_metric`、`selection_score` 和 validation 指标，后续汇报可以明确说明没有用 test set 选择模型。
+4. 本轮实验使用 Houston2013 official split、train seed 0、20 epoch source training、10 epoch compact finetune、`--min-active-ratio 0.1`。
+
+复跑结果如下：
+
+| 目标 MACs | Best source epoch | Source val OA | Source OA | Compact OA | Compact AA | Compact Kappa | 实际 MACs | 实际 Params | 结构宽度 |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 65% | 9 | 100.00% | 87.22% | 87.60% | 89.40% | 86.59% | 65.09% | 64.66% | main 26/50/105, aux 22/41/105, head 96/64 |
+| 80% | 9 | 100.00% | 86.99% | 86.90% | 88.73% | 85.82% | 80.12% | 79.53% | main 29/60/114, aux 27/48/114, head 111/64 |
+| 90% | 9 | 100.00% | 86.67% | 86.23% | 88.41% | 85.12% | 90.08% | 90.74% | main 29/61/125, aux 31/58/125, head 118/64 |
+
+关键判断：
+
+1. 资源控制仍然成立：65/80/90 三档实际 MACs 分别为 65.09%、80.12%、90.08%，结构宽度也随预算单调增加。
+2. validation OA 在第 9 轮达到 100%，说明 10% train validation 仍偏小，适合作为“避免 test-set selection”的规范化机制，但不适合作为强泛化判断。
+3. 单 seed 下 OA 仍非单调：65% compact OA 反而最高，说明当前 BRM-Net 小主干受训练随机性、类别局部混淆和 budget 正则共同影响，不能把单 seed 的预算排序作为论文最终结论。
+4. 与上一轮随机 compact validation 相比，新流程在方法论上更规范，但 80%/90% compact OA 略低；这不是失败，而是说明“验证集选择机制”不是当前精度瓶颈，下一步应转向多 seed 统计和更有工作量的主干迁移。
+
+下一步建议：
+
+1. 保留当前 BRM-Net 作为机制验证模型，论文中用它证明 hard-concrete 预算控制、紧凑导出、模态退化评估闭环。
+2. 立即跑 65/80/90 的 seed 1、seed 2，得到均值和标准差，避免导师追问“为什么 65% 比 90% 高”时没有统计依据。
+3. 若多 seed 仍显示 65% 不低于 90%，论文表述应改为“目标预算可控且精度在轻量化区间内保持稳定”，不要声称预算越高精度越高。
+4. 下一阶段把该机制迁移到服务器上的较大双分支主干，当前小 BRM-Net 继续承担可复现实验和消融表，服务器主干承担硕士论文工作量与主结果。

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset, TensorDataset, random_split
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -58,6 +58,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--patch-size", type=int, default=7)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--val-fraction", type=float, default=0.1)
+    parser.add_argument(
+        "--val-split-strategy",
+        choices=("class_balanced", "random"),
+        default="class_balanced",
+    )
+    parser.add_argument(
+        "--selection-metric",
+        choices=("oa", "accuracy", "loss"),
+        default="oa",
+    )
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--lambda-budget", type=float, default=1.0)
@@ -89,6 +100,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--compact-finetune-epochs", type=int, default=10)
     parser.add_argument("--compact-val-fraction", type=float, default=0.1)
+    parser.add_argument(
+        "--compact-val-split-strategy",
+        choices=("class_balanced", "random"),
+        default="class_balanced",
+    )
     parser.add_argument(
         "--compact-selection-metric",
         choices=("oa", "accuracy", "loss"),
@@ -170,24 +186,30 @@ def split_loader_for_validation(
     loader: DataLoader,
     val_fraction: float,
     seed: int,
+    strategy: str = "random",
 ) -> tuple[DataLoader, DataLoader | None]:
     if not 0.0 <= val_fraction < 1.0:
         raise ValueError(f"val_fraction must be in [0, 1), got {val_fraction}")
+    if strategy not in {"random", "class_balanced"}:
+        raise ValueError(f"Unsupported validation split strategy: {strategy}")
     if val_fraction == 0.0:
         return loader, None
 
     dataset_size = len(loader.dataset)
     if dataset_size < 2:
         return loader, None
-    val_size = max(1, int(round(dataset_size * val_fraction)))
-    val_size = min(val_size, dataset_size - 1)
-    train_size = dataset_size - val_size
     generator = torch.Generator().manual_seed(int(seed))
-    train_subset, val_subset = random_split(
-        loader.dataset,
-        [train_size, val_size],
-        generator=generator,
-    )
+    if strategy == "class_balanced":
+        train_subset, val_subset = _class_balanced_split(loader.dataset, val_fraction, generator)
+    else:
+        val_size = max(1, int(round(dataset_size * val_fraction)))
+        val_size = min(val_size, dataset_size - 1)
+        train_size = dataset_size - val_size
+        train_subset, val_subset = random_split(
+            loader.dataset,
+            [train_size, val_size],
+            generator=generator,
+        )
     train_loader = DataLoader(
         train_subset,
         batch_size=loader.batch_size,
@@ -207,6 +229,59 @@ def split_loader_for_validation(
         drop_last=False,
     )
     return train_loader, val_loader
+
+
+def _dataset_labels(dataset) -> np.ndarray | None:
+    if isinstance(dataset, Subset):
+        parent_labels = _dataset_labels(dataset.dataset)
+        if parent_labels is None:
+            return None
+        return parent_labels[np.asarray(dataset.indices, dtype=np.int64)]
+    if isinstance(dataset, TensorDataset) and len(dataset.tensors) >= 3:
+        return dataset.tensors[2].detach().cpu().numpy()
+    if hasattr(dataset, "labels"):
+        return np.asarray(dataset.labels)
+    return None
+
+
+def _class_balanced_split(dataset, val_fraction: float, generator: torch.Generator) -> tuple[Subset, Subset]:
+    labels = _dataset_labels(dataset)
+    if labels is None:
+        dataset_size = len(dataset)
+        val_size = max(1, int(round(dataset_size * val_fraction)))
+        val_size = min(val_size, dataset_size - 1)
+        train_size = dataset_size - val_size
+        train_subset, val_subset = random_split(
+            dataset,
+            [train_size, val_size],
+            generator=generator,
+        )
+        return train_subset, val_subset
+
+    labels = np.asarray(labels).reshape(-1)
+    if len(labels) != len(dataset):
+        raise ValueError("dataset labels must have the same length as the dataset")
+
+    val_indices: list[int] = []
+    for class_id in sorted(np.unique(labels).tolist()):
+        class_indices = np.flatnonzero(labels == class_id)
+        if len(class_indices) < 2:
+            continue
+        class_tensor = torch.as_tensor(class_indices, dtype=torch.long)
+        permutation = torch.randperm(len(class_tensor), generator=generator)
+        class_val_size = max(1, int(round(len(class_indices) * val_fraction)))
+        class_val_size = min(class_val_size, len(class_indices) - 1)
+        val_indices.extend(class_tensor[permutation[:class_val_size]].tolist())
+
+    if not val_indices:
+        dataset_size = len(dataset)
+        val_size = max(1, int(round(dataset_size * val_fraction)))
+        val_size = min(val_size, dataset_size - 1)
+        val_indices = torch.randperm(dataset_size, generator=generator)[:val_size].tolist()
+
+    val_set = set(int(index) for index in val_indices)
+    train_indices = [index for index in range(len(dataset)) if index not in val_set]
+    return Subset(dataset, train_indices), Subset(dataset, sorted(val_set))
 
 
 def compact_selection_score(metrics: dict[str, float], metric: str) -> float:
@@ -468,6 +543,20 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         print(json.dumps(result, ensure_ascii=False))
         return result
 
+    train_loader, val_loader = split_loader_for_validation(
+        train_loader,
+        val_fraction=cli_args.val_fraction,
+        seed=cli_args.seed,
+        strategy=cli_args.val_split_strategy,
+    )
+    data_metadata = {
+        **data_metadata,
+        "effective_train_samples": len(train_loader.dataset),
+        "validation_samples": len(val_loader.dataset) if val_loader is not None else 0,
+        "validation_fraction": cli_args.val_fraction,
+        "validation_split_strategy": cli_args.val_split_strategy,
+    }
+
     if cli_args.gate_type == "legacy_sigmoid":
         set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
     else:
@@ -490,13 +579,34 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         )
 
     history = []
+    best_source_state = copy.deepcopy(model.state_dict())
+    best_source_score = float("-inf")
+    best_source_epoch = 0
+    best_source_validation = None
     for epoch in range(cli_args.epochs):
         epoch_start = time.perf_counter()
         train_metrics = train_one_epoch(model, train_loader, optimizer, device, loss_kwargs=loss_kwargs)
+        validation_metrics = None
+        selection_score = None
+        if val_loader is not None:
+            validation_metrics = evaluate(
+                model,
+                val_loader,
+                device,
+                loss_kwargs=loss_kwargs,
+            )
+            selection_score = compact_selection_score(validation_metrics, cli_args.selection_metric)
+            if selection_score > best_source_score:
+                best_source_score = selection_score
+                best_source_epoch = epoch + 1
+                best_source_validation = validation_metrics
+                best_source_state = copy.deepcopy(model.state_dict())
         epoch_record = {
             "epoch": epoch + 1,
             "elapsed_seconds": time.perf_counter() - epoch_start,
             "train": train_metrics,
+            "validation": validation_metrics,
+            "selection_score": selection_score,
         }
         history.append(epoch_record)
         paths["history"].write_text(
@@ -504,6 +614,8 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             encoding="utf-8",
         )
         print(json.dumps(epoch_record, ensure_ascii=False))
+    if val_loader is not None:
+        model.load_state_dict(best_source_state)
 
     metrics_by_mode = evaluate_degradation_matrix(
         model,
@@ -539,6 +651,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             train_loader,
             val_fraction=cli_args.compact_val_fraction,
             seed=cli_args.seed,
+            strategy=cli_args.compact_val_split_strategy,
         )
         compact_history = []
         best_compact_state = copy.deepcopy(compact_model.state_dict())
@@ -656,6 +769,10 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 "model": model.state_dict(),
                 "args": config,
                 "data_metadata": data_metadata,
+                "best_epoch": best_source_epoch,
+                "selection_metric": cli_args.selection_metric,
+                "selection_score": best_source_score if val_loader is not None else None,
+                "validation": best_source_validation,
             },
             checkpoint_path,
         )
@@ -665,6 +782,9 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             {
                 "metrics_csv": str(metrics_path),
                 "checkpoint": str(checkpoint_path),
+                "best_epoch": best_source_epoch,
+                "selection_metric": cli_args.selection_metric,
+                "selection_score": best_source_score if val_loader is not None else None,
                 "metrics": metrics_by_mode,
                 "compact_metrics": compact_metrics_by_mode,
                 "resource_stats": resource_stats,

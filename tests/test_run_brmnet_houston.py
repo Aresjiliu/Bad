@@ -58,7 +58,11 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.target_budget, 1.0)
         self.assertEqual(args.lambda_budget, 1.0)
         self.assertEqual(args.min_active_ratio, 0.0)
+        self.assertEqual(args.val_fraction, 0.1)
+        self.assertEqual(args.val_split_strategy, "class_balanced")
+        self.assertEqual(args.selection_metric, "oa")
         self.assertEqual(args.compact_val_fraction, 0.1)
+        self.assertEqual(args.compact_val_split_strategy, "class_balanced")
         self.assertEqual(args.compact_selection_metric, "oa")
         self.assertIsNone(args.gate_init_retention)
         self.assertFalse(args.dataset_only)
@@ -167,6 +171,28 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(val_loader.dataset.indices, val_loader_again.dataset.indices)
         self.assertEqual(train_loader.batch_size, 4)
         self.assertFalse(val_loader.drop_last)
+
+    def test_split_loader_for_validation_can_balance_classes(self):
+        labels = torch.tensor([0] * 8 + [1] * 4 + [2] * 2)
+        dataset = TensorDataset(
+            torch.arange(len(labels)).view(-1, 1).float(),
+            torch.arange(len(labels)).view(-1, 1).float(),
+            labels,
+        )
+        loader = DataLoader(dataset, batch_size=4, shuffle=False, num_workers=0)
+
+        train_loader, val_loader = split_loader_for_validation(
+            loader,
+            val_fraction=0.25,
+            seed=3,
+            strategy="class_balanced",
+        )
+
+        val_labels = labels[val_loader.dataset.indices]
+        train_labels = labels[train_loader.dataset.indices]
+        self.assertEqual(set(val_labels.tolist()), {0, 1, 2})
+        self.assertEqual(len(val_loader.dataset), 4)
+        self.assertTrue(all(label in train_labels.tolist() for label in (0, 1, 2)))
 
     def test_split_loader_for_validation_can_be_disabled(self):
         dataset = TensorDataset(torch.arange(6), torch.arange(6), torch.arange(6))
