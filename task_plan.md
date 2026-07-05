@@ -19,3 +19,10 @@
 ## 本轮结论
 
 推荐路线为：以当前 `brmnet_core` 小模型作为机制验证和消融基础，同时启动服务器/旧代码中的 ResNet 类双分支主干迁移。短期先补多 seed 统计，随后实现 availability mask 与 modality dropout，使 MQE/RGF 从“输出可视化模块”变成真实的模态缺失鲁棒训练机制。
+
+## 2026-07-06 论文写作推进
+
+1. [completed] 检查 `D:\Academic\paper_submission\brmnet_pricai2026` Overleaf/LaTeX 工程。
+2. [completed] 将当前已验证 Houston2013-HS-LiDAR 结构化剪枝实验整理为独立 LaTeX 表格。
+3. [completed] 调整摘要、引言、方法、实验、讨论和结论，使当前稿件区分“已验证 prototype 结果”和“待核验三数据集主结果”。
+4. [completed] 生成 Overleaf 上传包。

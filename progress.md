@@ -9,3 +9,12 @@
 - 已补充外部调研：missing modality survey、RingMoE、MAPEX、MaMOL、高光谱压缩 benchmark、星上推理综述、会议截稿信息。
 - 已输出决策文档 `docs/NEXT_DIRECTION_DECISION_ZH.md`。
 - 本地提交已完成；推送 GitHub 两次失败，错误分别为无法连接 443 端口和连接被重置。
+
+## 2026-07-06
+
+- 检查投稿工程 `D:\Academic\paper_submission\brmnet_pricai2026`。
+- 新增 Overleaf 初稿表格 `tables/prototype_hslidar_structured.tex`。
+- 更新 `sections/00_abstract.tex`、`01_intro.tex`、`02_related_work.tex`、`03_method.tex`、`04_experiments.tex`、`05_discussion.tex`、`06_conclusion.tex`。
+- 更新 `notes/experiments.md`，新增 `notes/overleaf_status.md`。
+- 生成 Overleaf 上传包 `D:\Academic\paper_submission\brmnet_pricai2026_overleaf_initial_20260706.zip`。
+- 匿名检查通过；TODO 统计为 6；本机未检测到 `latexmk` 或 `pdflatex`，暂未本地编译 PDF。
