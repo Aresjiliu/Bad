@@ -57,6 +57,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.compact_finetune_epochs, 10)
         self.assertEqual(args.target_budget, 1.0)
         self.assertEqual(args.lambda_budget, 1.0)
+        self.assertEqual(args.modality_dropout_prob, 0.0)
         self.assertEqual(args.min_active_ratio, 0.0)
         self.assertEqual(args.val_fraction, 0.1)
         self.assertEqual(args.val_split_strategy, "class_balanced")
@@ -66,6 +67,11 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.compact_selection_metric, "oa")
         self.assertIsNone(args.gate_init_retention)
         self.assertFalse(args.dataset_only)
+
+    def test_modality_dropout_argument(self):
+        args = build_parser().parse_args(["--modality-dropout-prob", "0.25"])
+
+        self.assertEqual(args.modality_dropout_prob, 0.25)
 
     def test_retention_to_gate_score_round_trips_probability(self):
         import math

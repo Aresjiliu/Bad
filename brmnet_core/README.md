@@ -25,6 +25,10 @@ losses = brmnet_loss(model, outputs, labels, lambda_budget=1e-3)
 losses["total"].backward()
 ```
 
+`BRMNet` and `CompactBRMNet` also accept an optional `availability_mask` with shape `[batch, 2]`.
+The two columns indicate whether the main and auxiliary modalities are available.
+Unavailable modalities are excluded from reliability softmax competition.
+
 ## Minimal Engine
 
 `brmnet_core.engine` accepts tuple batches `(main, aux, labels)` and dict batches with aliases such as `hsi`, `lidar`, `sar`, `ms`, `label`, and `target`.
@@ -37,6 +41,13 @@ Evaluation supports the first degradation matrix needed by the report:
 - `aux_noise`
 
 Use `evaluate_degradation_matrix(...)` to run all four modes and return a metrics dictionary keyed by mode.
+
+Training-time modality dropout is available through `train_one_epoch(..., modality_dropout_prob=p)`.
+The Houston runner exposes the same mechanism as:
+
+```powershell
+python scripts/run_brmnet_houston.py --modality-dropout-prob 0.25
+```
 
 ## Next Integration Point
 

@@ -83,3 +83,31 @@ P2：补论文图表。
 - `D:\Academic\paper_submission\brmnet_pricai2026\notes\experiments.md`
 
 当前写法已经把 prototype 结果从单 seed 改为 3 seed mean +/- std，并明确这是 mechanism verification，而不是最终主表。
+
+## 7. 代码推进状态
+
+已完成缺失模态训练闭环的第一步实现：
+
+- `ReliabilityGatedFusion` 支持 `availability_mask`，缺失模态不再参与 softmax 权重竞争；
+- `BRMNet` 和 `CompactBRMNet` 的 forward 支持传入 `availability_mask`；
+- `apply_degradation` 在 `main_only`、`aux_only`、`aux_noise` 评估模式下生成可用性 mask；
+- 新增 `apply_modality_dropout`，训练时可按样本随机置零一个模态；
+- `train_one_epoch` 新增 `modality_dropout_prob` 参数；
+- `scripts/run_brmnet_houston.py` 新增 `--modality-dropout-prob` 命令行参数，source 与 compact fine-tuning 均可启用。
+
+建议下一组实验：
+
+```powershell
+python scripts/run_brmnet_houston.py `
+  --data-root D:\Academic\HSLiNets-main\Dataset `
+  --data-format raw --split-protocol official `
+  --target-budget 0.8 --min-active-ratio 0.1 `
+  --epochs 20 --compact-finetune-epochs 10 `
+  --val-fraction 0.1 --val-split-strategy class_balanced --selection-metric oa `
+  --compact-val-fraction 0.1 --compact-val-split-strategy class_balanced --compact-selection-metric oa `
+  --modality-dropout-prob 0.25 `
+  --batch-size 64 --device cuda --seed 0 `
+  --output-dir output\modality_dropout_validation
+```
+
+这组实验应优先观察 `main_only`、`aux_only` 和 `aux_noise` 的提升，而不是只看 full OA。

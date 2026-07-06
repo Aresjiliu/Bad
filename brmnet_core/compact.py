@@ -98,6 +98,7 @@ class CompactBRMNet(nn.Module):
         self,
         main_input: torch.Tensor,
         aux_input: torch.Tensor,
+        availability_mask: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
         main_feature = self.main_encoder(main_input)
         aux_feature = self.aux_encoder(aux_input)
@@ -108,6 +109,7 @@ class CompactBRMNet(nn.Module):
             aux_feature,
             q_main,
             q_aux,
+            availability_mask=availability_mask,
         )
         logits = self.classifier(fused)
         return {

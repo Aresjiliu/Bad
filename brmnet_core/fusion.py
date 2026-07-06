@@ -38,11 +38,20 @@ class ReliabilityGatedFusion(nn.Module):
         feature_aux: torch.Tensor,
         quality_main: torch.Tensor,
         quality_aux: torch.Tensor,
+        availability_mask: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if feature_main.shape != feature_aux.shape:
             raise ValueError(f"Feature shapes must match: {feature_main.shape} vs {feature_aux.shape}")
         quality = torch.cat([quality_main, quality_aux], dim=1)
-        weights = torch.softmax(quality / self.temperature, dim=1)
+        logits = quality / self.temperature
+        if availability_mask is not None:
+            availability_mask = availability_mask.to(device=logits.device, dtype=torch.bool)
+            if availability_mask.shape != logits.shape:
+                raise ValueError(f"Availability mask must have shape {tuple(logits.shape)}, got {tuple(availability_mask.shape)}")
+            if bool((availability_mask.sum(dim=1) == 0).any()):
+                raise ValueError("At least one modality must be available for each sample.")
+            logits = logits.masked_fill(~availability_mask, torch.finfo(logits.dtype).min)
+        weights = torch.softmax(logits, dim=1)
         fused = weights[:, 0:1, None, None] * feature_main + weights[:, 1:2, None, None] * feature_aux
         return fused, weights
 

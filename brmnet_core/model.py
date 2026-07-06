@@ -55,12 +55,23 @@ class BRMNet(nn.Module):
             initial_retention=initial_retention,
         )
 
-    def forward(self, main_input: torch.Tensor, aux_input: torch.Tensor) -> dict[str, torch.Tensor]:
+    def forward(
+        self,
+        main_input: torch.Tensor,
+        aux_input: torch.Tensor,
+        availability_mask: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
         main_feature = self.main_encoder(main_input)
         aux_feature = self.aux_encoder(aux_input)
         q_main = self.main_quality(main_feature)
         q_aux = self.aux_quality(aux_feature)
-        fused, weights = self.reliability_fusion(main_feature, aux_feature, q_main, q_aux)
+        fused, weights = self.reliability_fusion(
+            main_feature,
+            aux_feature,
+            q_main,
+            q_aux,
+            availability_mask=availability_mask,
+        )
         logits = self.classifier(fused)
         return {
             "logits": logits,

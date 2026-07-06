@@ -6,7 +6,14 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from brmnet_core import BRMNet
 from brmnet_core.budget_gates import iter_budget_gates, set_gate_stochastic
-from brmnet_core.engine import evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
+from brmnet_core.engine import (
+    apply_degradation,
+    apply_modality_dropout,
+    evaluate,
+    evaluate_degradation_matrix,
+    train_one_epoch,
+    unpack_batch,
+)
 
 
 class BRMNetEngineTest(unittest.TestCase):
@@ -35,6 +42,46 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertTrue(torch.equal(legacy_batch.main, main))
         self.assertTrue(torch.equal(legacy_batch.aux, aux))
         self.assertTrue(torch.equal(legacy_batch.labels, labels))
+
+    def test_apply_degradation_sets_availability_mask(self):
+        batch = unpack_batch(
+            (
+                torch.ones(2, 4, 7, 7),
+                torch.ones(2, 1, 7, 7),
+                torch.tensor([0, 1]),
+            ),
+            torch.device("cpu"),
+        )
+
+        main_only = apply_degradation(batch, degradation="main_only")
+        aux_only = apply_degradation(batch, degradation="aux_only")
+
+        torch.testing.assert_close(main_only.availability_mask, torch.tensor([[1.0, 0.0], [1.0, 0.0]]))
+        torch.testing.assert_close(aux_only.availability_mask, torch.tensor([[0.0, 1.0], [0.0, 1.0]]))
+        self.assertTrue(torch.equal(main_only.aux, torch.zeros_like(batch.aux)))
+        self.assertTrue(torch.equal(aux_only.main, torch.zeros_like(batch.main)))
+
+    def test_apply_modality_dropout_drops_one_modality_per_selected_sample(self):
+        batch = unpack_batch(
+            (
+                torch.ones(6, 4, 7, 7),
+                torch.ones(6, 1, 7, 7),
+                torch.tensor([0, 1, 2, 0, 1, 2]),
+            ),
+            torch.device("cpu"),
+        )
+
+        dropped = apply_modality_dropout(
+            batch,
+            probability=1.0,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        self.assertTrue(torch.equal(dropped.availability_mask.sum(dim=1), torch.ones(6)))
+        dropped_main = dropped.availability_mask[:, 0] == 0
+        dropped_aux = dropped.availability_mask[:, 1] == 0
+        self.assertTrue(torch.equal(dropped.main[dropped_main], torch.zeros_like(dropped.main[dropped_main])))
+        self.assertTrue(torch.equal(dropped.aux[dropped_aux], torch.zeros_like(dropped.aux[dropped_aux])))
 
     def test_train_one_epoch_updates_model_and_reports_metrics(self):
         torch.manual_seed(0)

@@ -3,6 +3,7 @@ import unittest
 import torch
 
 from brmnet_core.budget_gates import BudgetGatedConv2d
+from brmnet_core.fusion import ReliabilityGatedFusion
 from brmnet_core.gated_blocks import HardConcreteConvBlock
 from brmnet_core.hard_concrete import HardConcreteGate
 from brmnet_core.model import BRMNet
@@ -59,6 +60,34 @@ class StructuredBRMNetTest(unittest.TestCase):
         self.assertEqual(outputs["main_feature"].shape, (2, 128, 4, 4))
         self.assertEqual(outputs["aux_feature"].shape, (2, 128, 4, 4))
         self.assertEqual(outputs["fusion_weights"].shape, (2, 2))
+
+    def test_reliability_fusion_masks_unavailable_modalities(self):
+        fusion = ReliabilityGatedFusion()
+        main = torch.ones(2, 3, 2, 2)
+        aux = torch.full((2, 3, 2, 2), 2.0)
+        q_main = torch.tensor([[0.1], [0.9]])
+        q_aux = torch.tensor([[0.9], [0.1]])
+        availability_mask = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+
+        fused, weights = fusion(main, aux, q_main, q_aux, availability_mask=availability_mask)
+
+        torch.testing.assert_close(weights, availability_mask)
+        torch.testing.assert_close(fused[0], main[0])
+        torch.testing.assert_close(fused[1], aux[1])
+
+    def test_model_forward_accepts_availability_mask(self):
+        torch.manual_seed(0)
+        model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
+        model.eval()
+        availability_mask = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+
+        outputs = model(
+            torch.randn(2, 4, 7, 7),
+            torch.randn(2, 1, 7, 7),
+            availability_mask=availability_mask,
+        )
+
+        torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
 
     def test_legacy_model_remains_available(self):
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)

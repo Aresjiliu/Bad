@@ -8,7 +8,15 @@ from .budget_gates import (
 )
 from .data import HoustonDataBundle, build_houston_raw_loaders, load_houston_scene, write_houston_data_artifacts
 from .compact import CompactBRMNet
-from .engine import BRMNetBatch, apply_degradation, evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
+from .engine import (
+    BRMNetBatch,
+    apply_degradation,
+    apply_modality_dropout,
+    evaluate,
+    evaluate_degradation_matrix,
+    train_one_epoch,
+    unpack_batch,
+)
 from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
 from .gated_blocks import HardConcreteConvBlock
@@ -55,6 +63,7 @@ __all__ = [
     "BRMNet",
     "BRMNetBatch",
     "apply_degradation",
+    "apply_modality_dropout",
     "evaluate",
     "evaluate_degradation_matrix",
     "train_one_epoch",

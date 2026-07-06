@@ -87,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--lambda-quality", type=float, default=0.0)
     parser.add_argument(
+        "--modality-dropout-prob",
+        type=float,
+        default=0.0,
+        help="Training-time probability of dropping exactly one modality per selected sample.",
+    )
+    parser.add_argument(
         "--gate-type",
         choices=("hard_concrete", "legacy_sigmoid"),
         default="hard_concrete",
@@ -585,7 +591,14 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     best_source_validation = None
     for epoch in range(cli_args.epochs):
         epoch_start = time.perf_counter()
-        train_metrics = train_one_epoch(model, train_loader, optimizer, device, loss_kwargs=loss_kwargs)
+        train_metrics = train_one_epoch(
+            model,
+            train_loader,
+            optimizer,
+            device,
+            loss_kwargs=loss_kwargs,
+            modality_dropout_prob=cli_args.modality_dropout_prob,
+        )
         validation_metrics = None
         selection_score = None
         if val_loader is not None:
@@ -669,6 +682,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                     "lambda_budget": 0.0,
                     "lambda_quality": cli_args.lambda_quality,
                 },
+                modality_dropout_prob=cli_args.modality_dropout_prob,
             )
             compact_validation_metrics = None
             compact_score = None

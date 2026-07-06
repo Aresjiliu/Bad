@@ -32,4 +32,5 @@
 2. [completed] 生成 `docs/generated/structured_pruning_multiseed_summary.md` 和 `docs/generated/structured_pruning_multiseed_runs.csv`。
 3. [completed] 将 Overleaf prototype 表格从单 seed 更新为 3 seed mean +/- std。
 4. [completed] 新增中文更新文档 `docs/PAPER_EXPERIMENT_UPDATE_20260706_ZH.md`。
-5. [pending] 按论文需求实现 availability mask + modality dropout 缺失模态训练闭环。
+5. [completed] 按论文需求实现 availability mask + modality dropout 缺失模态训练闭环。
+6. [pending] 运行 modality dropout 对照实验，重点比较 full/main_only/aux_only/aux_noise 四种模式。

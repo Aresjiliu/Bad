@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
@@ -15,6 +16,7 @@ class BRMNetBatch:
     aux: torch.Tensor
     labels: torch.Tensor
     quality_targets: tuple[torch.Tensor, torch.Tensor] | None = None
+    availability_mask: torch.Tensor | None = None
 
 
 def _first_present(batch: Mapping[str, object], keys: tuple[str, ...]) -> object:
@@ -29,11 +31,13 @@ def unpack_batch(batch: object, device: torch.device | str) -> BRMNetBatch:
 
     device = torch.device(device)
     quality_targets = None
+    availability_mask = None
 
     if isinstance(batch, Mapping):
         main = _first_present(batch, ("main", "main_input", "hsi", "x_main", "m_1"))
         aux = _first_present(batch, ("aux", "aux_input", "lidar", "sar", "ms", "x_aux", "m_2"))
         labels = _first_present(batch, ("labels", "label", "target", "y"))
+        availability_mask = batch.get("availability_mask", batch.get("modality_mask"))
         if "q_main" in batch and "q_aux" in batch:
             quality_targets = (batch["q_main"], batch["q_aux"])
         elif "quality_main" in batch and "quality_aux" in batch:
@@ -53,7 +57,26 @@ def unpack_batch(batch: object, device: torch.device | str) -> BRMNetBatch:
             quality_targets[0].to(device=device, non_blocking=True),
             quality_targets[1].to(device=device, non_blocking=True),
         )
-    return BRMNetBatch(main=main, aux=aux, labels=labels, quality_targets=quality_targets)
+    if availability_mask is not None:
+        availability_mask = availability_mask.to(device=device, non_blocking=True).float()
+    return BRMNetBatch(
+        main=main,
+        aux=aux,
+        labels=labels,
+        quality_targets=quality_targets,
+        availability_mask=availability_mask,
+    )
+
+
+def _availability(batch: BRMNetBatch, main_available: float, aux_available: float) -> torch.Tensor:
+    mask = torch.tensor(
+        [main_available, aux_available],
+        dtype=batch.main.dtype,
+        device=batch.main.device,
+    ).expand(batch.labels.numel(), 2)
+    if batch.availability_mask is not None:
+        mask = mask * batch.availability_mask.to(device=batch.main.device, dtype=batch.main.dtype)
+    return mask
 
 
 def apply_degradation(
@@ -66,13 +89,70 @@ def apply_degradation(
     if degradation == "full":
         return batch
     if degradation == "main_only":
-        return BRMNetBatch(batch.main, torch.zeros_like(batch.aux), batch.labels, batch.quality_targets)
+        return BRMNetBatch(
+            batch.main,
+            torch.zeros_like(batch.aux),
+            batch.labels,
+            batch.quality_targets,
+            _availability(batch, 1.0, 0.0),
+        )
     if degradation == "aux_only":
-        return BRMNetBatch(torch.zeros_like(batch.main), batch.aux, batch.labels, batch.quality_targets)
+        return BRMNetBatch(
+            torch.zeros_like(batch.main),
+            batch.aux,
+            batch.labels,
+            batch.quality_targets,
+            _availability(batch, 0.0, 1.0),
+        )
     if degradation == "aux_noise":
         noise = torch.randn_like(batch.aux) * float(aux_noise_std)
-        return BRMNetBatch(batch.main, batch.aux + noise, batch.labels, batch.quality_targets)
+        return BRMNetBatch(
+            batch.main,
+            batch.aux + noise,
+            batch.labels,
+            batch.quality_targets,
+            _availability(batch, 1.0, 1.0),
+        )
     raise ValueError(f"Unsupported degradation mode: {degradation}")
+
+
+def apply_modality_dropout(
+    batch: BRMNetBatch,
+    probability: float = 0.0,
+    generator: torch.Generator | None = None,
+) -> BRMNetBatch:
+    """Randomly remove one modality per selected training sample."""
+
+    probability = float(probability)
+    if probability <= 0.0:
+        return batch
+    if probability > 1.0:
+        raise ValueError(f"probability must be in [0, 1], got {probability}")
+
+    batch_size = int(batch.labels.numel())
+    device = batch.main.device
+    drop_selected = (torch.rand(batch_size, generator=generator) < probability).to(device=device)
+    drop_main = (torch.rand(batch_size, generator=generator) < 0.5).to(device=device) & drop_selected
+    drop_aux = drop_selected & ~drop_main
+
+    mask = torch.ones(batch_size, 2, dtype=batch.main.dtype, device=device)
+    if batch.availability_mask is not None:
+        mask = batch.availability_mask.to(device=device, dtype=batch.main.dtype).clone()
+    mask[drop_main, 0] = 0.0
+    mask[drop_aux, 1] = 0.0
+
+    main = batch.main * mask[:, 0].reshape(batch_size, 1, 1, 1)
+    aux = batch.aux * mask[:, 1].reshape(batch_size, 1, 1, 1)
+    return BRMNetBatch(main, aux, batch.labels, batch.quality_targets, mask)
+
+
+def _forward_model(model: nn.Module, batch: BRMNetBatch) -> dict[str, torch.Tensor]:
+    if batch.availability_mask is None:
+        return model(batch.main, batch.aux)
+    signature = inspect.signature(model.forward)
+    if "availability_mask" in signature.parameters:
+        return model(batch.main, batch.aux, availability_mask=batch.availability_mask)
+    return model(batch.main, batch.aux)
 
 
 def _new_meter() -> dict[str, float]:
@@ -165,6 +245,7 @@ def train_one_epoch(
     device: torch.device | str,
     loss_kwargs: dict[str, float] | None = None,
     grad_clip: float | None = None,
+    modality_dropout_prob: float = 0.0,
 ) -> dict[str, float]:
     model.to(device)
     model.train()
@@ -173,8 +254,9 @@ def train_one_epoch(
 
     for raw_batch in loader:
         batch = unpack_batch(raw_batch, device)
+        batch = apply_modality_dropout(batch, probability=modality_dropout_prob)
         optimizer.zero_grad(set_to_none=True)
-        outputs = model(batch.main, batch.aux)
+        outputs = _forward_model(model, batch)
         losses = brmnet_loss(model, outputs, batch.labels, quality_targets=batch.quality_targets, **loss_kwargs)
         losses["total"].backward()
         if grad_clip is not None:
@@ -202,7 +284,7 @@ def evaluate(
 
     for raw_batch in loader:
         batch = apply_degradation(unpack_batch(raw_batch, device), degradation=degradation, aux_noise_std=aux_noise_std)
-        outputs = model(batch.main, batch.aux)
+        outputs = _forward_model(model, batch)
         losses = brmnet_loss(model, outputs, batch.labels, quality_targets=batch.quality_targets, **loss_kwargs)
         _update_meter(meter, losses, outputs["logits"], batch.labels)
         predictions = outputs["logits"].argmax(dim=1)
