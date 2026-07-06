@@ -23,3 +23,8 @@
 - MaMOL 将遥感缺失模态分类重构为条件计算问题，支持把 MQE/RGF 写成轻量条件路由。
 - 2026 年高光谱压缩 benchmark 强调同时看 accuracy、memory、inference efficiency，说明论文主表必须有 Params/MACs/Latency/Model Size。
 - ICTAI 2026 截稿已延至 2026-07-21；PRICAI 2026 已在 2026-06-27 截稿，ACCV 2026 截稿为 2026-07-05，当前不适合作为稳妥主投。
+## 2026-07-06 多种子结果发现
+
+- Houston2013-HS-LiDAR official split 中，65/80/90 target MACs 预算在 3 seed 下实际 MACs ratio 分别为 64.96 +/- 0.12、80.01 +/- 0.10、90.07 +/- 0.08，说明预算命中是当前最稳的可写结论。
+- Compact OA 分别为 85.53 +/- 2.20、85.84 +/- 0.92、85.74 +/- 0.88，不呈现随预算单调提升，因此不应把当前 prototype 写成性能主表。
+- 当前最稳妥论文写法是：prototype 作为 hard-concrete gate + compact export + validation selection 的机制验证和消融基础，下一步用 missing-modality training loop 和较大双分支 backbone 承担主工作量。

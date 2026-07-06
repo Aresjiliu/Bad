@@ -26,3 +26,10 @@
 2. [completed] 将当前已验证 Houston2013-HS-LiDAR 结构化剪枝实验整理为独立 LaTeX 表格。
 3. [completed] 调整摘要、引言、方法、实验、讨论和结论，使当前稿件区分“已验证 prototype 结果”和“待核验三数据集主结果”。
 4. [completed] 生成 Overleaf 上传包。
+## 2026-07-06 多种子实验与论文同步
+
+1. [completed] 运行 Houston2013-HS-LiDAR official split 结构化剪枝 seed 1/2，并结合已有 seed 0 形成 3 seed 统计。
+2. [completed] 生成 `docs/generated/structured_pruning_multiseed_summary.md` 和 `docs/generated/structured_pruning_multiseed_runs.csv`。
+3. [completed] 将 Overleaf prototype 表格从单 seed 更新为 3 seed mean +/- std。
+4. [completed] 新增中文更新文档 `docs/PAPER_EXPERIMENT_UPDATE_20260706_ZH.md`。
+5. [pending] 按论文需求实现 availability mask + modality dropout 缺失模态训练闭环。

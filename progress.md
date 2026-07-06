@@ -18,3 +18,9 @@
 - 更新 `notes/experiments.md`，新增 `notes/overleaf_status.md`。
 - 生成 Overleaf 上传包 `D:\Academic\paper_submission\brmnet_pricai2026_overleaf_initial_20260706.zip`。
 - 匿名检查通过；TODO 统计为 6；本机未检测到 `latexmk` 或 `pdflatex`，暂未本地编译 PDF。
+## 2026-07-06 多种子实验
+
+- 运行 Houston2013-HS-LiDAR official split 结构化剪枝 seed 1/2，与 seed 0 组成 3 seed 统计。
+- 生成 `docs/generated/structured_pruning_multiseed_summary.md` 和 `docs/generated/structured_pruning_multiseed_runs.csv`。
+- 更新 Overleaf prototype 表格为 3 seed mean +/- std，并在实验章节明确它是机制验证而非最终主表。
+- 新增 `docs/PAPER_EXPERIMENT_UPDATE_20260706_ZH.md`，记录结果、论文写法和下一步优先级。
