@@ -111,3 +111,20 @@ python scripts/run_brmnet_houston.py `
 ```
 
 这组实验应优先观察 `main_only`、`aux_only` 和 `aux_noise` 的提升，而不是只看 full OA。
+
+## 8. 初步 dropout 对照结果
+
+已完成 80% budget、seed 0、`--modality-dropout-prob 0.25` 的初步实验。完整记录见：
+
+- `docs/generated/modality_dropout_seed0_budget80.md`
+
+核心现象：
+
+| Model | Training | Full OA | Main-only OA | Aux-only OA | Aux-noise OA |
+|---|---|---:|---:|---:|---:|
+| Source | no dropout | 86.99 | 54.42 | 23.16 | 86.16 |
+| Source | dropout 0.25 | 84.92 | 81.26 | 41.04 | 83.43 |
+| Compact | no dropout | 86.90 | 49.75 | 24.13 | 87.02 |
+| Compact | dropout 0.25 | 88.20 | 80.00 | 43.50 | 85.92 |
+
+该结果说明：availability mask + modality dropout 对缺失模态鲁棒性是有效方向，尤其 main-only 提升明显；但当前只有 seed 0，必须补 seed 1/2 后才能写成论文结论。

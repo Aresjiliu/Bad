@@ -26,3 +26,4 @@
 - 新增 `docs/PAPER_EXPERIMENT_UPDATE_20260706_ZH.md`，记录结果、论文写法和下一步优先级。
 - 实现 availability mask + modality dropout：RGF mask softmax、BRMNet/CompactBRMNet forward mask、engine degradation mask、training-time modality dropout、Houston runner `--modality-dropout-prob`。
 - 验证：`python -m unittest discover -s tests` 通过 101 个测试，1 个跳过；`scripts/run_brmnet_houston.py --dry-run --modality-dropout-prob 0.25 --device cpu` 通过。
+- 运行 80% budget seed0 dropout 0.25 初步实验：compact full OA 88.20，main-only OA 80.00，aux-only OA 43.50；对应 no-dropout compact 为 86.90、49.75、24.13。

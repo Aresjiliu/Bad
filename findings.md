@@ -29,3 +29,4 @@
 - Compact OA 分别为 85.53 +/- 2.20、85.84 +/- 0.92、85.74 +/- 0.88，不呈现随预算单调提升，因此不应把当前 prototype 写成性能主表。
 - 当前最稳妥论文写法是：prototype 作为 hard-concrete gate + compact export + validation selection 的机制验证和消融基础，下一步用 missing-modality training loop 和较大双分支 backbone 承担主工作量。
 - availability mask 的实现使 RGF 从“质量分数可视化/隐式融合”推进到“显式缺失模态鲁棒融合”；下一步实验评价应重点看 main_only、aux_only、aux_noise，而不是只盯 full OA。
+- 80% budget seed0 初步对照显示，compact 模型加入 dropout 0.25 后 full/main_only/aux_only/aux_noise OA 为 88.20/80.00/43.50/85.92；no-dropout 为 86.90/49.75/24.13/87.02。该方向值得补 seed 1/2，但目前不能作为最终结论。
