@@ -211,12 +211,9 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
         if macs > 0 and oa > 0:
             legacy_points.append((macs, oa, budget))
     if legacy_points:
-        grouped: dict[float, list[tuple[float, float]]] = defaultdict(list)
-        for macs, oa, budget in legacy_points:
-            grouped[budget].append((macs, oa))
-        xs = [np.mean([item[0] for item in values]) for values in grouped.values()]
-        ys = [np.mean([item[1] for item in values]) for values in grouped.values()]
-        ax.plot(xs, ys, color="#BBBBBB", marker="o", markersize=3, linewidth=0.9, label="prior sweep")
+        xs = [item[0] for item in legacy_points]
+        ys = [item[1] for item in legacy_points]
+        ax.scatter(xs, ys, color="#C9C9C9", s=15, marker="o", linewidth=0, label="prior sweep", zorder=1)
 
     variants = _available_variants(summary_rows)
     colors = [OKABE_ITO["blue"], OKABE_ITO["vermillion"], OKABE_ITO["green"], OKABE_ITO["purple"]]
@@ -228,29 +225,40 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
         oa = _percent(_float(row, "oa_mean"))
         if macs <= 0 or oa <= 0:
             continue
-        ax.scatter(
-            [macs],
-            [oa],
-            s=34,
+        macs_std = _percent(_float(row, "compact_macs_ratio_std"))
+        oa_std = _percent(_float(row, "oa_std"))
+        ax.errorbar(
+            macs,
+            oa,
+            xerr=macs_std if macs_std > 0 else None,
+            yerr=oa_std if oa_std > 0 else None,
+            fmt="o",
+            markersize=4.8,
+            capsize=2.4,
+            elinewidth=0.8,
             color=colors[idx % len(colors)],
-            edgecolor="white",
-            linewidth=0.5,
+            markeredgecolor="white",
+            markeredgewidth=0.5,
             zorder=3,
-            label=_variant_label(variant),
+            label=f"{_variant_label(variant)} (n={row.get('runs', '1')})",
         )
         ax.annotate(
             f"{oa:.1f}",
             (macs, oa),
-            xytext=(4, 4),
+            xytext=(4, 5),
             textcoords="offset points",
             fontsize=6.5,
         )
 
+    ax.axvspan(78, 82, color=OKABE_ITO["orange"], alpha=0.10, linewidth=0)
+    ax.axvline(80, color=OKABE_ITO["orange"], linewidth=0.8, linestyle="--")
+    ylo, yhi = ax.get_ylim()
+    ax.text(80.25, ylo + 0.05 * (yhi - ylo), "80% target", color=OKABE_ITO["orange"], fontsize=6.5, va="bottom")
     ax.set_xlabel("Actual MAC ratio (%)")
     ax.set_ylabel("OA (%)")
     ax.set_title("Accuracy-efficiency")
     ax.grid(True, color="#E6E6E6", linewidth=0.45)
-    ax.legend(loc="lower right", handlelength=1.2, borderaxespad=0.2)
+    ax.legend(loc="lower left", handlelength=1.2, borderaxespad=0.2)
 
 
 def _plot_robustness(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
@@ -282,7 +290,7 @@ def _plot_robustness(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
     ax.set_title("Missing-modality robustness")
     ax.grid(axis="y", color="#E6E6E6", linewidth=0.45)
     if len(variants) > 1:
-        ax.legend(loc="upper right", ncols=1)
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.24), ncols=min(len(variants), 2), columnspacing=0.8, handlelength=1.4)
 
 
 def _plot_widths(ax: plt.Axes, resource_records: list[dict[str, object]], variants: list[str]) -> None:
@@ -291,17 +299,34 @@ def _plot_widths(ax: plt.Axes, resource_records: list[dict[str, object]], varian
         ax.text(0.5, 0.5, "No compact width records", ha="center", va="center", transform=ax.transAxes)
         ax.axis("off")
         return
-    image = ax.imshow(matrix, cmap="cividis", vmin=0, vmax=100, aspect="auto")
-    ax.set_xticks(range(len(variants)), [_variant_label(variant) for variant in variants], rotation=20, ha="right")
-    ax.set_yticks(range(len(labels)), labels)
+    y = np.arange(len(labels))
+    ax.set_yticks(y, labels)
+    ax.invert_yaxis()
+    ax.set_xlim(55, 103)
+    ax.set_xlabel("Retained width (%)")
     ax.set_title("Retained width by layer")
-    for row in range(matrix.shape[0]):
-        for col in range(matrix.shape[1]):
-            value = matrix[row, col]
-            if np.isfinite(value):
-                ax.text(col, row, f"{value:.0f}", ha="center", va="center", fontsize=6.2, color="white" if value < 55 else "black")
-    cbar = plt.colorbar(image, ax=ax, fraction=0.046, pad=0.02)
-    cbar.set_label("Retained width (%)")
+    ax.grid(axis="x", color="#E6E6E6", linewidth=0.45)
+    colors = [OKABE_ITO["blue"], OKABE_ITO["vermillion"], OKABE_ITO["green"], OKABE_ITO["purple"]]
+    if matrix.shape[1] >= 2:
+        for row in range(matrix.shape[0]):
+            valid = matrix[row, :]
+            if np.sum(np.isfinite(valid)) >= 2:
+                ax.plot(valid[:2], [row, row], color="#BDBDBD", linewidth=1.0, zorder=1)
+    for col, variant in enumerate(variants):
+        values = matrix[:, col]
+        ax.scatter(
+            values,
+            y,
+            s=22,
+            color=colors[col % len(colors)],
+            edgecolor="white",
+            linewidth=0.4,
+            label=_variant_label(variant),
+            zorder=3,
+        )
+    for sep in [2.5, 5.5]:
+        ax.axhline(sep, color="#D9D9D9", linewidth=0.6)
+    ax.legend(loc="upper left", handlelength=1.2)
 
 
 def _plot_budget(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
