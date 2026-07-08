@@ -25,3 +25,5 @@ output/structured_pruning/
 output/structured_pruning_stability/
 output/structured_pruning_validation/
 output/modality_dropout_validation/
+output/experiments_priority/
+output/experiments_smoke/

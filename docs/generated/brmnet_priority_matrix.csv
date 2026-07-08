@@ -1,0 +1,16 @@
+priority,run_tag,dataset,split_protocol,split_seed,seed,target_budget,variant,gate_type,lambda_budget,modality_dropout_prob,epochs,compact_finetune_epochs,note
+1,full_budget0p8_seed0,Houston2013-HS-LiDAR,official,42,0,0.8,full,hard_concrete,1.0,0.25,20,10,Full BRM-Net: budget gates + compact export + availability-aware modality dropout.
+2,without_modality_dropout_budget0p8_seed0,Houston2013-HS-LiDAR,official,42,0,0.8,without_modality_dropout,hard_concrete,1.0,0.0,20,10,Tests whether missing-modality robustness comes from dropout training.
+3,budget_only_budget0p8_seed0,Houston2013-HS-LiDAR,official,42,0,0.8,budget_only,hard_concrete,1.0,0.0,20,10,Compression mechanism without explicit missing-modality training.
+4,without_budget_loss_budget0p8_seed0,Houston2013-HS-LiDAR,official,42,0,0.8,without_budget_loss,hard_concrete,0.0,0.25,20,10,Reliability/dropout behavior without an active budget penalty.
+5,legacy_sigmoid_reference_budget0p8_seed0,Houston2013-HS-LiDAR,official,42,0,0.8,legacy_sigmoid_reference,legacy_sigmoid,1.0,0.25,20,10,Legacy gate reference; not a deployable hard-concrete export baseline.
+6,full_budget0p8_seed1,Houston2013-HS-LiDAR,official,42,1,0.8,full,hard_concrete,1.0,0.25,20,10,Full BRM-Net: budget gates + compact export + availability-aware modality dropout.
+7,without_modality_dropout_budget0p8_seed1,Houston2013-HS-LiDAR,official,42,1,0.8,without_modality_dropout,hard_concrete,1.0,0.0,20,10,Tests whether missing-modality robustness comes from dropout training.
+8,budget_only_budget0p8_seed1,Houston2013-HS-LiDAR,official,42,1,0.8,budget_only,hard_concrete,1.0,0.0,20,10,Compression mechanism without explicit missing-modality training.
+9,without_budget_loss_budget0p8_seed1,Houston2013-HS-LiDAR,official,42,1,0.8,without_budget_loss,hard_concrete,0.0,0.25,20,10,Reliability/dropout behavior without an active budget penalty.
+10,legacy_sigmoid_reference_budget0p8_seed1,Houston2013-HS-LiDAR,official,42,1,0.8,legacy_sigmoid_reference,legacy_sigmoid,1.0,0.25,20,10,Legacy gate reference; not a deployable hard-concrete export baseline.
+11,full_budget0p8_seed2,Houston2013-HS-LiDAR,official,42,2,0.8,full,hard_concrete,1.0,0.25,20,10,Full BRM-Net: budget gates + compact export + availability-aware modality dropout.
+12,without_modality_dropout_budget0p8_seed2,Houston2013-HS-LiDAR,official,42,2,0.8,without_modality_dropout,hard_concrete,1.0,0.0,20,10,Tests whether missing-modality robustness comes from dropout training.
+13,budget_only_budget0p8_seed2,Houston2013-HS-LiDAR,official,42,2,0.8,budget_only,hard_concrete,1.0,0.0,20,10,Compression mechanism without explicit missing-modality training.
+14,without_budget_loss_budget0p8_seed2,Houston2013-HS-LiDAR,official,42,2,0.8,without_budget_loss,hard_concrete,0.0,0.25,20,10,Reliability/dropout behavior without an active budget penalty.
+15,legacy_sigmoid_reference_budget0p8_seed2,Houston2013-HS-LiDAR,official,42,2,0.8,legacy_sigmoid_reference,legacy_sigmoid,1.0,0.25,20,10,Legacy gate reference; not a deployable hard-concrete export baseline.
