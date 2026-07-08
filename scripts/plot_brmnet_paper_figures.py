@@ -10,25 +10,71 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-OKABE_ITO = [
-    "#0072B2",
-    "#D55E00",
-    "#009E73",
-    "#CC79A7",
-    "#E69F00",
-    "#56B4E9",
-    "#000000",
-]
+MM = 1.0 / 25.4
+DOUBLE_COLUMN = (183 * MM, 126 * MM)
+SINGLE_COLUMN = (86 * MM, 62 * MM)
+OKABE_ITO = {
+    "blue": "#0072B2",
+    "orange": "#E69F00",
+    "green": "#009E73",
+    "vermillion": "#D55E00",
+    "purple": "#CC79A7",
+    "sky": "#56B4E9",
+    "black": "#000000",
+    "grey": "#7A7A7A",
+}
+VARIANT_LABELS = {
+    "full": "BRM-Net",
+    "without_modality_dropout": "w/o MD",
+    "without_budget_loss": "w/o budget",
+    "budget_only": "budget only",
+    "legacy_sigmoid_reference": "sigmoid gate",
+    "default": "BRM-Net",
+}
+MODE_LABELS = {
+    "full": "Full",
+    "main_only": "HSI only",
+    "aux_only": "LiDAR only",
+    "aux_noise": "LiDAR noise",
+}
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate paper-ready BRM-Net figures from experiment outputs.")
+    parser = argparse.ArgumentParser(
+        description="Generate publication-ready BRM-Net figures from experiment outputs."
+    )
     parser.add_argument("--experiments-root", default="output/experiments")
     parser.add_argument("--summary-csv", default="docs/generated/brmnet_structured_pruning.csv")
     parser.add_argument("--multiseed-csv", default="docs/generated/structured_pruning_multiseed_runs.csv")
     parser.add_argument("--output-dir", default="../paper_submission/brmnet_pricai2026/figures/generated")
     parser.add_argument("--formats", nargs="+", default=["pdf", "png"])
     return parser
+
+
+def apply_style() -> None:
+    plt.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["Arial", "DejaVu Sans", "Liberation Sans"],
+            "font.size": 7.5,
+            "axes.labelsize": 7.5,
+            "axes.titlesize": 8,
+            "axes.linewidth": 0.6,
+            "xtick.labelsize": 7,
+            "ytick.labelsize": 7,
+            "legend.fontsize": 7,
+            "legend.frameon": False,
+            "xtick.major.width": 0.55,
+            "ytick.major.width": 0.55,
+            "xtick.major.size": 2.6,
+            "ytick.major.size": 2.6,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+            "savefig.dpi": 600,
+        }
+    )
 
 
 def _ensure_dir(path: str | Path) -> Path:
@@ -39,7 +85,7 @@ def _ensure_dir(path: str | Path) -> Path:
 
 def _save(fig: plt.Figure, out_dir: Path, stem: str, formats: list[str]) -> None:
     for fmt in formats:
-        fig.savefig(out_dir / f"{stem}.{fmt}", dpi=300, bbox_inches="tight")
+        fig.savefig(out_dir / f"{stem}.{fmt}", dpi=600, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -58,194 +104,273 @@ def _float(row: dict[str, str], key: str, default: float = 0.0) -> float:
         return default
 
 
-def apply_style() -> None:
-    plt.rcParams.update(
-        {
-            "font.family": "sans-serif",
-            "font.sans-serif": ["Arial", "DejaVu Sans"],
-            "font.size": 8,
-            "axes.labelsize": 8,
-            "axes.titlesize": 8,
-            "xtick.labelsize": 7,
-            "ytick.labelsize": 7,
-            "legend.fontsize": 7,
-            "axes.spines.top": False,
-            "axes.spines.right": False,
-            "pdf.fonttype": 42,
-            "ps.fonttype": 42,
-        }
-    )
+def _percent(value: float) -> float:
+    return value * 100.0 if abs(value) <= 1.5 else value
 
 
-def plot_pareto(summary_rows: list[dict[str, str]], multiseed_rows: list[dict[str, str]], out_dir: Path, formats: list[str]) -> None:
-    points = []
-    for row in summary_rows:
-        if row.get("mode") != "full":
-            continue
-        macs = _float(row, "compact_macs_ratio_mean") * 100.0
-        params = _float(row, "compact_params_ratio_mean") * 100.0
-        oa = _float(row, "oa_mean") * 100.0
-        budget = _float(row, "target_budget") * 100.0
-        if macs > 0 and oa > 0:
-            points.append((budget, macs, params, oa, "summary"))
-    for row in multiseed_rows:
-        budget = _float(row, "budget")
-        macs = _float(row, "macs_ratio")
-        params = _float(row, "params_ratio")
-        oa = _float(row, "compact_oa")
-        if macs > 1.5:
-            macs = macs
-        else:
-            macs *= 100.0
-        if params <= 1.5:
-            params *= 100.0
-        points.append((budget, macs, params, oa, "multiseed"))
-
-    if not points:
-        return
-
-    grouped: dict[float, list[tuple[float, float, float]]] = defaultdict(list)
-    for budget, macs, params, oa, _source in points:
-        grouped[budget].append((macs, params, oa))
-
-    xs, ys, yerr, labels = [], [], [], []
-    for budget in sorted(grouped):
-        values = grouped[budget]
-        xs.append(np.mean([item[0] for item in values]))
-        oa_values = [item[2] for item in values]
-        ys.append(np.mean(oa_values))
-        yerr.append(np.std(oa_values, ddof=1) if len(oa_values) > 1 else 0.0)
-        labels.append(f"{int(round(budget))}%")
-
-    fig, ax = plt.subplots(figsize=(3.45, 2.45))
-    ax.errorbar(xs, ys, yerr=yerr, marker="o", linewidth=1.4, capsize=3, color=OKABE_ITO[0])
-    for x, y, label in zip(xs, ys, labels):
-        ax.text(x + 0.6, y, label, va="center", fontsize=7)
-    ax.set_xlabel("Actual MAC ratio (%)")
-    ax.set_ylabel("Overall accuracy (%)")
-    ax.set_title("Accuracy-efficiency trade-off")
-    ax.grid(True, linewidth=0.3, alpha=0.35)
-    _save(fig, out_dir, "fig_pareto_accuracy_efficiency", formats)
+def _variant(row: dict[str, str]) -> str:
+    return row.get("variant") or "default"
 
 
-def plot_robustness_heatmap(summary_rows: list[dict[str, str]], out_dir: Path, formats: list[str]) -> None:
-    rows = [row for row in summary_rows if abs(_float(row, "target_budget") - 0.8) < 1e-6]
-    if not rows:
-        rows = summary_rows
-    if not rows:
-        return
-    mode_order = ["full", "main_only", "aux_only", "aux_noise"]
-    by_mode = {row.get("mode"): _float(row, "oa_mean") * 100.0 for row in rows}
-    values = [by_mode.get(mode, np.nan) for mode in mode_order]
-
-    fig, ax = plt.subplots(figsize=(3.45, 1.65))
-    matrix = np.array([values], dtype=float)
-    image = ax.imshow(matrix, cmap="viridis", vmin=np.nanmin(matrix), vmax=np.nanmax(matrix))
-    ax.set_xticks(range(len(mode_order)), ["Full", "Main only", "Aux only", "Aux noise"])
-    ax.set_yticks([0], ["BRM-Net"])
-    for col, value in enumerate(values):
-        if np.isfinite(value):
-            ax.text(col, 0, f"{value:.1f}", ha="center", va="center", color="white" if value < np.nanmean(matrix) else "black")
-    cbar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label("OA (%)")
-    ax.set_title("Robustness under modality states")
-    _save(fig, out_dir, "fig_robustness_heatmap", formats)
+def _variant_label(variant: str) -> str:
+    return VARIANT_LABELS.get(variant, variant.replace("_", " "))
 
 
-def load_gate_records(experiments_root: str | Path) -> list[dict[str, object]]:
+def _row_for(rows: list[dict[str, str]], variant: str, mode: str) -> dict[str, str] | None:
+    candidates = [row for row in rows if _variant(row) == variant and row.get("mode") == mode]
+    if not candidates:
+        return None
+    return sorted(candidates, key=lambda row: (_float(row, "target_budget"), _float(row, "epochs")))[-1]
+
+
+def _available_variants(rows: list[dict[str, str]]) -> list[str]:
+    priority = ["full", "without_modality_dropout", "without_budget_loss", "budget_only", "legacy_sigmoid_reference", "default"]
+    available = {_variant(row) for row in rows}
+    ordered = [variant for variant in priority if variant in available]
+    ordered.extend(sorted(available.difference(ordered)))
+    return ordered
+
+
+def _load_resource_records(experiments_root: str | Path) -> list[dict[str, object]]:
+    root = Path(experiments_root)
     records: list[dict[str, object]] = []
-    for resource_path in Path(experiments_root).rglob("resource_stats.json"):
-        config_path = resource_path.parent / "config.json"
+    for resource_path in root.rglob("resource_stats.json"):
+        run_dir = resource_path.parent
+        config_path = run_dir / "config.json"
         if not config_path.is_file():
             continue
         try:
             resource = json.loads(resource_path.read_text(encoding="utf-8"))
             config = json.loads(config_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
+            relative = run_dir.relative_to(root)
+        except (json.JSONDecodeError, ValueError):
             continue
-        for gate in resource.get("gates", []):
-            records.append(
-                {
-                    "budget": float(config.get("target_budget", 0.0)) * 100.0,
-                    "seed": int(config.get("seed", -1)),
-                    "name": str(gate.get("name", "")),
-                    "retention": float(gate.get("active_channels", 0)) / max(float(gate.get("total_channels", 1)), 1.0) * 100.0,
-                }
-            )
+        variant = relative.parts[0] if len(relative.parts) > 1 else "default"
+        compact = resource.get("compact", {})
+        widths = resource.get("structure", {}).get("widths", {})
+        records.append(
+            {
+                "variant": variant,
+                "seed": int(config.get("seed", -1)),
+                "target_budget": float(config.get("target_budget", 0.0)),
+                "params_ratio": float(compact.get("params_ratio", 0.0)),
+                "macs_ratio": float(compact.get("macs_ratio", 0.0)),
+                "main_widths": compact.get("main_widths", widths.get("main", [])),
+                "aux_widths": compact.get("aux_widths", widths.get("aux", [])),
+                "head_widths": compact.get("head_widths", widths.get("head", [])),
+            }
+        )
     return records
 
 
-def plot_gate_retention(gate_records: list[dict[str, object]], out_dir: Path, formats: list[str]) -> None:
-    if not gate_records:
-        return
-    budgets = sorted({float(record["budget"]) for record in gate_records})
-    names = sorted({str(record["name"]) for record in gate_records})
-    name_labels = [name.replace("main_encoder.net.", "main").replace("aux_encoder.net.", "aux").replace("classifier.net.", "head") for name in names]
-    matrix = np.zeros((len(names), len(budgets)), dtype=float)
-    for i, name in enumerate(names):
-        for j, budget in enumerate(budgets):
-            values = [float(record["retention"]) for record in gate_records if record["name"] == name and float(record["budget"]) == budget]
-            matrix[i, j] = np.mean(values) if values else np.nan
-
-    fig, ax = plt.subplots(figsize=(3.45, max(2.2, 0.22 * len(names))))
-    image = ax.imshow(matrix, cmap="cividis", vmin=0, vmax=100, aspect="auto")
-    ax.set_xticks(range(len(budgets)), [f"{int(round(b))}%" for b in budgets])
-    ax.set_yticks(range(len(names)), name_labels)
-    ax.set_xlabel("Target MAC budget")
-    ax.set_title("Layer-wise retained channels")
-    cbar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label("Retained channels (%)")
-    _save(fig, out_dir, "fig_gate_retention", formats)
-
-
-def _parse_widths(value: str) -> list[float]:
-    widths = []
-    for part in str(value).split("/"):
-        try:
-            widths.append(float(part))
-        except ValueError:
-            continue
-    return widths
-
-
-def plot_gate_retention_from_widths(multiseed_rows: list[dict[str, str]], out_dir: Path, formats: list[str]) -> None:
-    if not multiseed_rows:
-        return
-    layer_specs = [
-        ("main_widths", "Main branch", [32.0, 64.0, 128.0]),
-        ("aux_widths", "Aux branch", [32.0, 64.0, 128.0]),
-        ("head_widths", "Head", [128.0, 64.0]),
+def _width_matrix(resource_records: list[dict[str, object]], variants: list[str]) -> tuple[list[str], np.ndarray]:
+    specs = [
+        ("main_widths", "HSI L1", 32.0),
+        ("main_widths", "HSI L2", 64.0),
+        ("main_widths", "HSI L3", 128.0),
+        ("aux_widths", "LiDAR L1", 32.0),
+        ("aux_widths", "LiDAR L2", 64.0),
+        ("aux_widths", "LiDAR L3", 128.0),
+        ("head_widths", "Head L1", 128.0),
+        ("head_widths", "Head L2", 64.0),
     ]
-    budgets = sorted({_float(row, "budget") for row in multiseed_rows})
-    labels: list[str] = []
-    matrix_rows: list[list[float]] = []
-    for key, group_label, denominators in layer_specs:
-        max_layers = max((len(_parse_widths(row.get(key, ""))) for row in multiseed_rows), default=0)
-        for layer_idx in range(max_layers):
-            labels.append(f"{group_label} L{layer_idx + 1}")
-            budget_values = []
-            for budget in budgets:
-                ratios = []
-                for row in multiseed_rows:
-                    if abs(_float(row, "budget") - budget) > 1e-6:
-                        continue
-                    widths = _parse_widths(row.get(key, ""))
-                    if layer_idx < len(widths) and layer_idx < len(denominators):
-                        ratios.append(widths[layer_idx] / denominators[layer_idx] * 100.0)
-                budget_values.append(float(np.mean(ratios)) if ratios else np.nan)
-            matrix_rows.append(budget_values)
+    matrix = np.full((len(specs), len(variants)), np.nan, dtype=float)
+    for col, variant in enumerate(variants):
+        records = [record for record in resource_records if record["variant"] == variant]
+        for row, (key, _label, denom) in enumerate(specs):
+            layer_idx = sum(1 for prior_key, _prior_label, _prior_denom in specs[:row] if prior_key == key)
+            ratios = []
+            for record in records:
+                widths = record.get(key, [])
+                if isinstance(widths, list) and layer_idx < len(widths):
+                    ratios.append(float(widths[layer_idx]) / denom * 100.0)
+            if ratios:
+                matrix[row, col] = float(np.mean(ratios))
+    return [label for _key, label, _denom in specs], matrix
 
-    if not matrix_rows:
+
+def _panel_label(ax: plt.Axes, label: str) -> None:
+    ax.text(
+        -0.16,
+        1.08,
+        label,
+        transform=ax.transAxes,
+        fontsize=9,
+        fontweight="bold",
+        va="top",
+        ha="left",
+    )
+
+
+def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_rows: list[dict[str, str]]) -> None:
+    legacy_points = []
+    for row in multiseed_rows:
+        macs = _percent(_float(row, "macs_ratio"))
+        oa = _percent(_float(row, "compact_oa"))
+        budget = _percent(_float(row, "budget"))
+        if macs > 0 and oa > 0:
+            legacy_points.append((macs, oa, budget))
+    if legacy_points:
+        grouped: dict[float, list[tuple[float, float]]] = defaultdict(list)
+        for macs, oa, budget in legacy_points:
+            grouped[budget].append((macs, oa))
+        xs = [np.mean([item[0] for item in values]) for values in grouped.values()]
+        ys = [np.mean([item[1] for item in values]) for values in grouped.values()]
+        ax.plot(xs, ys, color="#BBBBBB", marker="o", markersize=3, linewidth=0.9, label="prior sweep")
+
+    variants = _available_variants(summary_rows)
+    colors = [OKABE_ITO["blue"], OKABE_ITO["vermillion"], OKABE_ITO["green"], OKABE_ITO["purple"]]
+    for idx, variant in enumerate(variants):
+        row = _row_for(summary_rows, variant, "full")
+        if row is None:
+            continue
+        macs = _percent(_float(row, "compact_macs_ratio_mean"))
+        oa = _percent(_float(row, "oa_mean"))
+        if macs <= 0 or oa <= 0:
+            continue
+        ax.scatter(
+            [macs],
+            [oa],
+            s=34,
+            color=colors[idx % len(colors)],
+            edgecolor="white",
+            linewidth=0.5,
+            zorder=3,
+            label=_variant_label(variant),
+        )
+        ax.annotate(
+            f"{oa:.1f}",
+            (macs, oa),
+            xytext=(4, 4),
+            textcoords="offset points",
+            fontsize=6.5,
+        )
+
+    ax.set_xlabel("Actual MAC ratio (%)")
+    ax.set_ylabel("OA (%)")
+    ax.set_title("Accuracy-efficiency")
+    ax.grid(True, color="#E6E6E6", linewidth=0.45)
+    ax.legend(loc="lower right", handlelength=1.2, borderaxespad=0.2)
+
+
+def _plot_robustness(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
+    variants = _available_variants(summary_rows)
+    modes = ["full", "main_only", "aux_only", "aux_noise"]
+    width = min(0.18, 0.72 / max(len(variants), 1))
+    x = np.arange(len(modes))
+    colors = [OKABE_ITO["blue"], OKABE_ITO["vermillion"], OKABE_ITO["green"], OKABE_ITO["purple"]]
+    hatches = ["", "///", "\\\\\\", "..."]
+    for idx, variant in enumerate(variants):
+        values = []
+        for mode in modes:
+            row = _row_for(summary_rows, variant, mode)
+            values.append(_percent(_float(row, "oa_mean")) if row else np.nan)
+        offset = (idx - (len(variants) - 1) / 2) * width
+        ax.bar(
+            x + offset,
+            values,
+            width,
+            label=_variant_label(variant),
+            color=colors[idx % len(colors)],
+            edgecolor="black",
+            linewidth=0.35,
+            hatch=hatches[idx % len(hatches)],
+        )
+    ax.set_xticks(x, [MODE_LABELS[mode] for mode in modes], rotation=18, ha="right")
+    ax.set_ylim(0, 100)
+    ax.set_ylabel("OA (%)")
+    ax.set_title("Missing-modality robustness")
+    ax.grid(axis="y", color="#E6E6E6", linewidth=0.45)
+    if len(variants) > 1:
+        ax.legend(loc="upper right", ncols=1)
+
+
+def _plot_widths(ax: plt.Axes, resource_records: list[dict[str, object]], variants: list[str]) -> None:
+    labels, matrix = _width_matrix(resource_records, variants)
+    if not variants or np.isnan(matrix).all():
+        ax.text(0.5, 0.5, "No compact width records", ha="center", va="center", transform=ax.transAxes)
+        ax.axis("off")
         return
-    matrix = np.asarray(matrix_rows, dtype=float)
-    fig, ax = plt.subplots(figsize=(3.45, max(2.3, 0.24 * len(labels))))
     image = ax.imshow(matrix, cmap="cividis", vmin=0, vmax=100, aspect="auto")
-    ax.set_xticks(range(len(budgets)), [f"{int(round(b))}%" for b in budgets])
+    ax.set_xticks(range(len(variants)), [_variant_label(variant) for variant in variants], rotation=20, ha="right")
     ax.set_yticks(range(len(labels)), labels)
-    ax.set_xlabel("Target MAC budget")
-    ax.set_title("Layer-wise retained width")
-    cbar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    ax.set_title("Retained width by layer")
+    for row in range(matrix.shape[0]):
+        for col in range(matrix.shape[1]):
+            value = matrix[row, col]
+            if np.isfinite(value):
+                ax.text(col, row, f"{value:.0f}", ha="center", va="center", fontsize=6.2, color="white" if value < 55 else "black")
+    cbar = plt.colorbar(image, ax=ax, fraction=0.046, pad=0.02)
     cbar.set_label("Retained width (%)")
+
+
+def _plot_budget(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
+    variants = _available_variants(summary_rows)
+    labels, macs, params, targets = [], [], [], []
+    for variant in variants:
+        row = _row_for(summary_rows, variant, "full")
+        if row is None:
+            continue
+        labels.append(_variant_label(variant))
+        macs.append(_percent(_float(row, "compact_macs_ratio_mean")))
+        params.append(_percent(_float(row, "compact_params_ratio_mean")))
+        targets.append(_percent(_float(row, "target_budget")))
+    if not labels:
+        ax.axis("off")
+        return
+    x = np.arange(len(labels))
+    ax.bar(x - 0.16, macs, 0.32, color=OKABE_ITO["blue"], label="MACs", edgecolor="black", linewidth=0.35)
+    ax.bar(x + 0.16, params, 0.32, color=OKABE_ITO["orange"], label="Params", edgecolor="black", linewidth=0.35)
+    for idx, target in enumerate(targets):
+        ax.plot([idx - 0.38, idx + 0.38], [target, target], color=OKABE_ITO["vermillion"], linewidth=1.0)
+    ax.set_xticks(x, labels, rotation=20, ha="right")
+    ax.set_ylim(0, max(100.0, max(macs + params + targets) * 1.12))
+    ax.set_ylabel("Compact/full ratio (%)")
+    ax.set_title("Budget agreement")
+    ax.grid(axis="y", color="#E6E6E6", linewidth=0.45)
+    ax.legend(loc="upper right")
+
+
+def plot_overview(
+    summary_rows: list[dict[str, str]],
+    multiseed_rows: list[dict[str, str]],
+    resource_records: list[dict[str, object]],
+    out_dir: Path,
+    formats: list[str],
+) -> None:
+    if not summary_rows:
+        return
+    fig, axes = plt.subplots(2, 2, figsize=DOUBLE_COLUMN, constrained_layout=True)
+    fig.set_constrained_layout_pads(w_pad=3.0 / 72.0, h_pad=3.0 / 72.0, wspace=0.12, hspace=0.1)
+    _plot_pareto(axes[0, 0], summary_rows, multiseed_rows)
+    _plot_robustness(axes[0, 1], summary_rows)
+    variants = _available_variants(summary_rows)
+    _plot_widths(axes[1, 0], resource_records, variants)
+    _plot_budget(axes[1, 1], summary_rows)
+    for label, ax in zip(["A", "B", "C", "D"], axes.ravel(), strict=True):
+        _panel_label(ax, label)
+    _save(fig, out_dir, "fig_brmnet_results_overview", formats)
+
+
+def plot_single_figures(
+    summary_rows: list[dict[str, str]],
+    multiseed_rows: list[dict[str, str]],
+    resource_records: list[dict[str, object]],
+    out_dir: Path,
+    formats: list[str],
+) -> None:
+    if not summary_rows:
+        return
+    fig, ax = plt.subplots(figsize=SINGLE_COLUMN)
+    _plot_pareto(ax, summary_rows, multiseed_rows)
+    _save(fig, out_dir, "fig_pareto_accuracy_efficiency", formats)
+
+    fig, ax = plt.subplots(figsize=SINGLE_COLUMN)
+    _plot_robustness(ax, summary_rows)
+    _save(fig, out_dir, "fig_robustness_heatmap", formats)
+
+    fig, ax = plt.subplots(figsize=SINGLE_COLUMN)
+    _plot_widths(ax, resource_records, _available_variants(summary_rows))
     _save(fig, out_dir, "fig_gate_retention", formats)
 
 
@@ -255,14 +380,10 @@ def main() -> int:
     out_dir = _ensure_dir(args.output_dir)
     summary_rows = _read_csv(args.summary_csv)
     multiseed_rows = _read_csv(args.multiseed_csv)
-    plot_pareto(summary_rows, multiseed_rows, out_dir, args.formats)
-    plot_robustness_heatmap(summary_rows, out_dir, args.formats)
-    gate_records = load_gate_records(args.experiments_root)
-    if gate_records:
-        plot_gate_retention(gate_records, out_dir, args.formats)
-    else:
-        plot_gate_retention_from_widths(multiseed_rows, out_dir, args.formats)
-    print(f"Wrote figures to {out_dir}")
+    resource_records = _load_resource_records(args.experiments_root)
+    plot_overview(summary_rows, multiseed_rows, resource_records, out_dir, args.formats)
+    plot_single_figures(summary_rows, multiseed_rows, resource_records, out_dir, args.formats)
+    print(f"Wrote publication figures to {out_dir}")
     return 0
 
 

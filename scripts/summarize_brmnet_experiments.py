@@ -16,12 +16,21 @@ def _std(values: list[float]) -> float:
     return statistics.stdev(values) if len(values) > 1 else 0.0
 
 
+def _variant_from_path(root: Path, run_dir: Path) -> str:
+    try:
+        relative = run_dir.relative_to(root)
+    except ValueError:
+        return "unknown"
+    return relative.parts[0] if len(relative.parts) > 1 else "default"
+
+
 def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
+    root = Path(root)
     groups: dict[
         tuple[object, ...],
         dict[int, tuple[int, dict[str, float]]],
     ] = defaultdict(dict)
-    for metrics_path in Path(root).rglob("metrics.json"):
+    for metrics_path in root.rglob("metrics.json"):
         run_dir = metrics_path.parent
         config_path = run_dir / "config.json"
         history_path = run_dir / "history.json"
@@ -44,12 +53,15 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
         train_seconds = sum(float(item["elapsed_seconds"]) for item in history)
         for mode, values in metrics.items():
             key = (
+                _variant_from_path(root, run_dir),
                 config["split_protocol"],
                 int(config["split_seed"]),
                 config.get("gate_mode", "stochastic"),
                 config.get("gate_type", "legacy_sigmoid"),
                 float(config.get("target_budget", -1.0)),
                 config.get("budget_metric", "channels"),
+                float(config.get("lambda_budget", 0.0)),
+                float(config.get("modality_dropout_prob", 0.0)),
                 int(config["epochs"]),
                 mode,
             )
@@ -77,23 +89,29 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
     rows = []
     for key, runs_by_seed in sorted(groups.items()):
         (
+            variant,
             protocol,
             split_seed,
             gate_mode,
             gate_type,
             target_budget,
             budget_metric,
+            lambda_budget,
+            modality_dropout_prob,
             epochs,
             mode,
         ) = key
         runs = [item[1] for item in runs_by_seed.values()]
         row: dict[str, object] = {
+            "variant": variant,
             "protocol": protocol,
             "split_seed": split_seed,
             "gate_mode": gate_mode,
             "gate_type": gate_type,
             "target_budget": target_budget,
             "budget_metric": budget_metric,
+            "lambda_budget": lambda_budget,
+            "modality_dropout_prob": modality_dropout_prob,
             "epochs": epochs,
             "mode": mode,
             "runs": len(runs),
@@ -130,12 +148,13 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
 
     with md_path.open("w", encoding="utf-8") as handle:
         handle.write("# BRM-Net Experiment Summary\n\n")
-        handle.write("| Protocol | Gate | Metric | Budget | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio |\n")
-        handle.write("|---|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|\n")
+        handle.write("| Variant | Protocol | Gate | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio |\n")
+        handle.write("|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|\n")
         for row in rows:
             handle.write(
-                f"| {row['protocol']} | {row['gate_type']} | {row['budget_metric']} | "
-                f"{row['target_budget']:.2f} | {row['epochs']} | "
+                f"| {row['variant']} | {row['protocol']} | {row['gate_type']} | {row['budget_metric']} | "
+                f"{row['target_budget']:.2f} | {row['lambda_budget']:.2f} | "
+                f"{row['modality_dropout_prob']:.2f} | {row['epochs']} | "
                 f"{row['mode']} | {row['runs']} | "
                 f"{row['oa_mean']:.4f} +/- {row['oa_std']:.4f} | "
                 f"{row['aa_mean']:.4f} +/- {row['aa_std']:.4f} | "
