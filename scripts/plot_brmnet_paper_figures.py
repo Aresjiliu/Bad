@@ -227,8 +227,11 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
             continue
         macs_std = _percent(_float(row, "compact_macs_ratio_std"))
         oa_std = _percent(_float(row, "oa_std"))
+        # The current ablation points deliberately target the same 80% MAC budget.
+        # Apply a small display-only offset so the uncertainty bars remain legible.
+        display_macs = macs + (idx - (len(variants) - 1) / 2) * 0.55 if len(variants) > 1 else macs
         ax.errorbar(
-            macs,
+            display_macs,
             oa,
             xerr=macs_std if macs_std > 0 else None,
             yerr=oa_std if oa_std > 0 else None,
@@ -244,14 +247,13 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
         )
         ax.annotate(
             f"{oa:.1f}",
-            (macs, oa),
+            (display_macs, oa),
             xytext=(4, 5),
             textcoords="offset points",
             fontsize=6.5,
         )
 
     ax.axvspan(78, 82, color=OKABE_ITO["orange"], alpha=0.10, linewidth=0)
-    ax.axvline(80, color=OKABE_ITO["orange"], linewidth=0.8, linestyle="--")
     ylo, yhi = ax.get_ylim()
     ax.text(80.25, ylo + 0.05 * (yhi - ylo), "80% target", color=OKABE_ITO["orange"], fontsize=6.5, va="bottom")
     ax.set_xlabel("Actual MAC ratio (%)")
