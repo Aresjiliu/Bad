@@ -46,6 +46,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "modality_dropout_prob": 0.25,
             "lambda_budget": 1.0,
             "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
             "note": "Full BRM-Net: budget gates + compact export + availability-aware modality dropout.",
         },
         {
@@ -54,6 +55,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "modality_dropout_prob": 0.0,
             "lambda_budget": 1.0,
             "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
             "note": "Tests whether missing-modality robustness comes from dropout training.",
         },
         {
@@ -62,6 +64,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "modality_dropout_prob": 0.0,
             "lambda_budget": 1.0,
             "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
             "note": "Compression mechanism without explicit missing-modality training.",
         },
         {
@@ -70,7 +73,17 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "modality_dropout_prob": 0.25,
             "lambda_budget": 0.0,
             "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
             "note": "Reliability/dropout behavior without an active budget penalty.",
+        },
+        {
+            "variant": "without_reliability_uniform_fusion",
+            "target_budget": None,
+            "modality_dropout_prob": 0.25,
+            "lambda_budget": 1.0,
+            "gate_type": "hard_concrete",
+            "fusion_mode": "uniform",
+            "note": "Ablates reliability weighting by averaging available modalities.",
         },
         {
             "variant": "legacy_sigmoid_reference",
@@ -78,6 +91,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "modality_dropout_prob": 0.25,
             "lambda_budget": 1.0,
             "gate_type": "legacy_sigmoid",
+            "fusion_mode": "reliability",
             "note": "Legacy gate reference; not a deployable hard-concrete export baseline.",
         },
     ]
@@ -101,6 +115,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
                 "target_budget": target_budget,
                 "variant": variant["variant"],
                 "gate_type": variant["gate_type"],
+                "fusion_mode": variant["fusion_mode"],
                 "lambda_budget": variant["lambda_budget"],
                 "modality_dropout_prob": variant["modality_dropout_prob"],
                 "epochs": args.epochs,
@@ -131,6 +146,8 @@ def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
         str(row["target_budget"]),
         "--gate-type",
         str(row["gate_type"]),
+        "--fusion-mode",
+        str(row["fusion_mode"]),
         "--lambda-budget",
         str(row["lambda_budget"]),
         "--modality-dropout-prob",

@@ -52,6 +52,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.output_dir, "output/experiments")
         self.assertEqual(args.gate_mode, "deterministic")
         self.assertEqual(args.gate_type, "hard_concrete")
+        self.assertEqual(args.fusion_mode, "reliability")
         self.assertEqual(args.budget_metric, "macs")
         self.assertIsNone(args.gate_threshold)
         self.assertEqual(args.compact_finetune_epochs, 10)
@@ -74,6 +75,11 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         args = build_parser().parse_args(["--modality-dropout-prob", "0.25"])
 
         self.assertEqual(args.modality_dropout_prob, 0.25)
+
+    def test_uniform_fusion_argument(self):
+        args = build_parser().parse_args(["--fusion-mode", "uniform"])
+
+        self.assertEqual(args.fusion_mode, "uniform")
 
     def test_retention_to_gate_score_round_trips_probability(self):
         import math

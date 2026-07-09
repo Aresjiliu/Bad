@@ -21,6 +21,7 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                             "seed": seed,
                             "gate_mode": "deterministic",
                             "gate_type": "hard_concrete",
+                            "fusion_mode": "uniform",
                             "budget_metric": "macs",
                             "target_budget": 0.8,
                             "epochs": 20,
@@ -75,6 +76,7 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                         "seed": 0,
                         "gate_mode": "deterministic",
                         "gate_type": "hard_concrete",
+                        "fusion_mode": "uniform",
                         "budget_metric": "macs",
                         "target_budget": 0.8,
                         "epochs": 20,
@@ -122,6 +124,7 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
         self.assertEqual(full["protocol"], "random")
         self.assertEqual(full["gate_mode"], "deterministic")
         self.assertEqual(full["gate_type"], "hard_concrete")
+        self.assertEqual(full["fusion_mode"], "uniform")
         self.assertEqual(full["budget_metric"], "macs")
         self.assertEqual(full["target_budget"], 0.8)
         self.assertEqual(full["compact_params_ratio_mean"], 0.7)

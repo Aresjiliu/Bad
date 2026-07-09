@@ -64,6 +64,7 @@ def export_compact_brmnet(
         aux_width=(widths["aux_1"], widths["aux_2"], widths["shared"]),
         head_width=(widths["head_1"], widths["head_2"]),
         reliability_temperature=model.reliability_fusion.temperature,
+        fusion_mode=model.reliability_fusion.mode,
     )
     reference = next(model.parameters())
     compact.to(device=reference.device, dtype=reference.dtype)
@@ -125,5 +126,6 @@ def export_compact_brmnet(
             name: value.detach().cpu().tolist()
             for name, value in indices.items()
         },
+        "fusion_mode": model.reliability_fusion.mode,
     }
     return compact, metadata

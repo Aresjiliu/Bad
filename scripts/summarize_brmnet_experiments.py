@@ -58,6 +58,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                 int(config["split_seed"]),
                 config.get("gate_mode", "stochastic"),
                 config.get("gate_type", "legacy_sigmoid"),
+                config.get("fusion_mode", "reliability"),
                 float(config.get("target_budget", -1.0)),
                 config.get("budget_metric", "channels"),
                 float(config.get("lambda_budget", 0.0)),
@@ -104,6 +105,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             split_seed,
             gate_mode,
             gate_type,
+            fusion_mode,
             target_budget,
             budget_metric,
             lambda_budget,
@@ -118,6 +120,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             "split_seed": split_seed,
             "gate_mode": gate_mode,
             "gate_type": gate_type,
+            "fusion_mode": fusion_mode,
             "target_budget": target_budget,
             "budget_metric": budget_metric,
             "lambda_budget": lambda_budget,
@@ -163,11 +166,11 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
 
     with md_path.open("w", encoding="utf-8") as handle:
         handle.write("# BRM-Net Experiment Summary\n\n")
-        handle.write("| Variant | Protocol | Gate | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio | Latency ms |\n")
-        handle.write("|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|\n")
+        handle.write("| Variant | Protocol | Gate | Fusion | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio | Latency ms |\n")
+        handle.write("|---|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|\n")
         for row in rows:
             handle.write(
-                f"| {row['variant']} | {row['protocol']} | {row['gate_type']} | {row['budget_metric']} | "
+                f"| {row['variant']} | {row['protocol']} | {row['gate_type']} | {row['fusion_mode']} | {row['budget_metric']} | "
                 f"{row['target_budget']:.2f} | {row['lambda_budget']:.2f} | "
                 f"{row['modality_dropout_prob']:.2f} | {row['epochs']} | "
                 f"{row['mode']} | {row['runs']} | "

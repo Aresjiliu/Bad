@@ -38,6 +38,14 @@
    - `resource_stats.json` 新增 `latency_ms.hard` 与 `latency_ms.compact`，分别记录 `full`、`main_only`、`aux_only` 的平均推理耗时。
    - `scripts/summarize_brmnet_experiments.py` 会把 compact latency 汇总到 CSV/Markdown，便于直接形成论文资源效率表。
 
+7. 新增 `w/o reliability` 消融接口
+   - `ReliabilityGatedFusion` 新增 `mode` 参数，可选 `reliability` 和 `uniform`。
+   - `uniform` 模式不使用质量分数决定融合权重，而是在可用模态之间均匀加权，并继续尊重 `availability_mask`。
+   - Runner 新增 `--fusion-mode reliability|uniform`。
+   - compact export 会保留 source model 的 fusion mode。
+   - 实验矩阵新增 `without_reliability_uniform_fusion` 变体。
+   - 汇总脚本将 `fusion_mode` 纳入分组与 Markdown 表格，避免 reliability 与 uniform 结果混合。
+
 ## 对论文创新性的意义
 
 这次改动可以支撑方法部分从“剪枝 + 可靠性融合”的简单组合，升级为：
@@ -98,6 +106,7 @@ P1：更新消融实验表
 | Masked fusion only | 否 | 否 | 是 | 证明仅融合屏蔽不足 |
 | Compact export only | 是 | 否 | 是 | 证明静态轻量化收益 |
 | Compact + availability-conditioned | 是 | 是 | 是 | 本文完整方法 |
+| w/o reliability / uniform fusion | 是 | 是 | 否 | 证明质量分数是否提供额外收益 |
 
 P2：更新论文方法章节
 
@@ -112,6 +121,20 @@ P2：更新论文方法章节
 7. Training Objectives
 
 本次代码改动主要对应第 5、6 节。
+
+## 当前已具备的优先实验
+
+可直接生成包含 uniform 消融的核心实验矩阵：
+
+```powershell
+conda run -n hslinets python scripts/make_brmnet_experiment_matrix.py `
+  --data-root D:\Academic\HSLiNets-main\Dataset `
+  --python D:\software\anaconda3\envs\hslinets\python.exe `
+  --ablation core `
+  --seeds 0 1 2
+```
+
+其中 `without_reliability_uniform_fusion` 对应论文主消融表中的 `w/o reliability` 或 `average fusion` 行。
 
 ## 当前限制
 

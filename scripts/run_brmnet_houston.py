@@ -98,6 +98,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("hard_concrete", "legacy_sigmoid"),
         default="hard_concrete",
     )
+    parser.add_argument(
+        "--fusion-mode",
+        choices=("reliability", "uniform"),
+        default="reliability",
+        help="Use reliability-weighted fusion or uniform available-modality fusion for ablation.",
+    )
     parser.add_argument("--budget-metric", choices=("params", "macs"), default="macs")
     parser.add_argument(
         "--gate-threshold",
@@ -506,6 +512,7 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
             num_classes=cli_args.class_num,
             init_score=score,
             gate_type="legacy_sigmoid",
+            fusion_mode=cli_args.fusion_mode,
         )
         return model, retention, score
 
@@ -518,6 +525,7 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
         num_classes=cli_args.class_num,
         gate_type="hard_concrete",
         initial_retention=initial_retention,
+        fusion_mode=cli_args.fusion_mode,
     )
     if cli_args.gate_init_retention is None:
         initial_retention = initialize_uniform_resource_budget(
@@ -561,6 +569,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "target_budget": cli_args.target_budget,
             "gate_init_retention": gate_init_retention,
             "gate_type": cli_args.gate_type,
+            "fusion_mode": cli_args.fusion_mode,
             "budget_metric": cli_args.budget_metric,
         }
         summary["parameters"] = sum(param.numel() for param in model.parameters())

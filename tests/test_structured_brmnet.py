@@ -94,6 +94,24 @@ class StructuredBRMNetTest(unittest.TestCase):
         torch.testing.assert_close(fused[0], main[0])
         torch.testing.assert_close(fused[1], aux[1])
 
+    def test_uniform_fusion_ignores_quality_scores_but_respects_availability(self):
+        fusion = ReliabilityGatedFusion(mode="uniform")
+        main = torch.ones(2, 3, 2, 2)
+        aux = torch.full((2, 3, 2, 2), 3.0)
+        q_main = torch.tensor([[0.01], [0.99]])
+        q_aux = torch.tensor([[0.99], [0.01]])
+        availability_mask = torch.tensor([[1.0, 1.0], [1.0, 0.0]])
+
+        fused, weights = fusion(main, aux, q_main, q_aux, availability_mask=availability_mask)
+
+        torch.testing.assert_close(weights, torch.tensor([[0.5, 0.5], [1.0, 0.0]]))
+        torch.testing.assert_close(fused[0], torch.full((3, 2, 2), 2.0))
+        torch.testing.assert_close(fused[1], main[1])
+
+    def test_rejects_unknown_fusion_mode(self):
+        with self.assertRaisesRegex(ValueError, "fusion mode"):
+            ReliabilityGatedFusion(mode="unknown")
+
     def test_model_forward_accepts_availability_mask(self):
         torch.manual_seed(0)
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
@@ -153,6 +171,10 @@ class StructuredBRMNetTest(unittest.TestCase):
     def test_rejects_unknown_gate_type(self):
         with self.assertRaisesRegex(ValueError, "gate_type"):
             BRMNet(main_channels=4, aux_channels=1, num_classes=3, gate_type="unknown")
+
+    def test_rejects_unknown_model_fusion_mode(self):
+        with self.assertRaisesRegex(ValueError, "fusion mode"):
+            BRMNet(main_channels=4, aux_channels=1, num_classes=3, fusion_mode="unknown")
 
 
 if __name__ == "__main__":

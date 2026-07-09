@@ -141,6 +141,20 @@ class CompactBRMNetExportTest(unittest.TestCase):
 
         torch.testing.assert_close(source_logits, compact_logits, atol=1e-5, rtol=1e-5)
 
+    def test_exporter_preserves_uniform_fusion_mode(self):
+        source = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+            fusion_mode="uniform",
+        )
+
+        compact, metadata = export_compact_brmnet(source)
+
+        self.assertEqual(compact.reliability_fusion.mode, "uniform")
+        self.assertEqual(metadata["fusion_mode"], "uniform")
+
     def test_exporter_keeps_highest_probability_channel_for_empty_mask(self):
         source = BRMNet(
             main_channels=4,

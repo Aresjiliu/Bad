@@ -21,6 +21,7 @@ class BRMNet(nn.Module):
         reliability_temperature: float = 1.0,
         gate_type: str = "legacy_sigmoid",
         initial_retention: float = 0.9,
+        fusion_mode: str = "reliability",
     ) -> None:
         super().__init__()
         if gate_type not in {"legacy_sigmoid", "hard_concrete"}:
@@ -47,7 +48,10 @@ class BRMNet(nn.Module):
         )
         self.main_quality = ModalityQualityEstimator(self.main_encoder.out_channels)
         self.aux_quality = ModalityQualityEstimator(self.aux_encoder.out_channels)
-        self.reliability_fusion = ReliabilityGatedFusion(temperature=reliability_temperature)
+        self.reliability_fusion = ReliabilityGatedFusion(
+            temperature=reliability_temperature,
+            mode=fusion_mode,
+        )
         self.classifier = BudgetGatedFusionHead(
             self.main_encoder.out_channels,
             num_classes,
