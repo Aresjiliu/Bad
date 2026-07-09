@@ -83,6 +83,12 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                     "compact_macs_ratio": float(
                         resource_stats.get("compact", {}).get("macs_ratio", 0.0)
                     ),
+                    "compact_latency_ms": float(
+                        resource_stats.get("latency_ms", {})
+                        .get("compact", {})
+                        .get(mode, {})
+                        .get("mean", 0.0)
+                    ),
                 }
             train_seed = int(config["seed"])
             modified = metrics_path.stat().st_mtime_ns
@@ -134,6 +140,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             "fusion_weight_aux",
             "compact_params_ratio",
             "compact_macs_ratio",
+            "compact_latency_ms",
         ):
             values = [run[metric] for run in runs]
             row[f"{metric}_mean"] = _mean(values)
@@ -156,8 +163,8 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
 
     with md_path.open("w", encoding="utf-8") as handle:
         handle.write("# BRM-Net Experiment Summary\n\n")
-        handle.write("| Variant | Protocol | Gate | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio |\n")
-        handle.write("|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|\n")
+        handle.write("| Variant | Protocol | Gate | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio | Latency ms |\n")
+        handle.write("|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|\n")
         for row in rows:
             handle.write(
                 f"| {row['variant']} | {row['protocol']} | {row['gate_type']} | {row['budget_metric']} | "
@@ -168,7 +175,8 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
                 f"{row['aa_mean']:.4f} +/- {row['aa_std']:.4f} | "
                 f"{row['kappa_mean']:.4f} +/- {row['kappa_std']:.4f} | "
                 f"{row['compact_params_ratio_mean']:.4f} | "
-                f"{row['compact_macs_ratio_mean']:.4f} |\n"
+                f"{row['compact_macs_ratio_mean']:.4f} | "
+                f"{row['compact_latency_ms_mean']:.3f} |\n"
             )
 
 

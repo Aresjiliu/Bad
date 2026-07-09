@@ -66,6 +66,8 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.compact_val_split_strategy, "class_balanced")
         self.assertEqual(args.compact_selection_metric, "oa")
         self.assertIsNone(args.gate_init_retention)
+        self.assertEqual(args.latency_warmup, 5)
+        self.assertEqual(args.latency_iterations, 20)
         self.assertFalse(args.dataset_only)
 
     def test_modality_dropout_argument(self):
@@ -147,6 +149,8 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 sample_main=torch.randn(2, 4, 7, 7),
                 sample_aux=torch.randn(2, 1, 7, 7),
                 min_active_ratio=0.25,
+                latency_warmup=0,
+                latency_iterations=1,
             )
 
             self.assertTrue((Path(tmp) / "resource_stats.json").is_file())
@@ -168,6 +172,12 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                     stats["state_dependent"][family]["aux_only"]["macs_ratio"],
                     stats["state_dependent"][family]["full"]["macs_ratio"],
                 )
+                for state in ("full", "main_only", "aux_only"):
+                    self.assertGreaterEqual(
+                        stats["latency_ms"][family][state]["mean"],
+                        0.0,
+                    )
+                    self.assertEqual(stats["latency_ms"][family][state]["iterations"], 1)
             self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
 
     def test_split_loader_for_validation_uses_train_subset_and_deterministic_val_subset(self):

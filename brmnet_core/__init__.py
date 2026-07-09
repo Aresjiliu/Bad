@@ -30,6 +30,7 @@ from .legacy import MODALITY_CHANNELS, build_houston_args, get_houston_loaders, 
 from .model import BRMNet
 from .reporting import write_metrics_csv, write_metrics_json
 from .export import export_compact_brmnet
+from .profiling import make_availability_mask, profile_modality_state_latency
 from .resources import (
     BRMNetResourceStats,
     estimate_brmnet_resources,
@@ -81,4 +82,6 @@ __all__ = [
     "initialize_uniform_resource_budget",
     "find_resource_budget_threshold",
     "export_compact_brmnet",
+    "make_availability_mask",
+    "profile_modality_state_latency",
 ]

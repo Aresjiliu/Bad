@@ -53,6 +53,13 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                             "compact": {
                                 "params_ratio": 0.7,
                                 "macs_ratio": 0.8,
+                            },
+                            "latency_ms": {
+                                "compact": {
+                                    "full": {"mean": 1.0 + seed},
+                                    "main_only": {"mean": 0.7 + seed},
+                                    "aux_only": {"mean": 0.6 + seed},
+                                }
                             }
                         }
                     ),
@@ -95,7 +102,17 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                 encoding="utf-8",
             )
             (duplicate / "resource_stats.json").write_text(
-                json.dumps({"compact": {"params_ratio": 0.7, "macs_ratio": 0.8}}),
+                json.dumps(
+                    {
+                        "compact": {"params_ratio": 0.7, "macs_ratio": 0.8},
+                        "latency_ms": {
+                            "compact": {
+                                "full": {"mean": 1.0},
+                                "main_only": {"mean": 0.7},
+                            }
+                        },
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -109,6 +126,9 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
         self.assertEqual(full["target_budget"], 0.8)
         self.assertEqual(full["compact_params_ratio_mean"], 0.7)
         self.assertEqual(full["compact_macs_ratio_mean"], 0.8)
+        self.assertAlmostEqual(full["compact_latency_ms_mean"], 1.5)
+        main_only = next(row for row in rows if row["mode"] == "main_only")
+        self.assertAlmostEqual(main_only["compact_latency_ms_mean"], 1.2)
         self.assertEqual(full["runs"], 2)
         self.assertAlmostEqual(full["oa_mean"], 0.9)
         self.assertAlmostEqual(full["oa_std"], 0.1414213562)

@@ -26,6 +26,7 @@ from brmnet_core import (
     find_resource_budget_threshold,
     initialize_uniform_resource_budget,
     iter_hard_concrete_gates,
+    profile_modality_state_latency,
     set_gate_stochastic,
     set_hard_concrete_inference_mode,
     set_hard_concrete_stochastic,
@@ -122,6 +123,18 @@ def build_parser() -> argparse.ArgumentParser:
         default="deterministic",
     )
     parser.add_argument("--aux-noise-std", type=float, default=0.1)
+    parser.add_argument(
+        "--latency-warmup",
+        type=int,
+        default=5,
+        help="Warmup forward passes for state-dependent latency profiling.",
+    )
+    parser.add_argument(
+        "--latency-iterations",
+        type=int,
+        default=20,
+        help="Timed forward passes for state-dependent latency profiling.",
+    )
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--checkpoint", default="")
@@ -335,6 +348,8 @@ def write_structured_pruning_artifacts(
     target_budget: float | None = None,
     budget_metric: str = "macs",
     min_active_ratio: float = 0.0,
+    latency_warmup: int = 5,
+    latency_iterations: int = 20,
 ) -> tuple[torch.nn.Module, dict[str, object]]:
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -384,6 +399,22 @@ def write_structured_pruning_artifacts(
             )
             for state in modality_states
         },
+    }
+    latency_ms = {
+        "hard": profile_modality_state_latency(
+            model,
+            sample_main,
+            sample_aux,
+            warmup=latency_warmup,
+            iterations=latency_iterations,
+        ),
+        "compact": profile_modality_state_latency(
+            compact,
+            sample_main,
+            sample_aux,
+            warmup=latency_warmup,
+            iterations=latency_iterations,
+        ),
     }
 
     with torch.no_grad():
@@ -440,6 +471,7 @@ def write_structured_pruning_artifacts(
             "macs_ratio": int(compact_resources.macs) / int(baseline.macs),
         },
         "state_dependent": state_dependent,
+        "latency_ms": latency_ms,
         "equivalence_max_abs_error": equivalence_error,
         "equivalence_l2_relative_error": equivalence_l2_relative,
         "gates": gate_records,
@@ -694,6 +726,8 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             target_budget=cli_args.target_budget,
             budget_metric=cli_args.budget_metric,
             min_active_ratio=cli_args.min_active_ratio,
+            latency_warmup=cli_args.latency_warmup,
+            latency_iterations=cli_args.latency_iterations,
         )
         compact_optimizer = torch.optim.AdamW(
             compact_model.parameters(),

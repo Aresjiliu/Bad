@@ -32,6 +32,12 @@
    - 可选状态包括 `full`、`main_only`、`aux_only`。
    - `scripts/run_brmnet_houston.py` 的 `resource_stats.json` 新增 `state_dependent` 字段，分别记录 `hard` 与 `compact` 在不同模态状态下的有效 Params/MACs。
 
+6. 新增状态相关推理延迟统计
+   - `brmnet_core/profiling.py` 提供 `profile_modality_state_latency`。
+   - Runner 新增 `--latency-warmup` 和 `--latency-iterations` 参数。
+   - `resource_stats.json` 新增 `latency_ms.hard` 与 `latency_ms.compact`，分别记录 `full`、`main_only`、`aux_only` 的平均推理耗时。
+   - `scripts/summarize_brmnet_experiments.py` 会把 compact latency 汇总到 CSV/Markdown，便于直接形成论文资源效率表。
+
 ## 对论文创新性的意义
 
 这次改动可以支撑方法部分从“剪枝 + 可靠性融合”的简单组合，升级为：
@@ -49,16 +55,38 @@
 P0：补充状态相关资源与延迟统计
 
 - 已在资源估计层支持原始 hard 结构模型和 compact 模型的状态相关 Params/MACs。
-- 后续需要在真实实验 run 上重新生成 `resource_stats.json`，并补充 CUDA latency：
+- 已在 runner 中支持状态相关 latency profiling。
+- 后续需要在真实实验 run 上重新生成 `resource_stats.json`：
   - `full`
   - `main_only`
   - `aux_only`
 - 指标包括：
   - Params：已支持
   - MACs：已支持
-  - CUDA latency
+  - CUDA latency：已支持
   - OA / AA / Kappa
 - 目标：证明 compact export 与可用性条件计算同时带来资源收益。
+
+推荐运行时保留默认 profiling 设置：
+
+```powershell
+conda run -n hslinets python scripts/run_brmnet_houston.py `
+  --data-format legacy `
+  --data-root D:\Academic\HSLiNets-main\Huston2013 `
+  --split-protocol official `
+  --target-budget 0.8 `
+  --budget-metric macs `
+  --epochs 20 `
+  --compact-finetune-epochs 10 `
+  --modality-dropout-prob 0.25 `
+  --lambda-quality 0.2 `
+  --aux-noise-std 0.1 `
+  --seed 0 `
+  --device cuda `
+  --latency-warmup 5 `
+  --latency-iterations 20 `
+  --output-dir output/experiments/p0_reliability
+```
 
 P1：更新消融实验表
 
