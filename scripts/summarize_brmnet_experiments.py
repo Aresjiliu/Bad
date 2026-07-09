@@ -73,6 +73,10 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                     "train_seconds": train_seconds,
                     "soft_retention": float(values.get("soft_retention", 0.0)),
                     "hard_retention": float(values.get("hard_retention", 0.0)),
+                    "q_main": float(values.get("q_main", 0.0)),
+                    "q_aux": float(values.get("q_aux", 0.0)),
+                    "fusion_weight_main": float(values.get("fusion_weight_main", 0.0)),
+                    "fusion_weight_aux": float(values.get("fusion_weight_aux", 0.0)),
                     "compact_params_ratio": float(
                         resource_stats.get("compact", {}).get("params_ratio", 0.0)
                     ),
@@ -124,6 +128,10 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             "train_seconds",
             "soft_retention",
             "hard_retention",
+            "q_main",
+            "q_aux",
+            "fusion_weight_main",
+            "fusion_weight_aux",
             "compact_params_ratio",
             "compact_macs_ratio",
         ):

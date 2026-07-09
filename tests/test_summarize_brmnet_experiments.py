@@ -35,7 +35,13 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                 (run / "metrics.json").write_text(
                     json.dumps(
                         {
-                            "full": {"oa": oa, "aa": oa - 0.1, "kappa": oa - 0.2},
+                            "full": {
+                                "oa": oa,
+                                "aa": oa - 0.1,
+                                "kappa": oa - 0.2,
+                                "q_aux": 0.6 + seed * 0.2,
+                                "fusion_weight_aux": 0.7 + seed * 0.2,
+                            },
                             "main_only": {"oa": 0.5, "aa": 0.4, "kappa": 0.3},
                         }
                     ),
@@ -76,7 +82,13 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
             (duplicate / "metrics.json").write_text(
                 json.dumps(
                     {
-                        "full": {"oa": 0.8, "aa": 0.7, "kappa": 0.6},
+                        "full": {
+                            "oa": 0.8,
+                            "aa": 0.7,
+                            "kappa": 0.6,
+                            "q_aux": 0.6,
+                            "fusion_weight_aux": 0.7,
+                        },
                         "main_only": {"oa": 0.5, "aa": 0.4, "kappa": 0.3},
                     }
                 ),
@@ -100,6 +112,8 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
         self.assertEqual(full["runs"], 2)
         self.assertAlmostEqual(full["oa_mean"], 0.9)
         self.assertAlmostEqual(full["oa_std"], 0.1414213562)
+        self.assertAlmostEqual(full["q_aux_mean"], 0.7)
+        self.assertAlmostEqual(full["fusion_weight_aux_mean"], 0.8)
 
     def test_does_not_mix_different_target_budgets(self):
         with tempfile.TemporaryDirectory() as tmp:

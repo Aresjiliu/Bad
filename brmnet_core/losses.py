@@ -65,7 +65,7 @@ def brmnet_loss(
         hard_retention = soft_retention.new_tensor(stats.hard_retention)
         budget = torch.square(soft_retention - target)
     quality = torch.zeros((), dtype=cls.dtype, device=labels.device)
-    if quality_targets is not None:
+    if quality_targets is not None and lambda_quality > 0.0 and "q_main" in outputs and "q_aux" in outputs:
         quality = modality_quality_loss(outputs["q_main"], outputs["q_aux"], quality_targets[0], quality_targets[1])
     total = cls + lambda_budget * budget + lambda_quality * quality
     return {

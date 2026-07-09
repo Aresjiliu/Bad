@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 from .losses import brmnet_loss
 
@@ -79,6 +80,45 @@ def _availability(batch: BRMNetBatch, main_available: float, aux_available: floa
     return mask
 
 
+def _quality_targets(batch: BRMNetBatch, main_quality: float, aux_quality: float) -> tuple[torch.Tensor, torch.Tensor]:
+    batch_size = int(batch.labels.numel())
+    main = torch.full(
+        (batch_size, 1),
+        float(main_quality),
+        dtype=batch.main.dtype,
+        device=batch.main.device,
+    )
+    aux = torch.full(
+        (batch_size, 1),
+        float(aux_quality),
+        dtype=batch.main.dtype,
+        device=batch.main.device,
+    )
+    return main, aux
+
+
+def _downsample_like_input(x: torch.Tensor, factor: int) -> torch.Tensor:
+    if factor <= 1:
+        return x
+    height, width = x.shape[-2:]
+    small = F.interpolate(
+        x,
+        size=(max(1, height // factor), max(1, width // factor)),
+        mode="bilinear",
+        align_corners=False,
+    )
+    return F.interpolate(small, size=(height, width), mode="bilinear", align_corners=False)
+
+
+def _occlude_top_rows(x: torch.Tensor, ratio: float) -> torch.Tensor:
+    ratio = min(max(float(ratio), 0.0), 1.0)
+    occluded = x.clone()
+    rows = int(round(x.shape[-2] * ratio))
+    if rows > 0:
+        occluded[..., :rows, :] = 0
+    return occluded
+
+
 def apply_degradation(
     batch: BRMNetBatch,
     degradation: str = "full",
@@ -87,13 +127,19 @@ def apply_degradation(
     """Apply evaluation-time modality degradation used by the paper plan."""
 
     if degradation == "full":
-        return batch
+        return BRMNetBatch(
+            batch.main,
+            batch.aux,
+            batch.labels,
+            batch.quality_targets or _quality_targets(batch, 1.0, 1.0),
+            batch.availability_mask,
+        )
     if degradation == "main_only":
         return BRMNetBatch(
             batch.main,
             torch.zeros_like(batch.aux),
             batch.labels,
-            batch.quality_targets,
+            _quality_targets(batch, 1.0, 0.0),
             _availability(batch, 1.0, 0.0),
         )
     if degradation == "aux_only":
@@ -101,7 +147,7 @@ def apply_degradation(
             torch.zeros_like(batch.main),
             batch.aux,
             batch.labels,
-            batch.quality_targets,
+            _quality_targets(batch, 0.0, 1.0),
             _availability(batch, 0.0, 1.0),
         )
     if degradation == "aux_noise":
@@ -110,7 +156,48 @@ def apply_degradation(
             batch.main,
             batch.aux + noise,
             batch.labels,
-            batch.quality_targets,
+            _quality_targets(batch, 1.0, 0.8),
+            _availability(batch, 1.0, 1.0),
+        )
+    noise_modes = {
+        "aux_noise_low": (max(float(aux_noise_std), 0.05), 0.8),
+        "aux_noise_mid": (max(float(aux_noise_std), 0.10), 0.5),
+        "aux_noise_high": (max(float(aux_noise_std), 0.20), 0.2),
+    }
+    if degradation in noise_modes:
+        std, target = noise_modes[degradation]
+        noise = torch.randn_like(batch.aux) * std
+        return BRMNetBatch(
+            batch.main,
+            batch.aux + noise,
+            batch.labels,
+            _quality_targets(batch, 1.0, target),
+            _availability(batch, 1.0, 1.0),
+        )
+    downsample_modes = {
+        "aux_downsample_2": (2, 0.5),
+        "aux_downsample_4": (4, 0.25),
+    }
+    if degradation in downsample_modes:
+        factor, target = downsample_modes[degradation]
+        return BRMNetBatch(
+            batch.main,
+            _downsample_like_input(batch.aux, factor),
+            batch.labels,
+            _quality_targets(batch, 1.0, target),
+            _availability(batch, 1.0, 1.0),
+        )
+    occlusion_modes = {
+        "aux_occlusion_25": (0.25, 0.75),
+        "aux_occlusion_50": (0.50, 0.50),
+    }
+    if degradation in occlusion_modes:
+        ratio, target = occlusion_modes[degradation]
+        return BRMNetBatch(
+            batch.main,
+            _occlude_top_rows(batch.aux, ratio),
+            batch.labels,
+            _quality_targets(batch, 1.0, target),
             _availability(batch, 1.0, 1.0),
         )
     raise ValueError(f"Unsupported degradation mode: {degradation}")
@@ -143,7 +230,15 @@ def apply_modality_dropout(
 
     main = batch.main * mask[:, 0].reshape(batch_size, 1, 1, 1)
     aux = batch.aux * mask[:, 1].reshape(batch_size, 1, 1, 1)
-    return BRMNetBatch(main, aux, batch.labels, batch.quality_targets, mask)
+    quality_targets = batch.quality_targets
+    if quality_targets is None:
+        quality_targets = (mask[:, 0:1].clone(), mask[:, 1:2].clone())
+    else:
+        quality_targets = (
+            quality_targets[0].to(device=device, dtype=batch.main.dtype) * mask[:, 0:1],
+            quality_targets[1].to(device=device, dtype=batch.main.dtype) * mask[:, 1:2],
+        )
+    return BRMNetBatch(main, aux, batch.labels, quality_targets, mask)
 
 
 def _forward_model(model: nn.Module, batch: BRMNetBatch) -> dict[str, torch.Tensor]:
@@ -167,12 +262,21 @@ def _new_meter() -> dict[str, float]:
         "resource_ratio": 0.0,
         "expected_params_ratio": 0.0,
         "expected_macs_ratio": 0.0,
+        "q_main": 0.0,
+        "q_aux": 0.0,
+        "fusion_weight_main": 0.0,
+        "fusion_weight_aux": 0.0,
         "correct": 0.0,
         "samples": 0.0,
     }
 
 
-def _update_meter(meter: dict[str, float], losses: dict[str, torch.Tensor], logits: torch.Tensor, labels: torch.Tensor) -> None:
+def _update_meter(
+    meter: dict[str, float],
+    losses: dict[str, torch.Tensor],
+    outputs: dict[str, torch.Tensor],
+    labels: torch.Tensor,
+) -> None:
     batch_size = int(labels.numel())
     for key in (
         "loss",
@@ -188,6 +292,15 @@ def _update_meter(meter: dict[str, float], losses: dict[str, torch.Tensor], logi
     ):
         loss_key = "total" if key == "loss" else key
         meter[key] += float(losses[loss_key].detach().cpu()) * batch_size
+    if "q_main" in outputs:
+        meter["q_main"] += float(outputs["q_main"].detach().mean().cpu()) * batch_size
+    if "q_aux" in outputs:
+        meter["q_aux"] += float(outputs["q_aux"].detach().mean().cpu()) * batch_size
+    if "fusion_weights" in outputs:
+        weights = outputs["fusion_weights"].detach()
+        meter["fusion_weight_main"] += float(weights[:, 0].mean().cpu()) * batch_size
+        meter["fusion_weight_aux"] += float(weights[:, 1].mean().cpu()) * batch_size
+    logits = outputs["logits"]
     meter["correct"] += float((logits.argmax(dim=1) == labels).sum().detach().cpu())
     meter["samples"] += float(batch_size)
 
@@ -205,6 +318,10 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
         "resource_ratio": meter["resource_ratio"] / samples,
         "expected_params_ratio": meter["expected_params_ratio"] / samples,
         "expected_macs_ratio": meter["expected_macs_ratio"] / samples,
+        "q_main": meter["q_main"] / samples,
+        "q_aux": meter["q_aux"] / samples,
+        "fusion_weight_main": meter["fusion_weight_main"] / samples,
+        "fusion_weight_aux": meter["fusion_weight_aux"] / samples,
         "accuracy": meter["correct"] / samples,
         "samples": int(meter["samples"]),
     }
@@ -262,7 +379,7 @@ def train_one_epoch(
         if grad_clip is not None:
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(grad_clip))
         optimizer.step()
-        _update_meter(meter, losses, outputs["logits"], batch.labels)
+        _update_meter(meter, losses, outputs, batch.labels)
 
     return _finalize_meter(meter)
 
@@ -286,7 +403,7 @@ def evaluate(
         batch = apply_degradation(unpack_batch(raw_batch, device), degradation=degradation, aux_noise_std=aux_noise_std)
         outputs = _forward_model(model, batch)
         losses = brmnet_loss(model, outputs, batch.labels, quality_targets=batch.quality_targets, **loss_kwargs)
-        _update_meter(meter, losses, outputs["logits"], batch.labels)
+        _update_meter(meter, losses, outputs, batch.labels)
         predictions = outputs["logits"].argmax(dim=1)
         num_classes = int(outputs["logits"].shape[1])
         batch_confusion = torch.bincount(
@@ -311,7 +428,19 @@ def evaluate_degradation_matrix(
     device: torch.device | str,
     loss_kwargs: dict[str, float] | None = None,
     aux_noise_std: float = 0.0,
-    modes: tuple[str, ...] = ("full", "main_only", "aux_only", "aux_noise"),
+    modes: tuple[str, ...] = (
+        "full",
+        "main_only",
+        "aux_only",
+        "aux_noise",
+        "aux_noise_low",
+        "aux_noise_mid",
+        "aux_noise_high",
+        "aux_downsample_2",
+        "aux_downsample_4",
+        "aux_occlusion_25",
+        "aux_occlusion_50",
+    ),
 ) -> dict[str, dict[str, float]]:
     return {
         mode: evaluate(

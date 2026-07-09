@@ -61,6 +61,27 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertTrue(torch.equal(main_only.aux, torch.zeros_like(batch.aux)))
         self.assertTrue(torch.equal(aux_only.main, torch.zeros_like(batch.main)))
 
+    def test_apply_degradation_generates_quality_targets_for_p0_modes(self):
+        batch = unpack_batch(
+            (
+                torch.ones(2, 4, 8, 8),
+                torch.arange(1, 129, dtype=torch.float32).reshape(2, 1, 8, 8),
+                torch.tensor([0, 1]),
+            ),
+            torch.device("cpu"),
+        )
+
+        noisy = apply_degradation(batch, degradation="aux_noise_mid")
+        downsampled = apply_degradation(batch, degradation="aux_downsample_2")
+        occluded = apply_degradation(batch, degradation="aux_occlusion_50")
+
+        torch.testing.assert_close(noisy.quality_targets[0], torch.ones(2, 1))
+        torch.testing.assert_close(noisy.quality_targets[1], torch.full((2, 1), 0.5))
+        torch.testing.assert_close(downsampled.quality_targets[1], torch.full((2, 1), 0.5))
+        torch.testing.assert_close(occluded.quality_targets[1], torch.full((2, 1), 0.5))
+        self.assertFalse(torch.equal(downsampled.aux, batch.aux))
+        self.assertEqual(float((occluded.aux == 0).float().mean()), 0.5)
+
     def test_apply_modality_dropout_drops_one_modality_per_selected_sample(self):
         batch = unpack_batch(
             (
@@ -82,6 +103,47 @@ class BRMNetEngineTest(unittest.TestCase):
         dropped_aux = dropped.availability_mask[:, 1] == 0
         self.assertTrue(torch.equal(dropped.main[dropped_main], torch.zeros_like(dropped.main[dropped_main])))
         self.assertTrue(torch.equal(dropped.aux[dropped_aux], torch.zeros_like(dropped.aux[dropped_aux])))
+
+    def test_apply_modality_dropout_generates_quality_targets_from_availability(self):
+        batch = unpack_batch(
+            (
+                torch.ones(6, 4, 7, 7),
+                torch.ones(6, 1, 7, 7),
+                torch.tensor([0, 1, 2, 0, 1, 2]),
+            ),
+            torch.device("cpu"),
+        )
+
+        dropped = apply_modality_dropout(
+            batch,
+            probability=1.0,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        self.assertIsNotNone(dropped.quality_targets)
+        torch.testing.assert_close(dropped.quality_targets[0], dropped.availability_mask[:, 0:1])
+        torch.testing.assert_close(dropped.quality_targets[1], dropped.availability_mask[:, 1:2])
+
+    def test_apply_modality_dropout_masks_existing_quality_targets(self):
+        batch = unpack_batch(
+            (
+                torch.ones(6, 4, 7, 7),
+                torch.ones(6, 1, 7, 7),
+                torch.tensor([0, 1, 2, 0, 1, 2]),
+                torch.full((6, 1), 0.9),
+                torch.full((6, 1), 0.8),
+            ),
+            torch.device("cpu"),
+        )
+
+        dropped = apply_modality_dropout(
+            batch,
+            probability=1.0,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        torch.testing.assert_close(dropped.quality_targets[0], torch.full((6, 1), 0.9) * dropped.availability_mask[:, 0:1])
+        torch.testing.assert_close(dropped.quality_targets[1], torch.full((6, 1), 0.8) * dropped.availability_mask[:, 1:2])
 
     def test_train_one_epoch_updates_model_and_reports_metrics(self):
         torch.manual_seed(0)
@@ -168,6 +230,34 @@ class BRMNetEngineTest(unittest.TestCase):
             self.assertIn("accuracy", metrics)
             self.assertEqual(metrics["samples"], 4)
 
+    def test_evaluate_reports_quality_and_routing_statistics(self):
+        class FixedRoutingModel(nn.Module):
+            def forward(self, main, aux, availability_mask=None):
+                batch_size = main.shape[0]
+                weights = torch.tensor([[0.25, 0.75]], dtype=main.dtype).repeat(batch_size, 1)
+                return {
+                    "logits": torch.ones(batch_size, 3),
+                    "q_main": torch.full((batch_size, 1), 0.25),
+                    "q_aux": torch.full((batch_size, 1), 0.75),
+                    "fusion_weights": weights,
+                }
+
+        loader = DataLoader(
+            TensorDataset(
+                torch.randn(4, 4, 7, 7),
+                torch.randn(4, 1, 7, 7),
+                torch.tensor([0, 1, 2, 1]),
+            ),
+            batch_size=2,
+        )
+
+        metrics = evaluate(FixedRoutingModel(), loader, torch.device("cpu"))
+
+        self.assertAlmostEqual(metrics["q_main"], 0.25)
+        self.assertAlmostEqual(metrics["q_aux"], 0.75)
+        self.assertAlmostEqual(metrics["fusion_weight_main"], 0.25)
+        self.assertAlmostEqual(metrics["fusion_weight_aux"], 0.75)
+
     def test_evaluate_degradation_matrix_returns_report_modes(self):
         torch.manual_seed(0)
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3, init_score=0.5)
@@ -182,7 +272,22 @@ class BRMNetEngineTest(unittest.TestCase):
 
         matrix = evaluate_degradation_matrix(model, loader, torch.device("cpu"), aux_noise_std=0.1)
 
-        self.assertEqual(set(matrix), {"full", "main_only", "aux_only", "aux_noise"})
+        self.assertEqual(
+            set(matrix),
+            {
+                "full",
+                "main_only",
+                "aux_only",
+                "aux_noise",
+                "aux_noise_low",
+                "aux_noise_mid",
+                "aux_noise_high",
+                "aux_downsample_2",
+                "aux_downsample_4",
+                "aux_occlusion_25",
+                "aux_occlusion_50",
+            },
+        )
         self.assertTrue(all(metrics["samples"] == 4 for metrics in matrix.values()))
 
     def test_evaluate_reports_remote_sensing_classification_metrics(self):
