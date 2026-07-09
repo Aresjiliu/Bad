@@ -64,6 +64,31 @@ class BRMNetResourceTest(unittest.TestCase):
         self.assertEqual(stats.params_ratio, 1.0)
         self.assertEqual(stats.macs_ratio, 1.0)
 
+    def test_structured_resources_support_modality_states(self):
+        full = estimate_brmnet_resources(
+            self.model,
+            patch_size=7,
+            mode="baseline",
+            modality_state="full",
+        )
+        main_only = estimate_brmnet_resources(
+            self.model,
+            patch_size=7,
+            mode="baseline",
+            modality_state="main_only",
+        )
+        aux_only = estimate_brmnet_resources(
+            self.model,
+            patch_size=7,
+            mode="baseline",
+            modality_state="aux_only",
+        )
+
+        self.assertLess(main_only.macs, full.macs)
+        self.assertLess(aux_only.macs, full.macs)
+        self.assertLess(main_only.macs_ratio, 1.0)
+        self.assertLess(aux_only.macs_ratio, 1.0)
+
     def test_expected_resources_are_differentiable(self):
         stats = estimate_brmnet_resources(self.model, patch_size=7, mode="expected")
 
@@ -157,6 +182,27 @@ class BRMNetResourceTest(unittest.TestCase):
         self.assertEqual(compact_stats.params, baseline.params)
         self.assertEqual(compact_stats.macs, baseline.macs)
 
+    def test_compact_resources_support_modality_states(self):
+        from brmnet_core.compact import CompactBRMNet
+
+        compact = CompactBRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            main_width=(32, 64, 128),
+            aux_width=(32, 64, 128),
+            head_width=(128, 64),
+        )
+
+        full = estimate_compact_resources(compact, patch_size=7, modality_state="full")
+        main_only = estimate_compact_resources(compact, patch_size=7, modality_state="main_only")
+        aux_only = estimate_compact_resources(compact, patch_size=7, modality_state="aux_only")
+
+        self.assertLess(main_only.macs, full.macs)
+        self.assertLess(aux_only.macs, full.macs)
+        self.assertLess(main_only.macs_ratio, 1.0)
+        self.assertLess(aux_only.macs_ratio, 1.0)
+
     def test_global_threshold_projects_hard_resources_toward_budget(self):
         with torch.no_grad():
             for index, gate in enumerate(
@@ -221,6 +267,8 @@ class BRMNetResourceTest(unittest.TestCase):
             estimate_brmnet_resources(legacy, patch_size=7, mode="baseline")
         with self.assertRaisesRegex(ValueError, "mode"):
             estimate_brmnet_resources(self.model, patch_size=7, mode="unknown")
+        with self.assertRaisesRegex(ValueError, "modality_state"):
+            estimate_brmnet_resources(self.model, patch_size=7, mode="baseline", modality_state="unknown")
         with self.assertRaisesRegex(ValueError, "patch_size"):
             estimate_brmnet_resources(self.model, patch_size=0, mode="baseline")
 

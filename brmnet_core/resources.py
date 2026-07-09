@@ -10,6 +10,8 @@ from .hard_concrete import HardConcreteGate, iter_hard_concrete_gates
 
 Scalar = int | float | torch.Tensor
 
+MODALITY_STATES = {"full", "main_only", "aux_only"}
+
 
 @dataclass(frozen=True)
 class BRMNetResourceStats:
@@ -54,7 +56,13 @@ def _linear_cost(input_features: Scalar, output_features: int, bias: bool) -> tu
     return params, weights
 
 
-def _raw_resources(model, patch_size: int, mode: str) -> tuple[Scalar, Scalar]:
+def _validate_modality_state(modality_state: str) -> None:
+    if modality_state not in MODALITY_STATES:
+        raise ValueError(f"Unsupported modality_state: {modality_state}")
+
+
+def _raw_resources(model, patch_size: int, mode: str, modality_state: str = "full") -> tuple[Scalar, Scalar]:
+    _validate_modality_state(modality_state)
     main_blocks = model.main_encoder.net
     aux_blocks = model.aux_encoder.net
     head_blocks = model.classifier.net
@@ -76,10 +84,12 @@ def _raw_resources(model, patch_size: int, mode: str) -> tuple[Scalar, Scalar]:
 
     params: Scalar = 0
     macs: Scalar = 0
-    for blocks, input_channels, widths in (
-        (main_blocks, main_blocks[0].conv.in_channels, main_widths),
-        (aux_blocks, aux_blocks[0].conv.in_channels, aux_widths),
-    ):
+    branch_specs = []
+    if modality_state in {"full", "main_only"}:
+        branch_specs.append((main_blocks, main_blocks[0].conv.in_channels, main_widths))
+    if modality_state in {"full", "aux_only"}:
+        branch_specs.append((aux_blocks, aux_blocks[0].conv.in_channels, aux_widths))
+    for blocks, input_channels, widths in branch_specs:
         spatial = patch_size
         previous = input_channels
         for block, width in zip(blocks, widths):
@@ -90,7 +100,12 @@ def _raw_resources(model, patch_size: int, mode: str) -> tuple[Scalar, Scalar]:
             previous = width
 
     shared_width = main_widths[2]
-    for estimator in (model.main_quality, model.aux_quality):
+    quality_estimators = []
+    if modality_state in {"full", "main_only"}:
+        quality_estimators.append(model.main_quality)
+    if modality_state in {"full", "aux_only"}:
+        quality_estimators.append(model.aux_quality)
+    for estimator in quality_estimators:
         first_linear = estimator.net[2]
         second_linear = estimator.net[4]
         first_params, first_macs = _linear_cost(
@@ -128,16 +143,22 @@ def _raw_resources(model, patch_size: int, mode: str) -> tuple[Scalar, Scalar]:
     return params, macs
 
 
-def estimate_brmnet_resources(model, patch_size: int, mode: str = "expected") -> BRMNetResourceStats:
+def estimate_brmnet_resources(
+    model,
+    patch_size: int,
+    mode: str = "expected",
+    modality_state: str = "full",
+) -> BRMNetResourceStats:
     if getattr(model, "gate_type", None) != "hard_concrete":
         raise ValueError("Resource estimation requires a hard_concrete BRMNet.")
     if patch_size <= 0:
         raise ValueError(f"patch_size must be positive, got {patch_size}")
     if mode not in {"baseline", "expected", "hard"}:
         raise ValueError(f"Unsupported resource mode: {mode}")
+    _validate_modality_state(modality_state)
 
-    baseline_params, baseline_macs = _raw_resources(model, patch_size, "baseline")
-    params, macs = _raw_resources(model, patch_size, mode)
+    baseline_params, baseline_macs = _raw_resources(model, patch_size, "baseline", "full")
+    params, macs = _raw_resources(model, patch_size, mode, modality_state)
     return BRMNetResourceStats(
         params=params,
         macs=macs,
@@ -217,16 +238,26 @@ def initialize_uniform_resource_budget(
     return retention
 
 
-def estimate_compact_resources(model, patch_size: int) -> BRMNetResourceStats:
+def estimate_compact_resources(
+    model,
+    patch_size: int,
+    modality_state: str = "full",
+) -> BRMNetResourceStats:
     if patch_size <= 0:
         raise ValueError(f"patch_size must be positive, got {patch_size}")
+    _validate_modality_state(modality_state)
     main_blocks = model.main_encoder.net
     aux_blocks = model.aux_encoder.net
     head_blocks = model.classifier.net
 
     params = 0
     macs = 0
-    for blocks in (main_blocks, aux_blocks):
+    branch_blocks = []
+    if modality_state in {"full", "main_only"}:
+        branch_blocks.append(main_blocks)
+    if modality_state in {"full", "aux_only"}:
+        branch_blocks.append(aux_blocks)
+    for blocks in branch_blocks:
         spatial = patch_size
         for block in blocks:
             spatial = _conv_output_size(spatial, block.conv)
@@ -240,7 +271,12 @@ def estimate_compact_resources(model, patch_size: int) -> BRMNetResourceStats:
             macs += int(block_macs)
 
     shared_width = main_blocks[-1].conv.out_channels
-    for estimator in (model.main_quality, model.aux_quality):
+    quality_estimators = []
+    if modality_state in {"full", "main_only"}:
+        quality_estimators.append(model.main_quality)
+    if modality_state in {"full", "aux_only"}:
+        quality_estimators.append(model.aux_quality)
+    for estimator in quality_estimators:
         for linear in (estimator.net[2], estimator.net[4]):
             linear_params, linear_macs = _linear_cost(
                 linear.in_features,
@@ -272,11 +308,16 @@ def estimate_compact_resources(model, patch_size: int) -> BRMNetResourceStats:
     )
     params += int(linear_params)
     macs += int(linear_macs)
+    if modality_state == "full":
+        full_params, full_macs = params, macs
+    else:
+        full_stats = estimate_compact_resources(model, patch_size, modality_state="full")
+        full_params, full_macs = full_stats.params, full_stats.macs
     return BRMNetResourceStats(
         params=params,
         macs=macs,
-        params_ratio=1.0,
-        macs_ratio=1.0,
+        params_ratio=params / full_params,
+        macs_ratio=macs / full_macs,
     )
 
 

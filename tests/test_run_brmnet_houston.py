@@ -159,6 +159,15 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 )
             self.assertLess(stats["equivalence_max_abs_error"], 1e-5)
             self.assertLess(stats["equivalence_l2_relative_error"], 1e-5)
+            for family in ("hard", "compact"):
+                self.assertLess(
+                    stats["state_dependent"][family]["main_only"]["macs_ratio"],
+                    stats["state_dependent"][family]["full"]["macs_ratio"],
+                )
+                self.assertLess(
+                    stats["state_dependent"][family]["aux_only"]["macs_ratio"],
+                    stats["state_dependent"][family]["full"]["macs_ratio"],
+                )
             self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
 
     def test_split_loader_for_validation_uses_train_subset_and_deterministic_val_subset(self):

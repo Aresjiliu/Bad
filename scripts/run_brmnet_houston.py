@@ -312,6 +312,19 @@ def _as_float(value: object) -> float:
     return float(value)
 
 
+def _resource_payload(stats, baseline=None) -> dict[str, float | int]:
+    payload: dict[str, float | int] = {
+        "params": int(_as_float(stats.params)),
+        "macs": int(_as_float(stats.macs)),
+        "params_ratio": _as_float(stats.params_ratio),
+        "macs_ratio": _as_float(stats.macs_ratio),
+    }
+    if baseline is not None:
+        payload["global_params_ratio"] = int(_as_float(stats.params)) / int(_as_float(baseline.params))
+        payload["global_macs_ratio"] = int(_as_float(stats.macs)) / int(_as_float(baseline.macs))
+    return payload
+
+
 def write_structured_pruning_artifacts(
     model: torch.nn.Module,
     run_dir: str | Path,
@@ -346,6 +359,32 @@ def write_structured_pruning_artifacts(
     compact, metadata = export_compact_brmnet(model, threshold=threshold)
     compact.eval()
     compact_resources = estimate_compact_resources(compact, patch_size=patch_size)
+    modality_states = ("full", "main_only", "aux_only")
+    state_dependent = {
+        "hard": {
+            state: _resource_payload(
+                estimate_brmnet_resources(
+                    model,
+                    patch_size=patch_size,
+                    mode="hard",
+                    modality_state=state,
+                ),
+                baseline=baseline,
+            )
+            for state in modality_states
+        },
+        "compact": {
+            state: _resource_payload(
+                estimate_compact_resources(
+                    compact,
+                    patch_size=patch_size,
+                    modality_state=state,
+                ),
+                baseline=baseline,
+            )
+            for state in modality_states
+        },
+    }
 
     with torch.no_grad():
         source_logits = model(sample_main, sample_aux)["logits"]
@@ -400,6 +439,7 @@ def write_structured_pruning_artifacts(
             "params_ratio": int(compact_resources.params) / int(baseline.params),
             "macs_ratio": int(compact_resources.macs) / int(baseline.macs),
         },
+        "state_dependent": state_dependent,
         "equivalence_max_abs_error": equivalence_error,
         "equivalence_l2_relative_error": equivalence_l2_relative,
         "gates": gate_records,
