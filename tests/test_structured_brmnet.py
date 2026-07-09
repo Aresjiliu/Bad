@@ -1,12 +1,31 @@
 import unittest
 
 import torch
+from torch import nn
 
 from brmnet_core.budget_gates import BudgetGatedConv2d
 from brmnet_core.fusion import ReliabilityGatedFusion
 from brmnet_core.gated_blocks import HardConcreteConvBlock
 from brmnet_core.hard_concrete import HardConcreteGate
 from brmnet_core.model import BRMNet
+
+
+class CountingEncoder(nn.Module):
+    def __init__(self, out_channels: int = 128) -> None:
+        super().__init__()
+        self.out_channels = out_channels
+        self.calls = 0
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        self.calls += 1
+        return torch.ones(
+            inputs.shape[0],
+            self.out_channels,
+            4,
+            4,
+            device=inputs.device,
+            dtype=inputs.dtype,
+        )
 
 
 class StructuredBRMNetTest(unittest.TestCase):
@@ -88,6 +107,42 @@ class StructuredBRMNetTest(unittest.TestCase):
         )
 
         torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
+
+    def test_model_skips_fully_unavailable_auxiliary_encoder(self):
+        model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
+        model.eval()
+        model.main_encoder = CountingEncoder()
+        model.aux_encoder = CountingEncoder()
+        availability_mask = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+
+        outputs = model(
+            torch.randn(2, 4, 7, 7),
+            torch.randn(2, 1, 7, 7),
+            availability_mask=availability_mask,
+        )
+
+        self.assertEqual(model.main_encoder.calls, 1)
+        self.assertEqual(model.aux_encoder.calls, 0)
+        torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
+        torch.testing.assert_close(outputs["q_aux"], torch.zeros(2, 1))
+
+    def test_model_skips_fully_unavailable_main_encoder(self):
+        model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
+        model.eval()
+        model.main_encoder = CountingEncoder()
+        model.aux_encoder = CountingEncoder()
+        availability_mask = torch.tensor([[0.0, 1.0], [0.0, 1.0]])
+
+        outputs = model(
+            torch.randn(2, 4, 7, 7),
+            torch.randn(2, 1, 7, 7),
+            availability_mask=availability_mask,
+        )
+
+        self.assertEqual(model.main_encoder.calls, 0)
+        self.assertEqual(model.aux_encoder.calls, 1)
+        torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
+        torch.testing.assert_close(outputs["q_main"], torch.zeros(2, 1))
 
     def test_legacy_model_remains_available(self):
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)

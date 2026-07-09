@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 
+from .availability import encode_available_modalities
 from .encoders import BudgetGatedEncoder
 from .fusion import BudgetGatedFusionHead, ModalityQualityEstimator, ReliabilityGatedFusion
 from .hard_concrete import HardConcreteGate
@@ -61,10 +62,15 @@ class BRMNet(nn.Module):
         aux_input: torch.Tensor,
         availability_mask: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
-        main_feature = self.main_encoder(main_input)
-        aux_feature = self.aux_encoder(aux_input)
-        q_main = self.main_quality(main_feature)
-        q_aux = self.aux_quality(aux_feature)
+        main_feature, aux_feature, q_main, q_aux = encode_available_modalities(
+            self.main_encoder,
+            self.aux_encoder,
+            self.main_quality,
+            self.aux_quality,
+            main_input,
+            aux_input,
+            availability_mask,
+        )
         fused, weights = self.reliability_fusion(
             main_feature,
             aux_feature,
