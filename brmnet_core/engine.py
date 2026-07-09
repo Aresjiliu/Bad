@@ -159,10 +159,11 @@ def apply_degradation(
             _quality_targets(batch, 1.0, 0.8),
             _availability(batch, 1.0, 1.0),
         )
+    base_noise_std = float(aux_noise_std) if aux_noise_std > 0 else 0.1
     noise_modes = {
-        "aux_noise_low": (max(float(aux_noise_std), 0.05), 0.8),
-        "aux_noise_mid": (max(float(aux_noise_std), 0.10), 0.5),
-        "aux_noise_high": (max(float(aux_noise_std), 0.20), 0.2),
+        "aux_noise_low": (0.5 * base_noise_std, 0.8),
+        "aux_noise_mid": (1.0 * base_noise_std, 0.5),
+        "aux_noise_high": (2.0 * base_noise_std, 0.2),
     }
     if degradation in noise_modes:
         std, target = noise_modes[degradation]

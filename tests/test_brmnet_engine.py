@@ -82,6 +82,25 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertFalse(torch.equal(downsampled.aux, batch.aux))
         self.assertEqual(float((occluded.aux == 0).float().mean()), 0.5)
 
+    def test_aux_noise_degradation_uses_monotonic_noise_levels(self):
+        batch = unpack_batch(
+            (
+                torch.ones(4, 4, 8, 8),
+                torch.zeros(4, 1, 8, 8),
+                torch.tensor([0, 1, 2, 1]),
+            ),
+            torch.device("cpu"),
+        )
+
+        means = []
+        for mode in ("aux_noise_low", "aux_noise_mid", "aux_noise_high"):
+            torch.manual_seed(7)
+            degraded = apply_degradation(batch, degradation=mode, aux_noise_std=0.1)
+            means.append(float(degraded.aux.abs().mean()))
+
+        self.assertLess(means[0], means[1])
+        self.assertLess(means[1], means[2])
+
     def test_apply_modality_dropout_drops_one_modality_per_selected_sample(self):
         batch = unpack_batch(
             (
