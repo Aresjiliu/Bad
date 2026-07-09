@@ -70,7 +70,7 @@
 先跑 80% budget、seed 0 的完整 RC 设置：
 
 ```powershell
-python scripts/run_brmnet_houston.py `
+conda run -n hslinets python scripts/run_brmnet_houston.py `
   --data-format legacy `
   --data-root D:\Academic\HSLiNets-main\Huston2013 `
   --split-protocol official `
@@ -88,9 +88,9 @@ python scripts/run_brmnet_houston.py `
 
 ```powershell
 foreach ($s in 1,2) {
-  python scripts/run_brmnet_houston.py `
+  conda run -n hslinets python scripts/run_brmnet_houston.py `
     --data-format legacy `
-  --data-root D:\Academic\HSLiNets-main\Huston2013 `
+    --data-root D:\Academic\HSLiNets-main\Huston2013 `
     --split-protocol official `
     --target-budget 0.8 `
     --budget-metric macs `
@@ -106,7 +106,7 @@ foreach ($s in 1,2) {
 汇总结果：
 
 ```powershell
-python scripts/summarize_brmnet_experiments.py `
+conda run -n hslinets python scripts/summarize_brmnet_experiments.py `
   --root output/experiments `
   --output-prefix docs/generated/brmnet_p0_reliability_summary
 ```
@@ -128,5 +128,7 @@ python scripts/summarize_brmnet_experiments.py `
 python -m pytest tests -q
 104 passed, 1 skipped
 ```
+
+后续长跑实验默认使用 `hslinets` conda 环境。已验证该环境中 PyTorch 2.5.1 可识别 CUDA，GPU 为 NVIDIA GeForce RTX 4060 Laptop GPU。详细记录见 `docs/EXPERIMENT_ENVIRONMENT_ZH.md`。
 
 完整仓库级 `python -m pytest -q` 仍会在旧目录 `lib/` 与 `missing3/` 的 torchvision 导入处失败，原因是当前环境中的 torchvision C++ op 注册异常，与本次 BRM-Net P0 改动无关。
