@@ -63,3 +63,11 @@
 - Regenerated `docs/generated/brmnet_priority_summary.csv` and `.md`; summary now covers 59 protocol/mode groups.
 - Verified with `conda run -n hslinets python -m unittest discover -s tests`: 125 tests passed, 1 skipped.
 - Next action: tune degradation curriculum/proportions because multi-type improves occlusion/downsample robustness but slightly lowers clean full-modality OA.
+
+## 2026-07-10 light multi-type schedule
+
+- Ran `quality_multi_degradation_p025` seeds 0/1/2 using multi-type degradation probability 0.25.
+- Regenerated `docs/generated/brmnet_priority_summary.csv` and `.md`; summary now covers 70 protocol/mode groups.
+- Added `quality_multi_degradation_p025` to the formal core experiment matrix; regenerated `docs/generated/brmnet_priority_matrix.csv` and `docs/generated/run_brmnet_priority_matrix.ps1`.
+- Verified with `conda run -n hslinets python -m unittest discover -s tests`: 125 tests passed, 1 skipped.
+- Current recommendation: treat `quality_multi_degradation_p025` as the balanced main candidate because it gives adverse-state average OA 0.8476 while preserving full OA 0.8690.

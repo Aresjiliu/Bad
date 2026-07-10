@@ -58,3 +58,11 @@
 - It produces clearer degradation-sensitive routing for occlusion and resolution loss. Under `aux_occlusion_50`, `q_aux` is 0.5480 and auxiliary fusion weight is 0.3891; under `aux_downsample_4`, `q_aux` is 0.6617 and auxiliary fusion weight is 0.4169.
 - The tradeoff is clean full-modality performance: compact full OA is 0.8599, lower than noise-only degradation supervision 0.8745 and the refreshed full baseline 0.8697. This means the next improvement should tune the degradation schedule, not simply increase augmentation diversity.
 - Paper framing should present the current result as a robustness-efficiency tradeoff: multi-type degradation improves adverse-modality states at about 80% MACs, while a curriculum or weighted degradation sampler is needed to recover clean full-modality accuracy.
+
+## 2026-07-10 light multi-type degradation findings
+
+- Reducing multi-type degradation probability from 0.50 to 0.25 gives the best current balance. Compact full OA recovers to 0.8690, close to the refreshed full baseline 0.8697 and above the p=0.50 multi-type result 0.8599.
+- The adverse-state average over `aux_noise_high`, `aux_occlusion_50`, and `aux_downsample_4` is 0.8476 for p=0.25, slightly above p=0.50 multi-type 0.8472 and far above the refreshed full baseline 0.7489.
+- p=0.25 is especially strong for occlusion: compact `aux_occlusion_50` OA is 0.8557, compared with 0.8466 for p=0.50, 0.7332 for noise-only quality degradation, and 0.7421 for the full baseline.
+- The remaining weakness is high-noise routing calibration. p=0.25 has `q_aux` 0.9086 and auxiliary fusion weight 0.4772 under `aux_noise_high`, so it relies more on the auxiliary branch than p=0.50. This keeps clean accuracy but may reduce robustness on some seeds.
+- Current default recommendation for the paper experiment table: use `quality_multi_degradation_p025` as the balanced main method, and report noise-only and p=0.50 multi-type as ablations that expose the robustness-clean-accuracy tradeoff.

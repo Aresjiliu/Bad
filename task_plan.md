@@ -79,10 +79,12 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 
 ### Phase F: Robustness Tradeoff Tuning
 
-1. [pending] Add a weighted degradation sampler so the training mix can use more clean/noise samples and fewer severe spatial degradations.
-2. [pending] Run a compact tuning grid: multi-type probability 0.25 vs 0.5 and type mix balanced vs noise-heavy.
-3. [pending] Select the final thesis/paper default by average adverse-state OA first, then full-modality OA as a tie-breaker.
-4. [pending] Generate a paper-ready table with baseline, uniform, noise-only, and multi-type degradation supervision.
+1. [completed] Run a compact tuning grid for multi-type probability 0.25 vs 0.5.
+2. [completed] Add `quality_multi_degradation_p025` to the formal experiment matrix.
+3. [completed] Select the current thesis/paper default by average adverse-state OA first, then full-modality OA as a tie-breaker.
+4. [pending] Add a weighted degradation sampler if more tuning is needed after paper table generation.
+5. [pending] Generate a paper-ready table with baseline, uniform, noise-only, p=0.50 multi-type, and p=0.25 multi-type degradation supervision.
+6. [pending] Update method text to explain p=0.25 as a light degradation curriculum rather than an arbitrary hyperparameter.
 
 ### Phase D: Paper Figures and Writing
 

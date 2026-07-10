@@ -137,6 +137,18 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "note": "Trains reliability scores with noise, resolution-loss, and occlusion auxiliary degradation.",
         },
         {
+            "variant": "quality_multi_degradation_p025",
+            "target_budget": None,
+            "modality_dropout_prob": 0.25,
+            "lambda_budget": 1.0,
+            "lambda_quality": 1.0,
+            "aux_quality_degradation_prob": 0.25,
+            "aux_quality_degradation_types": "noise,downsample_4,occlusion_50",
+            "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
+            "note": "Light multi-degradation supervision for balancing clean OA and adverse-modality robustness.",
+        },
+        {
             "variant": "legacy_sigmoid_reference",
             "target_budget": None,
             "modality_dropout_prob": 0.25,
