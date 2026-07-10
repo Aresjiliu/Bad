@@ -83,8 +83,9 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 2. [completed] Add `quality_multi_degradation_p025` to the formal experiment matrix.
 3. [completed] Select the current thesis/paper default by average adverse-state OA first, then full-modality OA as a tie-breaker.
 4. [pending] Add a weighted degradation sampler if more tuning is needed after paper table generation.
-5. [pending] Generate a paper-ready table with baseline, uniform, noise-only, p=0.50 multi-type, and p=0.25 multi-type degradation supervision.
-6. [pending] Update method text to explain p=0.25 as a light degradation curriculum rather than an arbitrary hyperparameter.
+5. [completed] Generate a paper-ready table with baseline, uniform, noise-only, p=0.50 multi-type, and p=0.25 multi-type degradation supervision.
+6. [completed] Update the Overleaf experiment section with the robustness ablation result.
+7. [pending] Update method text to explain p=0.25 as a light degradation curriculum rather than an arbitrary hyperparameter.
 
 ### Phase D: Paper Figures and Writing
 

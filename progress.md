@@ -71,3 +71,11 @@
 - Added `quality_multi_degradation_p025` to the formal core experiment matrix; regenerated `docs/generated/brmnet_priority_matrix.csv` and `docs/generated/run_brmnet_priority_matrix.ps1`.
 - Verified with `conda run -n hslinets python -m unittest discover -s tests`: 125 tests passed, 1 skipped.
 - Current recommendation: treat `quality_multi_degradation_p025` as the balanced main candidate because it gives adverse-state average OA 0.8476 while preserving full OA 0.8690.
+
+## 2026-07-10 paper table update
+
+- Added `scripts/make_brmnet_paper_tables.py` to export the robustness ablation table from `docs/generated/brmnet_priority_summary.csv`.
+- Generated `docs/generated/brmnet_robustness_table.csv` and `.md`.
+- Generated Overleaf table `D:\Academic\paper_submission\brmnet_pricai2026\tables\robustness_ablation.tex`.
+- Updated Overleaf experiment section `D:\Academic\paper_submission\brmnet_pricai2026\sections\04_experiments.tex` to cite the new three-seed robustness ablation and remove outdated preliminary wording.
+- Verified local LaTeX build with `D:\texlive\2026\bin\windows\latexmk.exe -pdf -interaction=nonstopmode -halt-on-error paper.tex`.
