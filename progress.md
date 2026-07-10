@@ -86,3 +86,9 @@
 - Reframed the main technical claim as degradation-aware reliability supervision for degraded-but-available auxiliary modalities, not generic reliability weighting.
 - Added the key paper-facing result: `quality_multi_degradation_p025` reaches 84.76% adverse-state average OA at 80.01% MACs while preserving 86.90% full-modality OA.
 - Rebuilt the Overleaf manuscript successfully with `D:\texlive\2026\bin\windows\latexmk.exe -pdf -interaction=nonstopmode -halt-on-error paper.tex`.
+
+## 2026-07-10 degradation reliability diagnostics
+
+- Added `scripts/analyze_brmnet_degradation_reliability.py` to convert the priority summary into degradation diagnostics, correlation tables, and a publication-style multi-panel figure.
+- Generated `docs/generated/brmnet_degradation_reliability.md`, `.csv` diagnostics, `.csv` correlations, `.pdf`, and `.png`.
+- Main interpretation: multi-type degradation supervision improves adverse-state OA, but fusion weights are not fully calibrated quality scores; the paper should claim robust degradation-aware training rather than automatic monotonic suppression of every degraded modality.

@@ -1,0 +1,61 @@
+variant,method,family,metric,n,pearson_r,spearman_r
+full,Full baseline,noise,OA,3,-0.9782512657846296,-0.9999999999999998
+full,Full baseline,noise,Full-OA drop,3,0.9782512657846295,0.9999999999999998
+full,Full baseline,noise,Aux reliability,3,0.9835474605809685,0.9999999999999998
+full,Full baseline,noise,Aux fusion weight,3,0.984300268216652,0.9999999999999998
+full,Full baseline,resolution,OA,2,-1.0,-0.9999999999999998
+full,Full baseline,resolution,Full-OA drop,2,1.0,0.9999999999999998
+full,Full baseline,resolution,Aux reliability,2,-1.0,-0.9999999999999998
+full,Full baseline,resolution,Aux fusion weight,2,-0.9999999999999999,-0.9999999999999998
+full,Full baseline,occlusion,OA,2,-0.9999999999999999,-0.9999999999999998
+full,Full baseline,occlusion,Full-OA drop,2,0.9999999999999999,0.9999999999999998
+full,Full baseline,occlusion,Aux reliability,2,1.0,0.9999999999999998
+full,Full baseline,occlusion,Aux fusion weight,2,1.0,0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,noise,OA,3,-0.9933547703066095,-0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,noise,Full-OA drop,3,0.9933547703066092,0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,noise,Aux reliability,3,-0.9690151151549197,-0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,noise,Aux fusion weight,3,0.0,0.0
+without_reliability_uniform_fusion,Uniform fusion,resolution,OA,2,-0.9999999999999998,-0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,resolution,Full-OA drop,2,0.9999999999999998,0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,resolution,Aux reliability,2,-1.0,-0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,resolution,Aux fusion weight,2,0.0,0.0
+without_reliability_uniform_fusion,Uniform fusion,occlusion,OA,2,-0.9999999999999999,-0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,occlusion,Full-OA drop,2,0.9999999999999999,0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,occlusion,Aux reliability,2,0.9999999999999998,0.9999999999999998
+without_reliability_uniform_fusion,Uniform fusion,occlusion,Aux fusion weight,2,0.0,0.0
+quality_degradation_supervised,Noise quality,noise,OA,3,-0.9983071214099931,-0.9999999999999998
+quality_degradation_supervised,Noise quality,noise,Full-OA drop,3,0.998307121409993,0.9999999999999998
+quality_degradation_supervised,Noise quality,noise,Aux reliability,3,-0.8723241234582298,-0.9999999999999998
+quality_degradation_supervised,Noise quality,noise,Aux fusion weight,3,-0.8713091432391558,-0.9999999999999998
+quality_degradation_supervised,Noise quality,resolution,OA,2,-0.9999999999999999,-0.9999999999999998
+quality_degradation_supervised,Noise quality,resolution,Full-OA drop,2,0.9999999999999999,0.9999999999999998
+quality_degradation_supervised,Noise quality,resolution,Aux reliability,2,1.0,0.9999999999999998
+quality_degradation_supervised,Noise quality,resolution,Aux fusion weight,2,1.0,0.9999999999999998
+quality_degradation_supervised,Noise quality,occlusion,OA,2,-1.0,-0.9999999999999998
+quality_degradation_supervised,Noise quality,occlusion,Full-OA drop,2,1.0,0.9999999999999998
+quality_degradation_supervised,Noise quality,occlusion,Aux reliability,2,-0.9999999999999999,-0.9999999999999998
+quality_degradation_supervised,Noise quality,occlusion,Aux fusion weight,2,-1.0,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,noise,OA,3,-0.9553562306711513,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,noise,Full-OA drop,3,0.9553562306711514,0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,noise,Aux reliability,3,0.995098545081002,0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,noise,Aux fusion weight,3,0.9944502958471413,0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,resolution,OA,2,-0.9999999999999999,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,resolution,Full-OA drop,2,0.9999999999999999,0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,resolution,Aux reliability,2,-1.0,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,resolution,Aux fusion weight,2,-0.9999999999999998,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,occlusion,OA,2,-0.9999999999999999,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,occlusion,Full-OA drop,2,1.0,0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,occlusion,Aux reliability,2,-1.0,-0.9999999999999998
+quality_multi_degradation_supervised,Multi-deg. p=0.50,occlusion,Aux fusion weight,2,-1.0,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,noise,OA,3,-0.9391862464530647,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,noise,Full-OA drop,3,0.9391862464530647,0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,noise,Aux reliability,3,0.9989303768335434,0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,noise,Aux fusion weight,3,0.9982470624882659,0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,resolution,OA,2,-0.9999999999999998,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,resolution,Full-OA drop,2,0.9999999999999998,0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,resolution,Aux reliability,2,-1.0,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,resolution,Aux fusion weight,2,-1.0,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,occlusion,OA,2,-1.0,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,occlusion,Full-OA drop,2,0.9999999999999999,0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,occlusion,Aux reliability,2,-0.9999999999999998,-0.9999999999999998
+quality_multi_degradation_p025,Multi-deg. p=0.25,occlusion,Aux fusion weight,2,-1.0,-0.9999999999999998

@@ -63,8 +63,8 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 2. [completed] Test missing/non-missing quality supervision and identify its failure on degraded-but-available auxiliary inputs.
 3. [completed] Implement and validate noise-based degraded-available quality supervision.
 4. [completed] Extend quality degradation augmentation to occlusion and resolution-loss cases.
-5. [pending] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
-6. [pending] Generate degradation-curve figures and a Chinese analysis note.
+5. [completed] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
+6. [completed] Generate degradation-curve figures and a Chinese analysis note.
 7. [completed] Paper wording now emphasizes `degradation-aware reliability supervision` and avoids claiming generic reliability learning without degradation training.
 
 ### Phase E: Degradation-Aware Method Upgrade
@@ -91,6 +91,7 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 
 1. [pending] Generate retained-width visualization by branch and layer.
 2. [pending] Generate AER Pareto plot: MAC/latency vs average OA over modality states.
+2a. [completed] Generate degradation robustness and fusion-diagnostic figure for current Houston robustness ablations.
 3. [pending] Update LaTeX Method/Experiment sections and add Algorithm 1/2.
 4. [in_progress] Remove internal-status wording such as prototype, preliminary, remaining experiments, and must be checked from the final manuscript.
 
