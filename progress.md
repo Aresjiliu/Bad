@@ -92,3 +92,12 @@
 - Added `scripts/analyze_brmnet_degradation_reliability.py` to convert the priority summary into degradation diagnostics, correlation tables, and a publication-style multi-panel figure.
 - Generated `docs/generated/brmnet_degradation_reliability.md`, `.csv` diagnostics, `.csv` correlations, `.pdf`, and `.png`.
 - Main interpretation: multi-type degradation supervision improves adverse-state OA, but fusion weights are not fully calibrated quality scores; the paper should claim robust degradation-aware training rather than automatic monotonic suppression of every degraded modality.
+
+## 2026-07-10 review-guided manuscript revision
+
+- Applied the guidance from `D:\Download\BRM-Net_全面评审与调研指导意见.md` to the Overleaf manuscript.
+- Retitled the paper around budgeted compact fusion and degradation-calibrated reliability.
+- Rewrote the contribution statement to emphasize joint budget/availability/degradation formulation, fusion-compatible compact export, degradation-calibrated reliability fusion, and accuracy-efficiency-robustness evaluation.
+- Added a related-work positioning table and Algorithm 1 for training plus compact export.
+- Removed visible internal-status wording from the main manuscript path, including thesis-log, server reconciliation, target reference, and prototype-oriented claims.
+- Added the degradation reliability diagnostic figure to the Overleaf project and rebuilt `paper.pdf` successfully with TeX Live 2026.
