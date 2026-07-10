@@ -79,3 +79,10 @@
 - Generated Overleaf table `D:\Academic\paper_submission\brmnet_pricai2026\tables\robustness_ablation.tex`.
 - Updated Overleaf experiment section `D:\Academic\paper_submission\brmnet_pricai2026\sections\04_experiments.tex` to cite the new three-seed robustness ablation and remove outdated preliminary wording.
 - Verified local LaTeX build with `D:\texlive\2026\bin\windows\latexmk.exe -pdf -interaction=nonstopmode -halt-on-error paper.tex`.
+
+## 2026-07-10 manuscript claim alignment
+
+- Updated Overleaf abstract, introduction, experiments, discussion, and conclusion to align the paper claim with the new three-seed robustness ablation.
+- Reframed the main technical claim as degradation-aware reliability supervision for degraded-but-available auxiliary modalities, not generic reliability weighting.
+- Added the key paper-facing result: `quality_multi_degradation_p025` reaches 84.76% adverse-state average OA at 80.01% MACs while preserving 86.90% full-modality OA.
+- Rebuilt the Overleaf manuscript successfully with `D:\texlive\2026\bin\windows\latexmk.exe -pdf -interaction=nonstopmode -halt-on-error paper.tex`.

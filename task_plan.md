@@ -62,10 +62,10 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 1. [completed] Extract OA, q_aux, and fusion_weight_aux for aux_noise/high, downsample, and occlusion modes from the priority summary.
 2. [completed] Test missing/non-missing quality supervision and identify its failure on degraded-but-available auxiliary inputs.
 3. [completed] Implement and validate noise-based degraded-available quality supervision.
-4. [pending] Extend quality degradation augmentation to occlusion and resolution-loss cases.
+4. [completed] Extend quality degradation augmentation to occlusion and resolution-loss cases.
 5. [pending] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
 6. [pending] Generate degradation-curve figures and a Chinese analysis note.
-7. [pending] Paper wording should emphasize `degradation-aware reliability supervision`; avoid claiming generic reliability learning until multi-type degradation is validated.
+7. [completed] Paper wording now emphasizes `degradation-aware reliability supervision` and avoids claiming generic reliability learning without degradation training.
 
 ### Phase E: Degradation-Aware Method Upgrade
 
@@ -74,8 +74,8 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 3. [completed] Add multi-type degradation augmentation: Gaussian noise, random occlusion/block masking, and downsample-upsample resolution loss.
 4. [completed] Add ablations for degradation type: none, noise-only, multi-type.
 5. [completed] Complete Houston official seeds 0/1/2 for multi-type degradation supervision.
-6. [pending] Tune degradation type proportions or curriculum to recover clean full-modality OA while keeping occlusion/downsample gains.
-7. [pending] Update method writing around three contributions: structured compact export, availability-conditioned inference, and degradation-aware reliability supervision.
+6. [completed] Tune degradation type proportions or curriculum to recover clean full-modality OA while keeping occlusion/downsample gains.
+7. [completed] Update method writing around three contributions: structured compact export, availability-conditioned inference, and degradation-aware reliability supervision.
 
 ### Phase F: Robustness Tradeoff Tuning
 
@@ -85,14 +85,14 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 4. [pending] Add a weighted degradation sampler if more tuning is needed after paper table generation.
 5. [completed] Generate a paper-ready table with baseline, uniform, noise-only, p=0.50 multi-type, and p=0.25 multi-type degradation supervision.
 6. [completed] Update the Overleaf experiment section with the robustness ablation result.
-7. [pending] Update method text to explain p=0.25 as a light degradation curriculum rather than an arbitrary hyperparameter.
+7. [completed] Update method text to explain p=0.25 as a light degradation curriculum rather than an arbitrary hyperparameter.
 
 ### Phase D: Paper Figures and Writing
 
 1. [pending] Generate retained-width visualization by branch and layer.
 2. [pending] Generate AER Pareto plot: MAC/latency vs average OA over modality states.
 3. [pending] Update LaTeX Method/Experiment sections and add Algorithm 1/2.
-4. [pending] Remove internal-status wording such as prototype, preliminary, remaining experiments, and must be checked from the final manuscript.
+4. [in_progress] Remove internal-status wording such as prototype, preliminary, remaining experiments, and must be checked from the final manuscript.
 
 ### Execution Policy
 
