@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from brmnet_core import BRMNet
 from brmnet_core.budget_gates import iter_budget_gates, set_gate_stochastic
 from brmnet_core.engine import (
+    apply_aux_quality_degradation,
     apply_degradation,
     apply_modality_dropout,
     evaluate,
@@ -163,6 +164,51 @@ class BRMNetEngineTest(unittest.TestCase):
 
         torch.testing.assert_close(dropped.quality_targets[0], torch.full((6, 1), 0.9) * dropped.availability_mask[:, 0:1])
         torch.testing.assert_close(dropped.quality_targets[1], torch.full((6, 1), 0.8) * dropped.availability_mask[:, 1:2])
+
+    def test_apply_aux_quality_degradation_keeps_aux_available_but_lowers_quality_target(self):
+        batch = unpack_batch(
+            (
+                torch.ones(3, 4, 7, 7),
+                torch.zeros(3, 1, 7, 7),
+                torch.tensor([0, 1, 2]),
+            ),
+            torch.device("cpu"),
+        )
+
+        degraded = apply_aux_quality_degradation(
+            batch,
+            probability=1.0,
+            aux_noise_std=0.2,
+            aux_quality_target=0.4,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        torch.testing.assert_close(degraded.availability_mask, torch.ones(3, 2))
+        torch.testing.assert_close(degraded.quality_targets[0], torch.ones(3, 1))
+        torch.testing.assert_close(degraded.quality_targets[1], torch.full((3, 1), 0.4))
+        self.assertFalse(torch.equal(degraded.aux, batch.aux))
+
+    def test_apply_aux_quality_degradation_respects_unavailable_aux_mask(self):
+        batch = unpack_batch(
+            {
+                "main": torch.ones(2, 4, 7, 7),
+                "aux": torch.ones(2, 1, 7, 7),
+                "labels": torch.tensor([0, 1]),
+                "availability_mask": torch.tensor([[1.0, 0.0], [1.0, 1.0]]),
+            },
+            torch.device("cpu"),
+        )
+
+        degraded = apply_aux_quality_degradation(
+            batch,
+            probability=1.0,
+            aux_noise_std=0.2,
+            aux_quality_target=0.4,
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        torch.testing.assert_close(degraded.availability_mask, torch.tensor([[1.0, 0.0], [1.0, 1.0]]))
+        torch.testing.assert_close(degraded.quality_targets[1], torch.tensor([[0.0], [0.4]]))
 
     def test_train_one_epoch_updates_model_and_reports_metrics(self):
         torch.manual_seed(0)

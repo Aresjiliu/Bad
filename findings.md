@@ -41,3 +41,12 @@
 - `without_reliability_uniform_fusion` seeds 0/1/2 are complete. Compact 3-seed OA: full 0.8672 +/- 0.0060, main_only 0.7635 +/- 0.0192, aux_only 0.4352 +/- 0.0319, aux_noise 0.8422 +/- 0.0327, aux_noise_high 0.7701 +/- 0.0350.
 - Uniform fusion reaches acceptable full-modality OA but weak missing-modality OA. This is useful negative evidence: the reliability module should be justified by missing/noisy modality robustness, not by full-modality accuracy alone.
 - Current `full` reliability baseline in the summary is older and lacks current latency fields for all seeds, so the next clean comparison requires rerunning/refreshed reliability-gated seeds with the current profiling code.
+
+## 2026-07-10 degradation-aware reliability findings
+
+- The refreshed `full` reliability-gated baseline is not sufficient by itself. Under compact export, 3-seed OA is 0.8697 for full modality but only 0.7208 for `aux_noise_high`; the learned auxiliary quality and fusion weights do not reliably suppress severely corrupted auxiliary inputs.
+- Uniform fusion is a strong negative control rather than a strawman. It reaches compact full OA 0.8672 and `aux_noise_high` OA 0.7701, so the paper cannot claim that an unsupervised reliability module is automatically better than average fusion.
+- Direct `quality_supervised` with only missing/non-missing targets fails on degraded-but-available inputs. In seed0, `aux_noise_high` has `q_aux` 0.9999999, auxiliary fusion weight 0.5001, and compact OA 0.6929. This proves that quality supervision must explicitly include degraded available modalities.
+- `quality_degradation_supervised` is the current strongest direction. With noise-degraded available auxiliary samples during training, compact 3-seed `aux_noise_high` OA improves to 0.8515, compared with 0.7208 for the refreshed full baseline and 0.7701 for uniform fusion. The auxiliary fusion weight also drops to 0.3966 under high noise, showing that the routing behavior changes in the intended direction.
+- The same variant keeps normal full-modality compact OA at 0.8745 and `aux_noise` OA at 0.8655, so the robustness gain is not obtained by simply sacrificing clean-modality performance.
+- Limitation: the current quality-degradation augmentation is noise-only. It does not consistently solve occlusion or downsampling; `aux_occlusion_50` compact OA is 0.7332 and `aux_downsample_4` compact OA is 0.8014. The next method step should add multi-type degradation targets for noise, occlusion, and resolution loss.

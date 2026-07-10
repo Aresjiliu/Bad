@@ -242,6 +242,49 @@ def apply_modality_dropout(
     return BRMNetBatch(main, aux, batch.labels, quality_targets, mask)
 
 
+def apply_aux_quality_degradation(
+    batch: BRMNetBatch,
+    probability: float = 0.0,
+    aux_noise_std: float = 0.1,
+    aux_quality_target: float = 0.5,
+    generator: torch.Generator | None = None,
+) -> BRMNetBatch:
+    """Add train-time auxiliary degradation while keeping the modality available."""
+
+    probability = float(probability)
+    if probability <= 0.0:
+        return batch
+    if probability > 1.0:
+        raise ValueError(f"probability must be in [0, 1], got {probability}")
+
+    batch_size = int(batch.labels.numel())
+    device = batch.main.device
+    dtype = batch.main.dtype
+    base_mask = (
+        torch.ones(batch_size, 2, dtype=dtype, device=device)
+        if batch.availability_mask is None
+        else batch.availability_mask.to(device=device, dtype=dtype).clone()
+    )
+    selected = (torch.rand(batch_size, generator=generator) < probability).to(device=device)
+    aux_available = base_mask[:, 1] > 0
+    selected = selected & aux_available
+
+    noise = torch.randn(batch.aux.shape, dtype=batch.aux.dtype, device=device, generator=generator)
+    aux = batch.aux.clone()
+    aux[selected] = aux[selected] + noise[selected] * float(aux_noise_std)
+
+    quality_targets = batch.quality_targets
+    if quality_targets is None:
+        q_main = base_mask[:, 0:1].clone()
+        q_aux = base_mask[:, 1:2].clone()
+    else:
+        q_main = quality_targets[0].to(device=device, dtype=dtype) * base_mask[:, 0:1]
+        q_aux = quality_targets[1].to(device=device, dtype=dtype) * base_mask[:, 1:2]
+    q_aux[selected] = float(aux_quality_target)
+    q_aux = q_aux * base_mask[:, 1:2]
+    return BRMNetBatch(batch.main, aux, batch.labels, (q_main, q_aux), base_mask)
+
+
 def _forward_model(model: nn.Module, batch: BRMNetBatch) -> dict[str, torch.Tensor]:
     if batch.availability_mask is None:
         return model(batch.main, batch.aux)
@@ -364,6 +407,9 @@ def train_one_epoch(
     loss_kwargs: dict[str, float] | None = None,
     grad_clip: float | None = None,
     modality_dropout_prob: float = 0.0,
+    aux_quality_degradation_prob: float = 0.0,
+    aux_quality_degradation_noise_std: float = 0.1,
+    aux_quality_degradation_target: float = 0.5,
 ) -> dict[str, float]:
     model.to(device)
     model.train()
@@ -373,6 +419,12 @@ def train_one_epoch(
     for raw_batch in loader:
         batch = unpack_batch(raw_batch, device)
         batch = apply_modality_dropout(batch, probability=modality_dropout_prob)
+        batch = apply_aux_quality_degradation(
+            batch,
+            probability=aux_quality_degradation_prob,
+            aux_noise_std=aux_quality_degradation_noise_std,
+            aux_quality_target=aux_quality_degradation_target,
+        )
         optimizer.zero_grad(set_to_none=True)
         outputs = _forward_model(model, batch)
         losses = brmnet_loss(model, outputs, batch.labels, quality_targets=batch.quality_targets, **loss_kwargs)

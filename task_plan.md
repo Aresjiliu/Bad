@@ -47,8 +47,9 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 1. [completed] Implement `--fusion-mode uniform` as `w/o reliability / average fusion`.
 2. [completed] Generate the core experiment matrix including `without_reliability_uniform_fusion`.
 3. [completed] Run `without_reliability_uniform_fusion` seed0 and summarize it in `docs/generated/brmnet_priority_summary.*`.
-4. [in_progress] Run `without_reliability_uniform_fusion` seed1 and seed2 for 3-seed reliability ablation.
-5. [pending] Re-run or refresh `full`, `without_modality_dropout`, and `without_budget_loss` with the current latency profiling fields.
+4. [completed] Run `without_reliability_uniform_fusion` seed1 and seed2 for 3-seed reliability ablation.
+5. [completed] Refresh `full` with the current latency profiling fields.
+6. [pending] Re-run or refresh `without_modality_dropout` and `without_budget_loss` if they are needed for the final ablation table.
 
 ### Phase B: Soft-Mask-Only vs Compact Export
 
@@ -58,10 +59,21 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 
 ### Phase C: Reliability Degradation Calibration
 
-1. [pending] Extract OA, q_aux, and fusion_weight_aux for aux_noise_low/mid/high, downsample, and occlusion modes.
-2. [pending] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
-3. [pending] Generate degradation-curve figures and a Chinese analysis note.
-4. [pending] If correlation is weak, downgrade paper language from `reliability-aware` to `availability-aware`.
+1. [completed] Extract OA, q_aux, and fusion_weight_aux for aux_noise/high, downsample, and occlusion modes from the priority summary.
+2. [completed] Test missing/non-missing quality supervision and identify its failure on degraded-but-available auxiliary inputs.
+3. [completed] Implement and validate noise-based degraded-available quality supervision.
+4. [pending] Extend quality degradation augmentation to occlusion and resolution-loss cases.
+5. [pending] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
+6. [pending] Generate degradation-curve figures and a Chinese analysis note.
+7. [pending] Paper wording should emphasize `degradation-aware reliability supervision`; avoid claiming generic reliability learning until multi-type degradation is validated.
+
+### Phase E: Degradation-Aware Method Upgrade
+
+1. [completed] Add `quality_degradation_supervised` to the experiment matrix.
+2. [completed] Complete Houston official seeds 0/1/2 for `quality_degradation_supervised`.
+3. [pending] Add multi-type degradation augmentation: Gaussian noise, random occlusion/block masking, and downsample-upsample resolution loss.
+4. [pending] Add ablations for degradation type: none, noise-only, multi-type.
+5. [pending] Update method writing around three contributions: structured compact export, availability-conditioned inference, and degradation-aware reliability supervision.
 
 ### Phase D: Paper Figures and Writing
 

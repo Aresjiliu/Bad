@@ -10,6 +10,7 @@ from .data import HoustonDataBundle, build_houston_raw_loaders, load_houston_sce
 from .compact import CompactBRMNet
 from .engine import (
     BRMNetBatch,
+    apply_aux_quality_degradation,
     apply_degradation,
     apply_modality_dropout,
     evaluate,
@@ -63,6 +64,7 @@ __all__ = [
     "set_hard_concrete_stochastic",
     "BRMNet",
     "BRMNetBatch",
+    "apply_aux_quality_degradation",
     "apply_degradation",
     "apply_modality_dropout",
     "evaluate",

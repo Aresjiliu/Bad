@@ -43,3 +43,13 @@
 - Completed `without_reliability_uniform_fusion` seed2 and regenerated `docs/generated/brmnet_priority_summary.csv` / `.md`.
 - Uniform-fusion ablation now has 3 seeds with real full/main_only/aux_only latency. This closes the first core ablation loop.
 - Next action: refresh the `full` reliability-gated baseline under the current profiler so reliability-vs-uniform comparisons use comparable latency/resource fields.
+
+## 2026-07-10 degradation-aware quality supervision
+
+- Refreshed the `full` reliability-gated baseline for seeds 0/1/2 with the current profiler and regenerated `docs/generated/brmnet_priority_summary.*`.
+- Added `quality_supervised` as a first check of direct quality loss. Seed0 showed that missing/non-missing supervision alone is not enough: `q_aux` stayed close to 1.0 under noisy auxiliary input and compact `aux_noise_high` OA dropped to 0.6929.
+- Implemented train-time degraded-but-available auxiliary quality augmentation through `apply_aux_quality_degradation`, plus runner arguments and experiment-matrix support.
+- Added `quality_degradation_supervised` to the core matrix and completed seeds 0/1/2 on Houston official split.
+- Regenerated `docs/generated/brmnet_priority_matrix.csv`, `docs/generated/run_brmnet_priority_matrix.ps1`, `docs/generated/brmnet_priority_summary.csv`, and `docs/generated/brmnet_priority_summary.md`.
+- Verified the code with `conda run -n hslinets python -m unittest discover -s tests`: 122 tests passed, 1 skipped.
+- Next action: extend the degradation-aware supervision from noise-only to multi-type degradation, especially downsampling and occlusion, then convert the result into the paper method and ablation table.

@@ -76,6 +76,19 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
 
         self.assertEqual(args.modality_dropout_prob, 0.25)
 
+    def test_aux_quality_degradation_arguments(self):
+        args = build_parser().parse_args(
+            [
+                "--aux-quality-degradation-prob",
+                "0.5",
+                "--aux-quality-degradation-target",
+                "0.4",
+            ]
+        )
+
+        self.assertEqual(args.aux_quality_degradation_prob, 0.5)
+        self.assertEqual(args.aux_quality_degradation_target, 0.4)
+
     def test_uniform_fusion_argument(self):
         args = build_parser().parse_args(["--fusion-mode", "uniform"])
 

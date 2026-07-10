@@ -19,6 +19,34 @@ class BRMNetExperimentMatrixTest(unittest.TestCase):
 
         self.assertIn("--fusion-mode uniform", command)
 
+    def test_core_matrix_includes_quality_supervised_reliability_variant(self):
+        args = build_parser().parse_args(["--ablation", "core", "--seeds", "0"])
+
+        rows = experiment_rows(args)
+        supervised = next(row for row in rows if row["variant"] == "quality_supervised")
+
+        self.assertEqual(supervised["fusion_mode"], "reliability")
+        self.assertEqual(supervised["lambda_quality"], 1.0)
+        self.assertEqual(supervised["modality_dropout_prob"], 0.25)
+
+        command = command_for_row(supervised, args)
+
+        self.assertIn("--lambda-quality 1.0", command)
+
+    def test_core_matrix_includes_quality_degradation_supervised_variant(self):
+        args = build_parser().parse_args(["--ablation", "core", "--seeds", "0"])
+
+        rows = experiment_rows(args)
+        supervised = next(row for row in rows if row["variant"] == "quality_degradation_supervised")
+
+        self.assertEqual(supervised["fusion_mode"], "reliability")
+        self.assertEqual(supervised["lambda_quality"], 1.0)
+        self.assertEqual(supervised["aux_quality_degradation_prob"], 0.5)
+
+        command = command_for_row(supervised, args)
+
+        self.assertIn("--aux-quality-degradation-prob 0.5", command)
+
 
 if __name__ == "__main__":
     unittest.main()
