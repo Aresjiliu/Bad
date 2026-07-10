@@ -42,6 +42,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
         selected_metrics_path = (
             compact_metrics_path if compact_metrics_path.is_file() else metrics_path
         )
+        source_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
         metrics = json.loads(selected_metrics_path.read_text(encoding="utf-8"))
         resource_path = run_dir / "resource_stats.json"
         resource_stats = (
@@ -52,6 +53,7 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
         train_accuracy = float(history[-1]["train"]["accuracy"]) if history else 0.0
         train_seconds = sum(float(item["elapsed_seconds"]) for item in history)
         for mode, values in metrics.items():
+            source_values = source_metrics.get(mode, values)
             key = (
                 _variant_from_path(root, run_dir),
                 config["split_protocol"],
@@ -74,10 +76,23 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
                     "train_seconds": train_seconds,
                     "soft_retention": float(values.get("soft_retention", 0.0)),
                     "hard_retention": float(values.get("hard_retention", 0.0)),
-                    "q_main": float(values.get("q_main", 0.0)),
-                    "q_aux": float(values.get("q_aux", 0.0)),
-                    "fusion_weight_main": float(values.get("fusion_weight_main", 0.0)),
-                    "fusion_weight_aux": float(values.get("fusion_weight_aux", 0.0)),
+                    "q_main": float(values.get("q_main", source_values.get("q_main", 0.0))),
+                    "q_aux": float(values.get("q_aux", source_values.get("q_aux", 0.0))),
+                    "fusion_weight_main": float(
+                        values.get("fusion_weight_main", source_values.get("fusion_weight_main", 0.0))
+                    ),
+                    "fusion_weight_aux": float(
+                        values.get("fusion_weight_aux", source_values.get("fusion_weight_aux", 0.0))
+                    ),
+                    "source_oa": float(source_values.get("oa", values["oa"])),
+                    "source_aa": float(source_values.get("aa", values["aa"])),
+                    "source_kappa": float(source_values.get("kappa", values["kappa"])),
+                    "source_latency_ms": float(
+                        resource_stats.get("latency_ms", {})
+                        .get("hard", {})
+                        .get(mode, {})
+                        .get("mean", 0.0)
+                    ),
                     "compact_params_ratio": float(
                         resource_stats.get("compact", {}).get("params_ratio", 0.0)
                     ),
@@ -141,6 +156,10 @@ def summarize_experiments(root: str | Path) -> list[dict[str, object]]:
             "q_aux",
             "fusion_weight_main",
             "fusion_weight_aux",
+            "source_oa",
+            "source_aa",
+            "source_kappa",
+            "source_latency_ms",
             "compact_params_ratio",
             "compact_macs_ratio",
             "compact_latency_ms",
@@ -166,19 +185,21 @@ def write_summary(rows: list[dict[str, object]], output_prefix: str | Path) -> N
 
     with md_path.open("w", encoding="utf-8") as handle:
         handle.write("# BRM-Net Experiment Summary\n\n")
-        handle.write("| Variant | Protocol | Gate | Fusion | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | OA | AA | Kappa | Params Ratio | MACs Ratio | Latency ms |\n")
-        handle.write("|---|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|\n")
+        handle.write("| Variant | Protocol | Gate | Fusion | Metric | Budget | Lambda | Dropout | Epochs | Mode | Runs | Source OA | Compact OA | Compact AA | Compact Kappa | Params Ratio | MACs Ratio | Source ms | Compact ms |\n")
+        handle.write("|---|---|---|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
         for row in rows:
             handle.write(
                 f"| {row['variant']} | {row['protocol']} | {row['gate_type']} | {row['fusion_mode']} | {row['budget_metric']} | "
                 f"{row['target_budget']:.2f} | {row['lambda_budget']:.2f} | "
                 f"{row['modality_dropout_prob']:.2f} | {row['epochs']} | "
                 f"{row['mode']} | {row['runs']} | "
+                f"{row['source_oa_mean']:.4f} +/- {row['source_oa_std']:.4f} | "
                 f"{row['oa_mean']:.4f} +/- {row['oa_std']:.4f} | "
                 f"{row['aa_mean']:.4f} +/- {row['aa_std']:.4f} | "
                 f"{row['kappa_mean']:.4f} +/- {row['kappa_std']:.4f} | "
                 f"{row['compact_params_ratio_mean']:.4f} | "
                 f"{row['compact_macs_ratio_mean']:.4f} | "
+                f"{row['source_latency_ms_mean']:.3f} | "
                 f"{row['compact_latency_ms_mean']:.3f} |\n"
             )
 

@@ -48,6 +48,19 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                     ),
                     encoding="utf-8",
                 )
+                (run / "compact_metrics.json").write_text(
+                    json.dumps(
+                        {
+                            "full": {
+                                "oa": oa - 0.05,
+                                "aa": oa - 0.15,
+                                "kappa": oa - 0.25,
+                            },
+                            "main_only": {"oa": 0.45, "aa": 0.35, "kappa": 0.25},
+                        }
+                    ),
+                    encoding="utf-8",
+                )
                 (run / "resource_stats.json").write_text(
                     json.dumps(
                         {
@@ -56,6 +69,11 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                                 "macs_ratio": 0.8,
                             },
                             "latency_ms": {
+                                "hard": {
+                                    "full": {"mean": 2.0 + seed},
+                                    "main_only": {"mean": 1.7 + seed},
+                                    "aux_only": {"mean": 1.6 + seed},
+                                },
                                 "compact": {
                                     "full": {"mean": 1.0 + seed},
                                     "main_only": {"mean": 0.7 + seed},
@@ -103,11 +121,24 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            (duplicate / "compact_metrics.json").write_text(
+                json.dumps(
+                    {
+                        "full": {"oa": 0.75, "aa": 0.65, "kappa": 0.55},
+                        "main_only": {"oa": 0.45, "aa": 0.35, "kappa": 0.25},
+                    }
+                ),
+                encoding="utf-8",
+            )
             (duplicate / "resource_stats.json").write_text(
                 json.dumps(
                     {
                         "compact": {"params_ratio": 0.7, "macs_ratio": 0.8},
                         "latency_ms": {
+                            "hard": {
+                                "full": {"mean": 2.0},
+                                "main_only": {"mean": 1.7},
+                            },
                             "compact": {
                                 "full": {"mean": 1.0},
                                 "main_only": {"mean": 0.7},
@@ -130,10 +161,13 @@ class SummarizeBRMNetExperimentsTest(unittest.TestCase):
         self.assertEqual(full["compact_params_ratio_mean"], 0.7)
         self.assertEqual(full["compact_macs_ratio_mean"], 0.8)
         self.assertAlmostEqual(full["compact_latency_ms_mean"], 1.5)
+        self.assertAlmostEqual(full["source_latency_ms_mean"], 2.5)
+        self.assertAlmostEqual(full["source_oa_mean"], 0.9)
         main_only = next(row for row in rows if row["mode"] == "main_only")
         self.assertAlmostEqual(main_only["compact_latency_ms_mean"], 1.2)
+        self.assertAlmostEqual(main_only["source_latency_ms_mean"], 2.2)
         self.assertEqual(full["runs"], 2)
-        self.assertAlmostEqual(full["oa_mean"], 0.9)
+        self.assertAlmostEqual(full["oa_mean"], 0.85)
         self.assertAlmostEqual(full["oa_std"], 0.1414213562)
         self.assertAlmostEqual(full["q_aux_mean"], 0.7)
         self.assertAlmostEqual(full["fusion_weight_aux_mean"], 0.8)

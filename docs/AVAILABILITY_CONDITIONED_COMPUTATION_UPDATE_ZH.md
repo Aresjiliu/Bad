@@ -46,6 +46,11 @@
    - 实验矩阵新增 `without_reliability_uniform_fusion` 变体。
    - 汇总脚本将 `fusion_mode` 纳入分组与 Markdown 表格，避免 reliability 与 uniform 结果混合。
 
+8. 补强 `soft-mask-only vs compact export` 报告口径
+   - Runner 已同时输出 source gated model 的 `metrics.json` 和 physical compact model 的 `compact_metrics.json`。
+   - 汇总脚本现在在同一行中保留 `source_oa/source_aa/source_kappa/source_latency_ms` 与 compact 的 OA/AA/Kappa/latency。
+   - 该设计可直接支持论文消融表中的 `soft-mask-only` 与 `compact export` 对比：source gated model 代表仍在完整网络中执行门控/掩码，compact model 代表真实物理通道移除后的导出模型。
+
 ## 对论文创新性的意义
 
 这次改动可以支撑方法部分从“剪枝 + 可靠性融合”的简单组合，升级为：
@@ -107,6 +112,7 @@ P1：更新消融实验表
 | Compact export only | 是 | 否 | 是 | 证明静态轻量化收益 |
 | Compact + availability-conditioned | 是 | 是 | 是 | 本文完整方法 |
 | w/o reliability / uniform fusion | 是 | 是 | 否 | 证明质量分数是否提供额外收益 |
+| soft-mask-only vs compact export | 对比项 | 对比项 | 是 | 证明真实物理导出优于只在完整模型中门控 |
 
 P2：更新论文方法章节
 
@@ -135,6 +141,14 @@ conda run -n hslinets python scripts/make_brmnet_experiment_matrix.py `
 ```
 
 其中 `without_reliability_uniform_fusion` 对应论文主消融表中的 `w/o reliability` 或 `average fusion` 行。
+
+生成实验后，建议使用以下命令形成带 source/compact 对比的汇总表：
+
+```powershell
+conda run -n hslinets python scripts/summarize_brmnet_experiments.py `
+  --root output/experiments_priority `
+  --output-prefix docs/generated/brmnet_priority_summary
+```
 
 ## 当前限制
 
