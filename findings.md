@@ -30,3 +30,14 @@
 - 当前最稳妥论文写法是：prototype 作为 hard-concrete gate + compact export + validation selection 的机制验证和消融基础，下一步用 missing-modality training loop 和较大双分支 backbone 承担主工作量。
 - availability mask 的实现使 RGF 从“质量分数可视化/隐式融合”推进到“显式缺失模态鲁棒融合”；下一步实验评价应重点看 main_only、aux_only、aux_noise，而不是只盯 full OA。
 - 80% budget seed0 初步对照显示，compact 模型加入 dropout 0.25 后 full/main_only/aux_only/aux_noise OA 为 88.20/80.00/43.50/85.92；no-dropout 为 86.90/49.75/24.13/87.02。该方向值得补 seed 1/2，但目前不能作为最终结论。
+
+## 2026-07-10 resources and current experimental state
+
+- `get-available-resources` script failed in `hslinets` because `psutil` is not installed; avoid repeating that exact command unless dependency is installed.
+- PyTorch 2.5.1 in `hslinets` reports CUDA available.
+- GPU: NVIDIA GeForce RTX 4060 Laptop GPU, 8188 MiB total; snapshot before experiments showed about 4868 MiB free.
+- Execution strategy: run training experiments serially, not in parallel.
+- `without_reliability_uniform_fusion` seed0 completed successfully and produced real latency fields in `resource_stats.json`.
+- `without_reliability_uniform_fusion` seeds 0/1/2 are complete. Compact 3-seed OA: full 0.8672 +/- 0.0060, main_only 0.7635 +/- 0.0192, aux_only 0.4352 +/- 0.0319, aux_noise 0.8422 +/- 0.0327, aux_noise_high 0.7701 +/- 0.0350.
+- Uniform fusion reaches acceptable full-modality OA but weak missing-modality OA. This is useful negative evidence: the reliability module should be justified by missing/noisy modality robustness, not by full-modality accuracy alone.
+- Current `full` reliability baseline in the summary is older and lacks current latency fields for all seeds, so the next clean comparison requires rerunning/refreshed reliability-gated seeds with the current profiling code.

@@ -27,3 +27,19 @@
 - 实现 availability mask + modality dropout：RGF mask softmax、BRMNet/CompactBRMNet forward mask、engine degradation mask、training-time modality dropout、Houston runner `--modality-dropout-prob`。
 - 验证：`python -m unittest discover -s tests` 通过 101 个测试，1 个跳过；`scripts/run_brmnet_houston.py --dry-run --modality-dropout-prob 0.25 --device cpu` 通过。
 - 运行 80% budget seed0 dropout 0.25 初步实验：compact full OA 88.20，main-only OA 80.00，aux-only OA 43.50；对应 no-dropout compact 为 86.90、49.75、24.13。
+
+## 2026-07-10 continuous improvement session
+
+- Read existing `task_plan.md`, `findings.md`, and `progress.md`.
+- Appended a new continuous improvement plan covering core ablations, source-vs-compact reporting, degradation calibration, and paper figures/writing.
+- Resource detection via skill script failed due missing `psutil`; switched to PyTorch/nvidia-smi checks.
+- Confirmed CUDA availability on RTX 4060 Laptop GPU.
+- Next action: run `without_reliability_uniform_fusion` seed1 and seed2 serially, then regenerate summary and commit results.
+
+## 2026-07-10 experiment progress
+
+- Completed `without_reliability_uniform_fusion` seed1 with current CUDA/latency profiling.
+- Next action: run seed2, then regenerate `docs/generated/brmnet_priority_summary.*` and inspect 3-seed uniform-fusion ablation.
+- Completed `without_reliability_uniform_fusion` seed2 and regenerated `docs/generated/brmnet_priority_summary.csv` / `.md`.
+- Uniform-fusion ablation now has 3 seeds with real full/main_only/aux_only latency. This closes the first core ablation loop.
+- Next action: refresh the `full` reliability-gated baseline under the current profiler so reliability-vs-uniform comparisons use comparable latency/resource fields.

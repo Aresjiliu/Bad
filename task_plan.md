@@ -35,3 +35,43 @@
 5. [completed] 按论文需求实现 availability mask + modality dropout 缺失模态训练闭环。
 6. [completed] 运行 80% budget seed0 modality dropout 初步对照实验，重点比较 full/main_only/aux_only/aux_noise 四种模式。
 7. [pending] 补 80% budget seed1/2 modality dropout 对照实验，确认鲁棒性收益是否稳定。
+
+## 2026-07-10 continuous improvement plan
+
+### Goal
+
+Continue the BRM-Net thesis/paper work according to the latest guidance: make the contribution defensible through compact export, availability-conditioned inference, reliability ablations, degradation calibration, and accuracy-efficiency-robustness reporting.
+
+### Phase A: Core Ablation Closure
+
+1. [completed] Implement `--fusion-mode uniform` as `w/o reliability / average fusion`.
+2. [completed] Generate the core experiment matrix including `without_reliability_uniform_fusion`.
+3. [completed] Run `without_reliability_uniform_fusion` seed0 and summarize it in `docs/generated/brmnet_priority_summary.*`.
+4. [in_progress] Run `without_reliability_uniform_fusion` seed1 and seed2 for 3-seed reliability ablation.
+5. [pending] Re-run or refresh `full`, `without_modality_dropout`, and `without_budget_loss` with the current latency profiling fields.
+
+### Phase B: Soft-Mask-Only vs Compact Export
+
+1. [completed] Update the summary script to report source gated model and compact export metrics side by side.
+2. [pending] Generate a paper-ready table comparing source gated and compact export under full/main_only/aux_only/noisy aux.
+3. [pending] Investigate any large source/compact gap through export equivalence and compact fine-tuning history.
+
+### Phase C: Reliability Degradation Calibration
+
+1. [pending] Extract OA, q_aux, and fusion_weight_aux for aux_noise_low/mid/high, downsample, and occlusion modes.
+2. [pending] Compute Pearson/Spearman correlation between degradation severity and reliability/fusion/OA drop.
+3. [pending] Generate degradation-curve figures and a Chinese analysis note.
+4. [pending] If correlation is weak, downgrade paper language from `reliability-aware` to `availability-aware`.
+
+### Phase D: Paper Figures and Writing
+
+1. [pending] Generate retained-width visualization by branch and layer.
+2. [pending] Generate AER Pareto plot: MAC/latency vs average OA over modality states.
+3. [pending] Update LaTeX Method/Experiment sections and add Algorithm 1/2.
+4. [pending] Remove internal-status wording such as prototype, preliminary, remaining experiments, and must be checked from the final manuscript.
+
+### Execution Policy
+
+- Use `conda run -n hslinets ...` for experiments.
+- CUDA is available on RTX 4060 Laptop 8GB; run experiments serially.
+- After each meaningful result, regenerate summaries, run targeted tests when code changes, commit, and push.
