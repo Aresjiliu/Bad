@@ -210,6 +210,49 @@ class BRMNetEngineTest(unittest.TestCase):
         torch.testing.assert_close(degraded.availability_mask, torch.tensor([[1.0, 0.0], [1.0, 1.0]]))
         torch.testing.assert_close(degraded.quality_targets[1], torch.tensor([[0.0], [0.4]]))
 
+    def test_apply_aux_quality_degradation_supports_resolution_loss_type(self):
+        aux = torch.arange(2 * 1 * 8 * 8, dtype=torch.float32).reshape(2, 1, 8, 8)
+        batch = unpack_batch(
+            (
+                torch.ones(2, 4, 8, 8),
+                aux,
+                torch.tensor([0, 1]),
+            ),
+            torch.device("cpu"),
+        )
+
+        degraded = apply_aux_quality_degradation(
+            batch,
+            probability=1.0,
+            degradation_types=("downsample_4",),
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        torch.testing.assert_close(degraded.availability_mask, torch.ones(2, 2))
+        torch.testing.assert_close(degraded.quality_targets[1], torch.full((2, 1), 0.25))
+        self.assertFalse(torch.equal(degraded.aux, batch.aux))
+
+    def test_apply_aux_quality_degradation_supports_occlusion_type(self):
+        batch = unpack_batch(
+            (
+                torch.ones(2, 4, 8, 8),
+                torch.ones(2, 1, 8, 8),
+                torch.tensor([0, 1]),
+            ),
+            torch.device("cpu"),
+        )
+
+        degraded = apply_aux_quality_degradation(
+            batch,
+            probability=1.0,
+            degradation_types=("occlusion_50",),
+            generator=torch.Generator().manual_seed(0),
+        )
+
+        torch.testing.assert_close(degraded.quality_targets[1], torch.full((2, 1), 0.5))
+        self.assertTrue(torch.all(degraded.aux[:, :, :4, :] == 0.0))
+        self.assertTrue(torch.all(degraded.aux[:, :, 4:, :] == 1.0))
+
     def test_train_one_epoch_updates_model_and_reports_metrics(self):
         torch.manual_seed(0)
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3, init_score=0.5)

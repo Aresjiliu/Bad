@@ -53,3 +53,13 @@
 - Regenerated `docs/generated/brmnet_priority_matrix.csv`, `docs/generated/run_brmnet_priority_matrix.ps1`, `docs/generated/brmnet_priority_summary.csv`, and `docs/generated/brmnet_priority_summary.md`.
 - Verified the code with `conda run -n hslinets python -m unittest discover -s tests`: 122 tests passed, 1 skipped.
 - Next action: extend the degradation-aware supervision from noise-only to multi-type degradation, especially downsampling and occlusion, then convert the result into the paper method and ablation table.
+
+## 2026-07-10 multi-type degradation supervision
+
+- Added `--aux-quality-degradation-types` with support for `noise`, `downsample_2`, `downsample_4`, `occlusion_25`, and `occlusion_50`.
+- Fixed PowerShell command generation for comma-separated degradation types in `scripts/make_brmnet_experiment_matrix.py`.
+- Added `quality_multi_degradation_supervised` to the core matrix and regenerated `docs/generated/brmnet_priority_matrix.csv` / `run_brmnet_priority_matrix.ps1`.
+- Completed Houston official seeds 0/1/2 for `quality_multi_degradation_supervised`.
+- Regenerated `docs/generated/brmnet_priority_summary.csv` and `.md`; summary now covers 59 protocol/mode groups.
+- Verified with `conda run -n hslinets python -m unittest discover -s tests`: 125 tests passed, 1 skipped.
+- Next action: tune degradation curriculum/proportions because multi-type improves occlusion/downsample robustness but slightly lowers clean full-modality OA.

@@ -83,11 +83,14 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                 "0.5",
                 "--aux-quality-degradation-target",
                 "0.4",
+                "--aux-quality-degradation-types",
+                "noise,downsample_4,occlusion_50",
             ]
         )
 
         self.assertEqual(args.aux_quality_degradation_prob, 0.5)
         self.assertEqual(args.aux_quality_degradation_target, 0.4)
+        self.assertEqual(args.aux_quality_degradation_types, "noise,downsample_4,occlusion_50")
 
     def test_uniform_fusion_argument(self):
         args = build_parser().parse_args(["--fusion-mode", "uniform"])

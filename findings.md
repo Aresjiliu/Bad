@@ -50,3 +50,11 @@
 - `quality_degradation_supervised` is the current strongest direction. With noise-degraded available auxiliary samples during training, compact 3-seed `aux_noise_high` OA improves to 0.8515, compared with 0.7208 for the refreshed full baseline and 0.7701 for uniform fusion. The auxiliary fusion weight also drops to 0.3966 under high noise, showing that the routing behavior changes in the intended direction.
 - The same variant keeps normal full-modality compact OA at 0.8745 and `aux_noise` OA at 0.8655, so the robustness gain is not obtained by simply sacrificing clean-modality performance.
 - Limitation: the current quality-degradation augmentation is noise-only. It does not consistently solve occlusion or downsampling; `aux_occlusion_50` compact OA is 0.7332 and `aux_downsample_4` compact OA is 0.8014. The next method step should add multi-type degradation targets for noise, occlusion, and resolution loss.
+
+## 2026-07-10 multi-type degradation findings
+
+- Multi-type degradation supervision closes the previous occlusion/downsample gap. Compact 3-seed OA reaches 0.8438 on `aux_downsample_4` and 0.8466 on `aux_occlusion_50`, compared with 0.8014 and 0.7332 for noise-only degradation supervision.
+- It keeps high-noise robustness essentially unchanged: compact `aux_noise_high` OA is 0.8511, close to the noise-only result 0.8515 and clearly above full baseline 0.7208 / uniform 0.7701.
+- It produces clearer degradation-sensitive routing for occlusion and resolution loss. Under `aux_occlusion_50`, `q_aux` is 0.5480 and auxiliary fusion weight is 0.3891; under `aux_downsample_4`, `q_aux` is 0.6617 and auxiliary fusion weight is 0.4169.
+- The tradeoff is clean full-modality performance: compact full OA is 0.8599, lower than noise-only degradation supervision 0.8745 and the refreshed full baseline 0.8697. This means the next improvement should tune the degradation schedule, not simply increase augmentation diversity.
+- Paper framing should present the current result as a robustness-efficiency tradeoff: multi-type degradation improves adverse-modality states at about 80% MACs, while a curriculum or weighted degradation sampler is needed to recover clean full-modality accuracy.

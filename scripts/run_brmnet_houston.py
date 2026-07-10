@@ -106,6 +106,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Quality target assigned to train-time degraded auxiliary samples.",
     )
     parser.add_argument(
+        "--aux-quality-degradation-types",
+        default="noise",
+        help="Comma-separated train-time auxiliary degradation types: noise, downsample_2, downsample_4, occlusion_25, occlusion_50.",
+    )
+    parser.add_argument(
         "--gate-type",
         choices=("hard_concrete", "legacy_sigmoid"),
         default="hard_concrete",
@@ -694,6 +699,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             aux_quality_degradation_prob=cli_args.aux_quality_degradation_prob,
             aux_quality_degradation_noise_std=cli_args.aux_noise_std,
             aux_quality_degradation_target=cli_args.aux_quality_degradation_target,
+            aux_quality_degradation_types=cli_args.aux_quality_degradation_types,
         )
         validation_metrics = None
         selection_score = None
@@ -784,6 +790,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 aux_quality_degradation_prob=cli_args.aux_quality_degradation_prob,
                 aux_quality_degradation_noise_std=cli_args.aux_noise_std,
                 aux_quality_degradation_target=cli_args.aux_quality_degradation_target,
+                aux_quality_degradation_types=cli_args.aux_quality_degradation_types,
             )
             compact_validation_metrics = None
             compact_score = None

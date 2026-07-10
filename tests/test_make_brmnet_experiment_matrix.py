@@ -47,6 +47,20 @@ class BRMNetExperimentMatrixTest(unittest.TestCase):
 
         self.assertIn("--aux-quality-degradation-prob 0.5", command)
 
+    def test_core_matrix_includes_multi_degradation_supervised_variant(self):
+        args = build_parser().parse_args(["--ablation", "core", "--seeds", "0"])
+
+        rows = experiment_rows(args)
+        supervised = next(row for row in rows if row["variant"] == "quality_multi_degradation_supervised")
+
+        self.assertEqual(supervised["fusion_mode"], "reliability")
+        self.assertEqual(supervised["lambda_quality"], 1.0)
+        self.assertEqual(supervised["aux_quality_degradation_types"], "noise,downsample_4,occlusion_50")
+
+        command = command_for_row(supervised, args)
+
+        self.assertIn("--aux-quality-degradation-types 'noise,downsample_4,occlusion_50'", command)
+
 
 if __name__ == "__main__":
     unittest.main()

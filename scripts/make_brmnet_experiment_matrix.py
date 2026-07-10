@@ -47,6 +47,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Full BRM-Net: budget gates + compact export + availability-aware modality dropout.",
@@ -58,6 +59,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Tests whether missing-modality robustness comes from dropout training.",
@@ -69,6 +71,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Compression mechanism without explicit missing-modality training.",
@@ -80,6 +83,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 0.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Reliability/dropout behavior without an active budget penalty.",
@@ -91,6 +95,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "uniform",
             "note": "Ablates reliability weighting by averaging available modalities.",
@@ -102,6 +107,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 1.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Adds direct quality supervision so reliability routing can learn degradation-aware scores.",
@@ -113,9 +119,22 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 1.0,
             "aux_quality_degradation_prob": 0.5,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "hard_concrete",
             "fusion_mode": "reliability",
             "note": "Trains reliability scores with degraded-but-available auxiliary samples.",
+        },
+        {
+            "variant": "quality_multi_degradation_supervised",
+            "target_budget": None,
+            "modality_dropout_prob": 0.25,
+            "lambda_budget": 1.0,
+            "lambda_quality": 1.0,
+            "aux_quality_degradation_prob": 0.5,
+            "aux_quality_degradation_types": "noise,downsample_4,occlusion_50",
+            "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
+            "note": "Trains reliability scores with noise, resolution-loss, and occlusion auxiliary degradation.",
         },
         {
             "variant": "legacy_sigmoid_reference",
@@ -124,6 +143,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "lambda_budget": 1.0,
             "lambda_quality": 0.0,
             "aux_quality_degradation_prob": 0.0,
+            "aux_quality_degradation_types": "noise",
             "gate_type": "legacy_sigmoid",
             "fusion_mode": "reliability",
             "note": "Legacy gate reference; not a deployable hard-concrete export baseline.",
@@ -153,6 +173,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
                 "lambda_budget": variant["lambda_budget"],
                 "lambda_quality": variant["lambda_quality"],
                 "aux_quality_degradation_prob": variant["aux_quality_degradation_prob"],
+                "aux_quality_degradation_types": variant["aux_quality_degradation_types"],
                 "modality_dropout_prob": variant["modality_dropout_prob"],
                 "epochs": args.epochs,
                 "compact_finetune_epochs": args.compact_finetune_epochs,
@@ -190,6 +211,8 @@ def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
         str(row["lambda_quality"]),
         "--aux-quality-degradation-prob",
         str(row["aux_quality_degradation_prob"]),
+        "--aux-quality-degradation-types",
+        str(row["aux_quality_degradation_types"]),
         "--modality-dropout-prob",
         str(row["modality_dropout_prob"]),
         "--epochs",
@@ -203,7 +226,14 @@ def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
         "--output-dir",
         str(Path(args.output_dir) / str(row["variant"])),
     ]
-    return " ".join(shlex.quote(part) for part in parts)
+    return " ".join(_quote_shell_arg(part) for part in parts)
+
+
+def _quote_shell_arg(part: object) -> str:
+    text = str(part)
+    if "," in text:
+        return "'" + text.replace("'", "''") + "'"
+    return shlex.quote(text)
 
 
 def write_outputs(rows: list[dict[str, object]], args: argparse.Namespace) -> None:

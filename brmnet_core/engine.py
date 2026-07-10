@@ -247,6 +247,7 @@ def apply_aux_quality_degradation(
     probability: float = 0.0,
     aux_noise_std: float = 0.1,
     aux_quality_target: float = 0.5,
+    degradation_types: Iterable[str] | str = ("noise",),
     generator: torch.Generator | None = None,
 ) -> BRMNetBatch:
     """Add train-time auxiliary degradation while keeping the modality available."""
@@ -256,6 +257,24 @@ def apply_aux_quality_degradation(
         return batch
     if probability > 1.0:
         raise ValueError(f"probability must be in [0, 1], got {probability}")
+
+    if isinstance(degradation_types, str):
+        modes = tuple(mode.strip() for mode in degradation_types.split(",") if mode.strip())
+    else:
+        modes = tuple(str(mode).strip() for mode in degradation_types if str(mode).strip())
+    if not modes:
+        raise ValueError("degradation_types must include at least one mode")
+
+    quality_by_mode = {
+        "noise": float(aux_quality_target),
+        "downsample_2": 0.5,
+        "downsample_4": 0.25,
+        "occlusion_25": 0.75,
+        "occlusion_50": 0.5,
+    }
+    unknown_modes = [mode for mode in modes if mode not in quality_by_mode]
+    if unknown_modes:
+        raise ValueError(f"Unsupported auxiliary quality degradation types: {', '.join(unknown_modes)}")
 
     batch_size = int(batch.labels.numel())
     device = batch.main.device
@@ -269,9 +288,8 @@ def apply_aux_quality_degradation(
     aux_available = base_mask[:, 1] > 0
     selected = selected & aux_available
 
-    noise = torch.randn(batch.aux.shape, dtype=batch.aux.dtype, device=device, generator=generator)
     aux = batch.aux.clone()
-    aux[selected] = aux[selected] + noise[selected] * float(aux_noise_std)
+    mode_indices = torch.randint(len(modes), (batch_size,), generator=generator).to(device=device)
 
     quality_targets = batch.quality_targets
     if quality_targets is None:
@@ -280,7 +298,24 @@ def apply_aux_quality_degradation(
     else:
         q_main = quality_targets[0].to(device=device, dtype=dtype) * base_mask[:, 0:1]
         q_aux = quality_targets[1].to(device=device, dtype=dtype) * base_mask[:, 1:2]
-    q_aux[selected] = float(aux_quality_target)
+
+    for mode_index, mode in enumerate(modes):
+        mode_selected = selected & (mode_indices == mode_index)
+        if not bool(mode_selected.any()):
+            continue
+        if mode == "noise":
+            noise = torch.randn(batch.aux.shape, dtype=batch.aux.dtype, device=device, generator=generator)
+            aux[mode_selected] = aux[mode_selected] + noise[mode_selected] * float(aux_noise_std)
+        elif mode == "downsample_2":
+            aux[mode_selected] = _downsample_like_input(aux[mode_selected], 2)
+        elif mode == "downsample_4":
+            aux[mode_selected] = _downsample_like_input(aux[mode_selected], 4)
+        elif mode == "occlusion_25":
+            aux[mode_selected] = _occlude_top_rows(aux[mode_selected], 0.25)
+        elif mode == "occlusion_50":
+            aux[mode_selected] = _occlude_top_rows(aux[mode_selected], 0.50)
+        q_aux[mode_selected] = quality_by_mode[mode]
+
     q_aux = q_aux * base_mask[:, 1:2]
     return BRMNetBatch(batch.main, aux, batch.labels, (q_main, q_aux), base_mask)
 
@@ -410,6 +445,7 @@ def train_one_epoch(
     aux_quality_degradation_prob: float = 0.0,
     aux_quality_degradation_noise_std: float = 0.1,
     aux_quality_degradation_target: float = 0.5,
+    aux_quality_degradation_types: Iterable[str] | str = ("noise",),
 ) -> dict[str, float]:
     model.to(device)
     model.train()
@@ -424,6 +460,7 @@ def train_one_epoch(
             probability=aux_quality_degradation_prob,
             aux_noise_std=aux_quality_degradation_noise_std,
             aux_quality_target=aux_quality_degradation_target,
+            degradation_types=aux_quality_degradation_types,
         )
         optimizer.zero_grad(set_to_none=True)
         outputs = _forward_model(model, batch)
