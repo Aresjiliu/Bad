@@ -89,12 +89,13 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 
 ### Phase D: Paper Figures and Writing
 
-1. [pending] Generate retained-width visualization by branch and layer.
-2. [pending] Generate AER Pareto plot: MAC/latency vs average OA over modality states.
+1. [completed] Generate retained-width visualization by branch and layer.
+2. [completed] Generate AER Pareto plot: MAC/latency vs average OA over modality states.
 2a. [completed] Generate degradation robustness and fusion-diagnostic figure for current Houston robustness ablations.
 3. [completed] Update LaTeX Method/Experiment sections and add Algorithm 1/2.
 4. [completed] Remove internal-status wording such as prototype, preliminary, remaining experiments, and must be checked from the final manuscript.
 5. [completed] Add related-work positioning table to clarify the difference from generic pruning, missing-modality learning, and expert routing.
+6. [completed] Revise Figure 1 resource-objective layout and Figure 2 overview styling according to manuscript-review feedback.
 
 ### Execution Policy
 

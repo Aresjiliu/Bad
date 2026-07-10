@@ -101,3 +101,10 @@
 - Added a related-work positioning table and Algorithm 1 for training plus compact export.
 - Removed visible internal-status wording from the main manuscript path, including thesis-log, server reconciliation, target reference, and prototype-oriented claims.
 - Added the degradation reliability diagnostic figure to the Overleaf project and rebuilt `paper.pdf` successfully with TeX Live 2026.
+
+## 2026-07-11 figure revision pass
+
+- Reworked the Overleaf Figure 1 TikZ layout so the resource objective is centered between the two channel-gate branches, with longer dashed objective arrows and more vertical separation between modality streams.
+- Updated the overview result figure generator to use more distinct markers in Panel A, simplify the accuracy-efficiency legend, and move Panel C/D legends away from data-heavy regions.
+- Regenerated `fig_brmnet_results_overview.*` for the Overleaf project and rebuilt `paper.pdf` successfully with TeX Live 2026.
+- Verified the plotting-code change with `conda run -n hslinets python -m unittest discover -s tests`: 129 tests passed, 1 skipped.

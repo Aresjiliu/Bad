@@ -29,7 +29,21 @@ VARIANT_LABELS = {
     "without_budget_loss": "w/o budget",
     "budget_only": "budget only",
     "legacy_sigmoid_reference": "sigmoid gate",
+    "quality_degradation_supervised": "Noise quality",
+    "quality_multi_degradation_p025": "Multi-deg. p=0.25",
+    "without_reliability_uniform_fusion": "Uniform fusion",
     "default": "BRM-Net",
+}
+VARIANT_MARKERS = {
+    "full": "D",
+    "without_modality_dropout": "s",
+    "without_budget_loss": "^",
+    "budget_only": "P",
+    "legacy_sigmoid_reference": "X",
+    "quality_degradation_supervised": "^",
+    "quality_multi_degradation_p025": "P",
+    "without_reliability_uniform_fusion": "X",
+    "default": "D",
 }
 MODE_LABELS = {
     "full": "Full",
@@ -124,11 +138,16 @@ def _row_for(rows: list[dict[str, str]], variant: str, mode: str) -> dict[str, s
 
 
 def _available_variants(rows: list[dict[str, str]]) -> list[str]:
-    priority = ["full", "without_modality_dropout", "without_budget_loss", "budget_only", "legacy_sigmoid_reference", "default"]
+    priority = [
+        "full",
+        "without_modality_dropout",
+        "quality_degradation_supervised",
+        "quality_multi_degradation_p025",
+        "without_reliability_uniform_fusion",
+        "default",
+    ]
     available = {_variant(row) for row in rows}
-    ordered = [variant for variant in priority if variant in available]
-    ordered.extend(sorted(available.difference(ordered)))
-    return ordered
+    return [variant for variant in priority if variant in available]
 
 
 def _load_resource_records(experiments_root: str | Path) -> list[dict[str, object]]:
@@ -213,10 +232,26 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
     if legacy_points:
         xs = [item[0] for item in legacy_points]
         ys = [item[1] for item in legacy_points]
-        ax.scatter(xs, ys, color="#C9C9C9", s=15, marker="o", linewidth=0, label="prior sweep", zorder=1)
+        ax.scatter(
+            xs,
+            ys,
+            facecolor="none",
+            edgecolor="#9A9A9A",
+            s=22,
+            marker="o",
+            linewidth=0.7,
+            label="prior sweep",
+            zorder=1,
+        )
 
     variants = _available_variants(summary_rows)
-    colors = [OKABE_ITO["blue"], OKABE_ITO["vermillion"], OKABE_ITO["green"], OKABE_ITO["purple"]]
+    colors = [
+        OKABE_ITO["blue"],
+        OKABE_ITO["vermillion"],
+        OKABE_ITO["green"],
+        OKABE_ITO["purple"],
+        OKABE_ITO["grey"],
+    ]
     for idx, variant in enumerate(variants):
         row = _row_for(summary_rows, variant, "full")
         if row is None:
@@ -235,32 +270,32 @@ def _plot_pareto(ax: plt.Axes, summary_rows: list[dict[str, str]], multiseed_row
             oa,
             xerr=macs_std if macs_std > 0 else None,
             yerr=oa_std if oa_std > 0 else None,
-            fmt="o",
-            markersize=4.8,
+            fmt=VARIANT_MARKERS.get(variant, "o"),
+            markersize=5.2,
             capsize=2.4,
             elinewidth=0.8,
             color=colors[idx % len(colors)],
-            markeredgecolor="white",
-            markeredgewidth=0.5,
+            markeredgecolor="black",
+            markeredgewidth=0.45,
             zorder=3,
-            label=f"{_variant_label(variant)} (n={row.get('runs', '1')})",
+            label=_variant_label(variant),
         )
-        ax.annotate(
-            f"{oa:.1f}",
-            (display_macs, oa),
-            xytext=(4, 5),
-            textcoords="offset points",
-            fontsize=6.5,
-        )
-
     ax.axvspan(78, 82, color=OKABE_ITO["orange"], alpha=0.10, linewidth=0)
     ylo, yhi = ax.get_ylim()
-    ax.text(80.25, ylo + 0.05 * (yhi - ylo), "80% target", color=OKABE_ITO["orange"], fontsize=6.5, va="bottom")
+    ax.text(80.25, ylo + 0.05 * (yhi - ylo), "80% target", color=OKABE_ITO["orange"], fontsize=6.3, va="bottom")
     ax.set_xlabel("Actual MAC ratio (%)")
     ax.set_ylabel("OA (%)")
     ax.set_title("Accuracy-efficiency")
     ax.grid(True, color="#E6E6E6", linewidth=0.45)
-    ax.legend(loc="lower left", handlelength=1.2, borderaxespad=0.2)
+    ax.legend(
+        loc="lower left",
+        ncols=2,
+        fontsize=6.3,
+        handlelength=1.0,
+        columnspacing=0.7,
+        borderaxespad=0.2,
+        labelspacing=0.25,
+    )
 
 
 def _plot_robustness(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
@@ -328,7 +363,14 @@ def _plot_widths(ax: plt.Axes, resource_records: list[dict[str, object]], varian
         )
     for sep in [2.5, 5.5]:
         ax.axhline(sep, color="#D9D9D9", linewidth=0.6)
-    ax.legend(loc="upper left", handlelength=1.2)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.20),
+        ncols=3,
+        handlelength=1.0,
+        columnspacing=0.8,
+        borderaxespad=0.0,
+    )
 
 
 def _plot_budget(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
@@ -355,7 +397,7 @@ def _plot_budget(ax: plt.Axes, summary_rows: list[dict[str, str]]) -> None:
     ax.set_ylabel("Compact/full ratio (%)")
     ax.set_title("Budget agreement")
     ax.grid(axis="y", color="#E6E6E6", linewidth=0.45)
-    ax.legend(loc="upper right")
+    ax.legend(loc="upper left", ncols=2, handlelength=1.2, columnspacing=0.9)
 
 
 def plot_overview(
