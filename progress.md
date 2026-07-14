@@ -108,3 +108,9 @@
 - Updated the overview result figure generator to use more distinct markers in Panel A, simplify the accuracy-efficiency legend, and move Panel C/D legends away from data-heavy regions.
 - Regenerated `fig_brmnet_results_overview.*` for the Overleaf project and rebuilt `paper.pdf` successfully with TeX Live 2026.
 - Verified the plotting-code change with `conda run -n hslinets python -m unittest discover -s tests`: 129 tests passed, 1 skipped.
+
+## 2026-07-14 full pipeline documentation
+
+- Added `docs/BRMNET_FULL_PIPELINE_ZH.md` as a clean Chinese runbook for the current `brmnet_core` and `scripts` mainline.
+- Documented the end-to-end flow from Houston raw data loading, source training, degradation evaluation, hard-concrete compact export, compact fine-tuning, multi-seed summarization, and paper table/figure generation.
+- Included Mermaid flowcharts, core module explanations, recommended commands, key parameter tables, output-file meanings, and paper-claim boundaries.
