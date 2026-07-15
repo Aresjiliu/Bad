@@ -7,6 +7,7 @@ from .availability import encode_available_modalities
 from .encoders import BudgetGatedEncoder
 from .fusion import BudgetGatedFusionHead, ModalityQualityEstimator, ReliabilityGatedFusion
 from .hard_concrete import HardConcreteGate
+from .quality_probe import PreEncoderQualityProbe
 
 
 class BRMNet(nn.Module):
@@ -22,11 +23,18 @@ class BRMNet(nn.Module):
         gate_type: str = "legacy_sigmoid",
         initial_retention: float = 0.9,
         fusion_mode: str = "reliability",
+        use_pre_encoder_quality_probe: bool = False,
+        pre_encoder_quality_hidden: int = 16,
     ) -> None:
         super().__init__()
         if gate_type not in {"legacy_sigmoid", "hard_concrete"}:
             raise ValueError(f"Unsupported gate_type: {gate_type}")
         self.gate_type = gate_type
+        self.pre_encoder_quality_probe = (
+            PreEncoderQualityProbe(main_channels, aux_channels, hidden_channels=pre_encoder_quality_hidden)
+            if use_pre_encoder_quality_probe
+            else None
+        )
         self.shared_fusion_gate = (
             HardConcreteGate(128, initial_retention=initial_retention)
             if gate_type == "hard_concrete"
@@ -66,6 +74,11 @@ class BRMNet(nn.Module):
         aux_input: torch.Tensor,
         availability_mask: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
+        pre_encoder_quality = (
+            self.pre_encoder_quality_probe(main_input, aux_input, availability_mask=availability_mask)
+            if self.pre_encoder_quality_probe is not None
+            else None
+        )
         main_feature, aux_feature, q_main, q_aux = encode_available_modalities(
             self.main_encoder,
             self.aux_encoder,
@@ -83,7 +96,7 @@ class BRMNet(nn.Module):
             availability_mask=availability_mask,
         )
         logits = self.classifier(fused)
-        return {
+        outputs = {
             "logits": logits,
             "q_main": q_main,
             "q_aux": q_aux,
@@ -91,3 +104,6 @@ class BRMNet(nn.Module):
             "main_feature": main_feature,
             "aux_feature": aux_feature,
         }
+        if pre_encoder_quality is not None:
+            outputs.update(pre_encoder_quality)
+        return outputs

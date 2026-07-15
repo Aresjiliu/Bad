@@ -121,3 +121,11 @@
 - Identified the core gap: reliability currently changes fusion but does not control encoder computation, so budget and robustness remain only loosely coupled.
 - Created `docs/THESIS_EXTENSION_AND_DEMO_PLAN_ZH.md` with a quality-conditioned budget routing design, multi-dataset experiment matrix, deployment plan, demonstration-system architecture, thesis chapter mapping, ten-week roadmap, and stop conditions.
 - Added the implementation roadmap to `task_plan.md` and recorded the literature-driven decisions in `findings.md`.
+
+## 2026-07-15 quality-routed foundation implementation
+
+- Added `brmnet_core/quality_probe.py` with `PreEncoderQualityProbe`, including availability-aware quality and uncertainty outputs.
+- Added the optional `use_pre_encoder_quality_probe` BRMNet path and four diagnostic output fields: `pre_q_main`, `pre_q_aux`, `pre_u_main`, and `pre_u_aux`.
+- Added `brmnet_core/projection.py` with `FeatureProjection`; equal input/output widths are parameter-free identities.
+- Followed red-green tests for both new modules: missing-module/unsupported-argument failures were observed before their implementations.
+- Fresh verification: `conda run -n hslinets python -m unittest discover -s tests` completed with 134 tests passing and 1 skipped; the Houston runner CPU dry-run also completed successfully.

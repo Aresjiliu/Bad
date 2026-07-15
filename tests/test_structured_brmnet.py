@@ -126,6 +126,22 @@ class StructuredBRMNetTest(unittest.TestCase):
 
         torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
 
+    def test_model_optionally_reports_pre_encoder_quality(self):
+        model = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            use_pre_encoder_quality_probe=True,
+            pre_encoder_quality_hidden=4,
+        )
+
+        outputs = model(torch.randn(2, 4, 7, 7), torch.randn(2, 1, 7, 7))
+
+        self.assertEqual(outputs["pre_q_main"].shape, (2, 1))
+        self.assertEqual(outputs["pre_q_aux"].shape, (2, 1))
+        self.assertEqual(outputs["pre_u_main"].shape, (2, 1))
+        self.assertEqual(outputs["pre_u_aux"].shape, (2, 1))
+
     def test_model_skips_fully_unavailable_auxiliary_encoder(self):
         model = BRMNet(main_channels=4, aux_channels=1, num_classes=3)
         model.eval()

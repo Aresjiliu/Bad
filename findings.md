@@ -76,3 +76,10 @@
 - A first implementation should use separately exportable 65/80/100 profiles and oracle routing labels before attempting a shared-weight slimmable supernet.
 - Thesis-level evidence requires at least Houston2013, Trento, and MUUFL Gulfport, three seeds, fixed split manifests, missing/degradation matrices, calibration metrics, and ONNX Runtime latency.
 - The demonstration system should be an algorithm and deployment validation platform, not a claimed satellite production system. Core interactions are modality switches, degradation injection, budget/profile selection, backend selection, spatial predictions, and routing diagnostics.
+
+## 2026-07-15 quality-routed foundation implementation
+
+- `PreEncoderQualityProbe` now estimates raw-input quality and uncertainty before the expensive encoders. It uses depthwise-plus-pointwise branches and treats unavailable modalities as quality 0 / uncertainty 1.
+- BRMNet exposes probe outputs only through the opt-in `use_pre_encoder_quality_probe` flag. The values are deliberately not connected to fusion or loss yet, so current metrics and resource accounting remain valid.
+- `FeatureProjection` is available for future branch-independent encoder widths. Equal-width projections use `nn.Identity`, so the default path has no added parameters.
+- The next implementation batch must add quality targets/metrics and a runner switch before GPU experiments; running the current training loop would not yet test the new hypothesis.

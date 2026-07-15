@@ -121,3 +121,10 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 8. [pending] Implement oracle and learned quality-conditioned budget routing.
 9. [pending] Add Trento and MUUFL protocols, then run three-seed experiments.
 10. [pending] Add ONNX Runtime benchmarks and the demonstration-system MVP.
+
+### 2026-07-15 implementation status
+
+- [completed] Add a standalone pre-encoder quality probe with availability-aware quality and uncertainty outputs.
+- [completed] Add the optional BRM-Net diagnostic output path without changing default inference behavior.
+- [completed] Add a fixed-dimension branch projection primitive for future independent-width encoders.
+- [pending] Train/supervise the probe, aggregate its diagnostics, and use it for budget-profile selection.

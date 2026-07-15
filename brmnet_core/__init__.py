@@ -20,6 +20,8 @@ from .engine import (
 )
 from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
+from .quality_probe import PreEncoderQualityProbe
+from .projection import FeatureProjection
 from .gated_blocks import HardConcreteConvBlock
 from .hard_concrete import (
     HardConcreteGate,
@@ -57,6 +59,8 @@ __all__ = [
     "ModalityQualityEstimator",
     "ReliabilityGatedFusion",
     "BudgetGatedFusionHead",
+    "PreEncoderQualityProbe",
+    "FeatureProjection",
     "HardConcreteGate",
     "HardConcreteConvBlock",
     "iter_hard_concrete_gates",
