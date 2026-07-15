@@ -115,6 +115,84 @@ def budget_profile_routing_loss(
     }
 
 
+def _quality_dict_to_tensor(
+    quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],
+) -> tuple[list[str], torch.Tensor]:
+    modes = list(quality_by_mode)
+    features = torch.as_tensor([quality_by_mode[mode] for mode in modes], dtype=torch.float32)
+    if features.ndim != 2 or features.shape[1] != 4:
+        raise ValueError("quality_by_mode values must contain four quality features")
+    return modes, features
+
+
+def _budget_indices_from_dict(
+    modes: list[str],
+    target_budgets_by_mode: dict[str, float],
+    profile_budgets: tuple[float, ...],
+) -> torch.Tensor:
+    indices: list[int] = []
+    for mode in modes:
+        target_budget = float(target_budgets_by_mode[mode])
+        nearest_index = min(range(len(profile_budgets)), key=lambda index: abs(profile_budgets[index] - target_budget))
+        indices.append(nearest_index)
+    return torch.as_tensor(indices, dtype=torch.long)
+
+
+def train_quality_budget_router(
+    quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],
+    target_budgets_by_mode: dict[str, float],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    hidden_channels: int = 16,
+    epochs: int = 200,
+    lr: float = 0.05,
+    seed: int = 0,
+) -> tuple[QualityBudgetRouter, list[float]]:
+    """Fit a small profile router on mode-level quality diagnostics."""
+
+    if epochs <= 0:
+        raise ValueError(f"epochs must be positive, got {epochs}")
+    torch.manual_seed(seed)
+    modes, features = _quality_dict_to_tensor(quality_by_mode)
+    target_indices = _budget_indices_from_dict(modes, target_budgets_by_mode, profile_budgets)
+    target_budgets = torch.as_tensor(
+        [[float(profile_budgets[index])] for index in target_indices.tolist()],
+        dtype=torch.float32,
+    )
+    targets = {"target_indices": target_indices, "target_budgets": target_budgets}
+    router = QualityBudgetRouter(profile_budgets=profile_budgets, hidden_channels=hidden_channels)
+    optimizer = torch.optim.Adam(router.parameters(), lr=float(lr))
+    history: list[float] = []
+    router.train()
+    for _ in range(epochs):
+        outputs = router(features)
+        losses = budget_profile_routing_loss(
+            outputs["profile_logits"],
+            outputs["expected_budget"],
+            targets,
+        )
+        optimizer.zero_grad()
+        losses["routing_total"].backward()
+        optimizer.step()
+        history.append(float(losses["routing_total"].detach().cpu()))
+    return router, history
+
+
+def predict_budget_profile_selection(
+    router: QualityBudgetRouter,
+    quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],
+) -> dict[str, float]:
+    modes, features = _quality_dict_to_tensor(quality_by_mode)
+    canonical_budgets = [round(float(budget), 6) for budget in router.profile_budgets.detach().cpu().tolist()]
+    router.eval()
+    with torch.no_grad():
+        outputs = router(features)
+    selected_indices = outputs["selected_profile"].reshape(-1).detach().cpu().tolist()
+    return {
+        mode: canonical_budgets[int(index)]
+        for mode, index in zip(modes, selected_indices)
+    }
+
+
 def evaluate_budget_profile_routing(
     profile_metrics: dict[float, dict[str, dict[str, float]]],
     quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],

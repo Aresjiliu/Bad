@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from scripts.evaluate_budget_profile_routing import (
+    build_routing_reports,
     load_profile_metrics,
     load_quality_features,
     main,
@@ -131,6 +132,33 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
         self.assertEqual(report["per_mode"]["full"]["selected_budget"], 1.0)
         self.assertEqual(report["per_mode"]["main_only"]["selected_budget"], 0.65)
         self.assertEqual(rows[0]["mode"], "full")
+
+    def test_builds_static_oracle_and_learned_comparison_reports(self):
+        quality_features = {
+            "full": [0.95, 0.90, 0.05, 0.10],
+            "aux_noise": [0.70, 0.45, 0.25, 0.55],
+            "main_only": [0.95, 0.00, 0.05, 1.00],
+        }
+        profile_metrics = {}
+        for budget in (0.65, 0.8, 1.0):
+            profile_metrics[budget] = {
+                "full": {"oa": 0.70 + budget / 10.0, "expected_macs_ratio": budget},
+                "aux_noise": {"oa": 0.65 + budget / 10.0, "expected_macs_ratio": budget},
+                "main_only": {"oa": 0.60 + budget / 10.0, "expected_macs_ratio": budget},
+            }
+
+        reports = build_routing_reports(
+            profile_metrics,
+            quality_features,
+            include_learned=True,
+            router_epochs=120,
+            router_seed=7,
+        )
+
+        self.assertEqual(set(reports), {"static_0.65", "static_0.8", "static_1.0", "oracle", "learned"})
+        self.assertEqual(reports["oracle"]["per_mode"]["full"]["selected_budget"], 1.0)
+        self.assertEqual(reports["learned"]["per_mode"]["full"]["selected_budget"], 1.0)
+        self.assertIn("routing_accuracy_vs_oracle", reports["learned"]["summary"])
 
     def test_script_can_run_from_file_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -7,6 +7,8 @@ from brmnet_core.profile_router import (
     budget_profile_routing_loss,
     evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
+    predict_budget_profile_selection,
+    train_quality_budget_router,
 )
 
 
@@ -89,6 +91,32 @@ class QualityBudgetRouterTest(unittest.TestCase):
         self.assertEqual(report["per_mode"]["main_only"]["selected_budget"], 0.65)
         self.assertAlmostEqual(report["summary"]["mean_oa"], (0.90 + 0.78 + 0.60) / 3)
         self.assertAlmostEqual(report["summary"]["mean_selected_budget"], (1.0 + 0.8 + 0.65) / 3)
+
+    def test_trains_router_and_predicts_budget_selection(self):
+        quality_by_mode = {
+            "full": [0.95, 0.90, 0.05, 0.10],
+            "aux_noise": [0.70, 0.45, 0.25, 0.55],
+            "main_only": [0.95, 0.00, 0.05, 1.00],
+        }
+        target_budgets_by_mode = {
+            "full": 1.0,
+            "aux_noise": 0.8,
+            "main_only": 0.65,
+        }
+
+        router, history = train_quality_budget_router(
+            quality_by_mode,
+            target_budgets_by_mode,
+            profile_budgets=(0.65, 0.8, 1.0),
+            hidden_channels=8,
+            epochs=120,
+            lr=0.05,
+            seed=7,
+        )
+        selections = predict_budget_profile_selection(router, quality_by_mode)
+
+        self.assertLess(history[-1], history[0])
+        self.assertEqual(selections, target_budgets_by_mode)
 
 
 if __name__ == "__main__":

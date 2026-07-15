@@ -155,3 +155,12 @@
 - Completed three short Houston legacy seed0 profile pilots at 65/80/100 target MAC budgets under the quality-routing setting.
 - Generated `docs/generated/brmnet_routing_profile_oracle_seed0.json` and `.csv`; the pilot oracle report covers 11 modality/degradation states with mean selected budget 0.7727 and mean expected MACs ratio 0.7361.
 - Added `docs/QUALITY_ROUTING_PROFILE_PROGRESS_ZH.md` to summarize the method logic, pilot result boundary, and next formal experiment plan.
+
+## 2026-07-16 learned routing and formal seed0 profile experiments
+
+- Added reusable learned-router helpers: `train_quality_budget_router` and `predict_budget_profile_selection`.
+- Extended `scripts/evaluate_budget_profile_routing.py` to produce static 65/80/100, oracle routing, and learned routing comparison reports.
+- Generated the formal routing profile matrix for Houston2013: 3 budgets x 3 seeds, 20 epochs, 3 compact fine-tune epochs.
+- Completed formal seed0 runs for 65%, 80%, and 100% profiles under the quality-routing setting.
+- Generated `docs/generated/brmnet_routing_profile_formal_comparison_seed0.csv` and `.json`.
+- Formal seed0 comparison: static 65% mean OA 0.7158 at 0.6121 MACs; static 80% 0.7231 at 0.7572 MACs; static 100% 0.7461 at 0.9420 MACs; oracle/learned routing 0.7501 at 0.8835 MACs.

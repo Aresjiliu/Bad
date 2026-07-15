@@ -130,5 +130,6 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Train/supervise the probe through existing quality targets and aggregate its diagnostics in train/eval metrics.
 - [completed] Add a standalone quality-to-budget profile router with oracle labels and supervised routing loss.
 - [completed] Integrate the router with deployable 65/80/100 profile evaluation and oracle profile reporting.
-- [pending] Train learned profile selection from oracle/validation labels and compare against static 65/80/100 profiles.
-- [pending] Run formal 20-epoch, 3-seed routing-profile experiments before using the numbers as thesis evidence.
+- [completed] Train learned profile selection from oracle labels and compare against static 65/80/100 profiles on formal seed0.
+- [pending] Replace in-sample learned routing with leave-one-state-out or validation-derived labels.
+- [pending] Run formal 20-epoch seed1/2 routing-profile experiments before using the numbers as thesis evidence.

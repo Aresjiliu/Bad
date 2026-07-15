@@ -85,3 +85,38 @@ flowchart LR
 3. Quality-conditioned budget profile routing：在多个可部署 compact profile 之间选择，实现按输入状态改变推理成本。
 
 实验章节应把当前 pilot 作为“routing pipeline validation”，正式结果需要重新运行长训练后再进入主表。
+
+## Formal Seed0 更新
+
+已完成 Houston2013 seed0 的 65%/80%/100% 三个正式 profile：
+
+- 训练轮数：20 epochs
+- compact fine-tune：3 epochs
+- 质量探针：`lambda_pre_quality=0.5`
+- 退化增强：`noise,downsample_4,occlusion_50`
+- 训练时 modality dropout：0.25
+
+生成文件：
+
+- `docs/generated/brmnet_routing_profile_formal_matrix.csv`
+- `docs/generated/run_brmnet_routing_profiles_formal.ps1`
+- `docs/generated/brmnet_routing_profile_formal_oracle_seed0.json`
+- `docs/generated/brmnet_routing_profile_formal_oracle_seed0.csv`
+- `docs/generated/brmnet_routing_profile_formal_comparison_seed0.json`
+- `docs/generated/brmnet_routing_profile_formal_comparison_seed0.csv`
+
+seed0 汇总如下：
+
+| Policy | Mean OA | Mean selected budget | Mean MACs ratio |
+|---|---:|---:|---:|
+| Static 65% | 0.7158 | 0.6500 | 0.6121 |
+| Static 80% | 0.7231 | 0.8000 | 0.7572 |
+| Static 100% | 0.7461 | 1.0000 | 0.9420 |
+| Oracle routing | 0.7501 | 0.9182 | 0.8835 |
+| Learned routing | 0.7501 | 0.9182 | 0.8835 |
+
+当前解释：
+
+- 与 static 100% 相比，oracle/learned routing 在 seed0 上略高 0.0040 mean OA，同时平均 MACs 从 0.9420 降到 0.8835。
+- learned routing 当前是在同一组 mode-level oracle labels 上训练并评估，意义是验证路由器可拟合规则，不应写成泛化能力结论。
+- 真正可写进论文主表的结果仍需 seed1/2，以及更严格的 learned router 划分策略，例如 leave-one-state-out 或 validation-label 训练。

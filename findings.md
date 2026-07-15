@@ -104,3 +104,11 @@
 - The current oracle routing report is useful as a pipeline validation artifact, not as a thesis result. Compact OA is low because the pilots use only 3 epochs and no compact fine-tuning.
 - The most useful near-term comparison is no longer only fixed-budget pruning. The thesis table should compare static profile selection, oracle profile routing, and learned quality-conditioned profile routing under the same missing/degradation states.
 - The next implementation should train a learned router on oracle or validation-derived labels, then report routing accuracy, average MACs, average OA, and calibration curves.
+
+## 2026-07-16 formal seed0 routing findings
+
+- Formal seed0 changes the evidence level: after 20 epochs plus 3 compact fine-tune epochs, profile metrics are usable for method debugging rather than only pipeline validation.
+- The seed0 static-profile tradeoff is monotonic in the expected direction: static 65% gives the lowest mean MACs and lowest mean OA, static 100% gives the highest fixed-profile OA and highest cost.
+- Oracle routing reaches mean OA 0.7501 at mean MACs 0.8835, compared with static 100% mean OA 0.7461 at mean MACs 0.9420. This is the first concrete evidence that quality-conditioned profile selection can improve the accuracy-efficiency-robustness tradeoff.
+- Learned routing currently matches oracle on the same mode-level labels. This verifies trainability but does not prove generalization; the paper should either mark it as in-sample policy fitting or add leave-one-state-out / validation-label experiments.
+- The oracle policy mostly selects 100% for degraded-but-available states, 80% for `aux_occlusion_50`, and 65% for `aux_only` / `main_only`, suggesting the current hand rule is conservative. Future work can learn less conservative labels from validation OA-resource utility.
