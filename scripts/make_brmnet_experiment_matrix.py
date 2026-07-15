@@ -16,6 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Create the prioritized BRM-Net experiment matrix and runnable commands."
     )
     parser.add_argument("--data-root", default="../data/Huston2013")
+    parser.add_argument("--data-format", choices=("raw", "legacy"), default="raw")
     parser.add_argument("--output-dir", default="output/experiments_priority")
     parser.add_argument("--matrix-csv", default="docs/generated/brmnet_priority_matrix.csv")
     parser.add_argument("--commands-ps1", default="docs/generated/run_brmnet_priority_matrix.ps1")
@@ -27,14 +28,49 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument(
         "--ablation",
-        choices=("core", "full"),
+        choices=("core", "full", "routing_profiles"),
         default="core",
-        help="core gives the minimum reviewer-critical matrix; full adds budget sensitivity.",
+        help="core gives reviewer-critical ablations; full adds budget sensitivity; routing_profiles creates 65/80/100 profile runs.",
     )
     return parser
 
 
+def _routing_profile_rows(args: argparse.Namespace) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    priority = 0
+    for seed, budget in itertools.product(args.seeds, (0.65, 0.8, 1.0)):
+        priority += 1
+        rows.append(
+            {
+                "priority": priority,
+                "run_tag": f"quality_routing_profile_budget{_float_label(budget)}_seed{seed}",
+                "dataset": "Houston2013-HS-LiDAR",
+                "split_protocol": "official",
+                "split_seed": 42,
+                "seed": seed,
+                "target_budget": float(budget),
+                "variant": "quality_routing_profile",
+                "gate_type": "hard_concrete",
+                "fusion_mode": "reliability",
+                "lambda_budget": 1.0,
+                "lambda_quality": 1.0,
+                "lambda_pre_quality": 0.5,
+                "pre_encoder_quality_hidden": 8,
+                "aux_quality_degradation_prob": 0.25,
+                "aux_quality_degradation_types": "noise,downsample_4,occlusion_50",
+                "modality_dropout_prob": 0.25,
+                "epochs": args.epochs,
+                "compact_finetune_epochs": args.compact_finetune_epochs,
+                "note": "Fixed deployable budget profile for quality-conditioned routing experiments.",
+            }
+        )
+    return rows
+
+
 def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
+    if args.ablation == "routing_profiles":
+        return _routing_profile_rows(args)
+
     budgets = args.budgets
     if args.ablation == "full":
         budgets = sorted(set([0.65, 0.8, 0.9, *budgets]))
@@ -184,6 +220,8 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
                 "fusion_mode": variant["fusion_mode"],
                 "lambda_budget": variant["lambda_budget"],
                 "lambda_quality": variant["lambda_quality"],
+                "lambda_pre_quality": 0.0,
+                "pre_encoder_quality_hidden": 16,
                 "aux_quality_degradation_prob": variant["aux_quality_degradation_prob"],
                 "aux_quality_degradation_types": variant["aux_quality_degradation_types"],
                 "modality_dropout_prob": variant["modality_dropout_prob"],
@@ -197,12 +235,12 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
 
 def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
     parts = [
-        args.python,
+        *shlex.split(args.python),
         "scripts/run_brmnet_houston.py",
         "--data-root",
         args.data_root,
         "--data-format",
-        "raw",
+        args.data_format,
         "--pair-modalities",
         "hsi+lidar",
         "--split-protocol",
@@ -221,6 +259,10 @@ def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
         str(row["lambda_budget"]),
         "--lambda-quality",
         str(row["lambda_quality"]),
+        "--lambda-pre-quality",
+        str(row.get("lambda_pre_quality", 0.0)),
+        "--pre-encoder-quality-hidden",
+        str(row.get("pre_encoder_quality_hidden", 16)),
         "--aux-quality-degradation-prob",
         str(row["aux_quality_degradation_prob"]),
         "--aux-quality-degradation-types",

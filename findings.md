@@ -96,3 +96,11 @@
 - A finite-profile router is now represented in code, which is important for thesis defensibility: it avoids claiming an abstract dynamic network before there are deployable fixed profiles.
 - The first oracle rule is intentionally coarse. It is suitable for bootstrapping experiments and calibration plots, but should not be overclaimed as an optimal policy.
 - The next technical risk is profile materialization: current hard-concrete export can create target budgets, but the routing code still needs a run-level interface that evaluates or loads 65/80/100 profile checkpoints and reports oracle-vs-learned selection.
+
+## 2026-07-15 routing profile pilot findings
+
+- The 65/80/100 profile pipeline now runs end to end on HSLiNets Houston legacy data with CUDA in the `hslinets` conda environment.
+- The short seed0 pilots confirm budget controllability: source expected MACs are about 0.654/0.802/1.000 for 65/80/100 targets, and compact MACs are about 0.649/0.799/1.000.
+- The current oracle routing report is useful as a pipeline validation artifact, not as a thesis result. Compact OA is low because the pilots use only 3 epochs and no compact fine-tuning.
+- The most useful near-term comparison is no longer only fixed-budget pruning. The thesis table should compare static profile selection, oracle profile routing, and learned quality-conditioned profile routing under the same missing/degradation states.
+- The next implementation should train a learned router on oracle or validation-derived labels, then report routing accuracy, average MACs, average OA, and calibration curves.

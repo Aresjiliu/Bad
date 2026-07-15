@@ -76,6 +76,34 @@ class BRMNetExperimentMatrixTest(unittest.TestCase):
 
         self.assertIn("--aux-quality-degradation-prob 0.25", command)
 
+    def test_routing_profile_matrix_generates_fixed_budget_profiles(self):
+        args = build_parser().parse_args(
+            [
+                "--ablation",
+                "routing_profiles",
+                "--seeds",
+                "0",
+                "--data-format",
+                "legacy",
+                "--python",
+                "conda run -n hslinets python",
+            ]
+        )
+
+        rows = experiment_rows(args)
+
+        self.assertEqual([row["target_budget"] for row in rows], [0.65, 0.8, 1.0])
+        self.assertEqual({row["variant"] for row in rows}, {"quality_routing_profile"})
+        self.assertTrue(all(row["lambda_pre_quality"] == 0.5 for row in rows))
+        self.assertTrue(all(row["aux_quality_degradation_prob"] == 0.25 for row in rows))
+
+        command = command_for_row(rows[0], args)
+
+        self.assertIn("--lambda-pre-quality 0.5", command)
+        self.assertIn("--pre-encoder-quality-hidden 8", command)
+        self.assertIn("--data-format legacy", command)
+        self.assertTrue(command.startswith("conda run -n hslinets python scripts/run_brmnet_houston.py"))
+
 
 if __name__ == "__main__":
     unittest.main()

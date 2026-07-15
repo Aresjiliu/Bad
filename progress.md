@@ -145,3 +145,13 @@
 - The router maps four pre-encoder diagnostics `[pre_q_main, pre_q_aux, pre_u_main, pre_u_aux]` to 65/80/100 budget-profile probabilities, expected budget, selected profile, and selected budget.
 - The oracle target function provides the first supervised labels: clean low-uncertainty states map to the full profile, severe low-quality/high-uncertainty states map to the low-budget profile, and intermediate states map to the middle profile.
 - Verified with `conda run -n hslinets python -m unittest tests.test_profile_router` and full `conda run -n hslinets python -m unittest discover -s tests`: 140 tests passed and 1 skipped.
+
+## 2026-07-15 routing profile evaluation workflow
+
+- Added `evaluate_budget_profile_routing` and the CLI `scripts/evaluate_budget_profile_routing.py` to combine 65/80/100 compact profile metrics with pre-encoder quality features.
+- Added resource-stat backfill so compact metrics with zero `expected_macs_ratio` are corrected from sibling `resource_stats.json`.
+- Extended `scripts/make_brmnet_experiment_matrix.py` with `--ablation routing_profiles`, `--data-format`, and correct multi-token Python command generation for `conda run -n hslinets python`.
+- Generated `docs/generated/brmnet_routing_profile_matrix.csv` and `docs/generated/run_brmnet_routing_profiles.ps1`.
+- Completed three short Houston legacy seed0 profile pilots at 65/80/100 target MAC budgets under the quality-routing setting.
+- Generated `docs/generated/brmnet_routing_profile_oracle_seed0.json` and `.csv`; the pilot oracle report covers 11 modality/degradation states with mean selected budget 0.7727 and mean expected MACs ratio 0.7361.
+- Added `docs/QUALITY_ROUTING_PROFILE_PROGRESS_ZH.md` to summarize the method logic, pilot result boundary, and next formal experiment plan.

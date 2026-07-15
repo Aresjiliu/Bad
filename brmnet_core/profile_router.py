@@ -113,3 +113,57 @@ def budget_profile_routing_loss(
         "routing_cls": routing_cls,
         "routing_budget": routing_budget,
     }
+
+
+def evaluate_budget_profile_routing(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    selected_budgets_by_mode: dict[str, float] | None = None,
+    metric_key: str = "oa",
+    resource_key: str = "expected_macs_ratio",
+) -> dict[str, object]:
+    budgets = tuple(float(budget) for budget in profile_budgets)
+    normalized_profile_metrics = {float(budget): metrics for budget, metrics in profile_metrics.items()}
+    missing_profiles = [budget for budget in budgets if budget not in normalized_profile_metrics]
+    if missing_profiles:
+        raise KeyError(f"Missing profile metrics for budgets: {missing_profiles}")
+
+    per_mode: dict[str, dict[str, float]] = {}
+    metric_values: list[float] = []
+    selected_budget_values: list[float] = []
+    resource_values: list[float] = []
+
+    for mode, features in quality_by_mode.items():
+        if selected_budgets_by_mode is None:
+            feature_tensor = torch.as_tensor([features], dtype=torch.float32)
+            targets = oracle_budget_profile_targets(feature_tensor, profile_budgets=budgets)
+            selected_budget = float(targets["target_budgets"][0, 0].detach().cpu())
+        else:
+            selected_budget = float(selected_budgets_by_mode[mode])
+        selected_budget = min(budgets, key=lambda budget: abs(budget - selected_budget))
+        if selected_budget not in normalized_profile_metrics:
+            raise KeyError(f"Missing selected budget profile: {selected_budget}")
+        if mode not in normalized_profile_metrics[selected_budget]:
+            raise KeyError(f"Missing mode {mode!r} for budget profile {selected_budget}")
+
+        metrics = normalized_profile_metrics[selected_budget][mode]
+        metric_value = float(metrics[metric_key])
+        resource_value = float(metrics.get(resource_key, selected_budget))
+        per_mode[mode] = {
+            "selected_budget": selected_budget,
+            metric_key: metric_value,
+            resource_key: resource_value,
+        }
+        metric_values.append(metric_value)
+        selected_budget_values.append(selected_budget)
+        resource_values.append(resource_value)
+
+    count = max(len(metric_values), 1)
+    summary = {
+        f"mean_{metric_key}": sum(metric_values) / count,
+        "mean_selected_budget": sum(selected_budget_values) / count,
+        f"mean_{resource_key}": sum(resource_values) / count,
+        "modes": count,
+    }
+    return {"per_mode": per_mode, "summary": summary}

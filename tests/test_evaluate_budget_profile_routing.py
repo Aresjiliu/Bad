@@ -1,0 +1,185 @@
+import csv
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+from scripts.evaluate_budget_profile_routing import (
+    load_profile_metrics,
+    load_quality_features,
+    main,
+)
+
+
+class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
+    def test_loads_profile_metrics_from_budget_specs(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            metrics_path = root / "metrics.json"
+            metrics_path.write_text(json.dumps({"full": {"oa": 0.9}}), encoding="utf-8")
+
+            metrics = load_profile_metrics([f"1.0:{metrics_path}"])
+
+        self.assertEqual(metrics[1.0]["full"]["oa"], 0.9)
+
+    def test_load_profile_metrics_backfills_compact_resource_ratios(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            metrics_path = root / "compact_metrics.json"
+            metrics_path.write_text(
+                json.dumps({"full": {"oa": 0.9, "expected_macs_ratio": 0.0}}),
+                encoding="utf-8",
+            )
+            (root / "resource_stats.json").write_text(
+                json.dumps(
+                    {
+                        "compact": {"params_ratio": 0.7, "macs_ratio": 0.65},
+                        "state_dependent": {
+                            "compact": {
+                                "full": {"global_params_ratio": 0.7, "global_macs_ratio": 0.65}
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            metrics = load_profile_metrics([f"0.65:{metrics_path}"])
+
+        self.assertEqual(metrics[0.65]["full"]["expected_macs_ratio"], 0.65)
+        self.assertEqual(metrics[0.65]["full"]["expected_params_ratio"], 0.7)
+
+    def test_loads_quality_features_from_metrics_json(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "quality.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "full": {
+                            "pre_q_main": 0.9,
+                            "pre_q_aux": 0.8,
+                            "pre_u_main": 0.1,
+                            "pre_u_aux": 0.2,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            features = load_quality_features(path)
+
+        self.assertEqual(features["full"], [0.9, 0.8, 0.1, 0.2])
+
+    def test_main_writes_json_and_csv_report(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            quality_path = root / "quality.json"
+            quality_path.write_text(
+                json.dumps(
+                    {
+                        "full": {
+                            "pre_q_main": 0.9,
+                            "pre_q_aux": 0.9,
+                            "pre_u_main": 0.1,
+                            "pre_u_aux": 0.1,
+                        },
+                        "main_only": {
+                            "pre_q_main": 0.9,
+                            "pre_q_aux": 0.0,
+                            "pre_u_main": 0.1,
+                            "pre_u_aux": 1.0,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            profile_specs = []
+            for budget, full_oa, main_oa in ((0.65, 0.8, 0.6), (0.8, 0.85, 0.62), (1.0, 0.9, 0.64)):
+                path = root / f"profile_{budget}.json"
+                path.write_text(
+                    json.dumps(
+                        {
+                            "full": {"oa": full_oa, "expected_macs_ratio": budget},
+                            "main_only": {"oa": main_oa, "expected_macs_ratio": budget},
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                profile_specs.extend(["--profile-metrics", f"{budget}:{path}"])
+            output_json = root / "routing.json"
+            output_csv = root / "routing.csv"
+
+            exit_code = main(
+                [
+                    *profile_specs,
+                    "--quality-metrics",
+                    str(quality_path),
+                    "--output-json",
+                    str(output_json),
+                    "--output-csv",
+                    str(output_csv),
+                ]
+            )
+
+            report = json.loads(output_json.read_text(encoding="utf-8"))
+            with output_csv.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["per_mode"]["full"]["selected_budget"], 1.0)
+        self.assertEqual(report["per_mode"]["main_only"]["selected_budget"], 0.65)
+        self.assertEqual(rows[0]["mode"], "full")
+
+    def test_script_can_run_from_file_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            quality_path = root / "quality.json"
+            quality_path.write_text(
+                json.dumps(
+                    {
+                        "full": {
+                            "pre_q_main": 0.9,
+                            "pre_q_aux": 0.9,
+                            "pre_u_main": 0.1,
+                            "pre_u_aux": 0.1,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            profile_args = []
+            for budget in (0.65, 0.8, 1.0):
+                path = root / f"profile_{budget}.json"
+                path.write_text(
+                    json.dumps({"full": {"oa": 0.8 + budget / 10.0, "expected_macs_ratio": budget}}),
+                    encoding="utf-8",
+                )
+                profile_args.extend(["--profile-metrics", f"{budget}:{path}"])
+            output_json = root / "routing.json"
+            output_csv = root / "routing.csv"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/evaluate_budget_profile_routing.py",
+                    *profile_args,
+                    "--quality-metrics",
+                    str(quality_path),
+                    "--output-json",
+                    str(output_json),
+                    "--output-csv",
+                    str(output_csv),
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

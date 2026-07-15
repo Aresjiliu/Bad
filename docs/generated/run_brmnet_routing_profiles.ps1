@@ -1,0 +1,12 @@
+$ErrorActionPreference = 'Stop'
+Set-Location (Split-Path -Parent $PSScriptRoot)
+Set-Location ..
+
+# priority 1: quality_routing_profile_budget0p65_seed0 - Fixed deployable budget profile for quality-conditioned routing experiments.
+conda run -n hslinets python scripts/run_brmnet_houston.py --data-root 'D:\Academic\HSLiNets-main\Huston2013' --data-format legacy --pair-modalities hsi+lidar --split-protocol official --split-seed 42 --seed 0 --target-budget 0.65 --gate-type hard_concrete --fusion-mode reliability --lambda-budget 1.0 --lambda-quality 1.0 --lambda-pre-quality 0.5 --pre-encoder-quality-hidden 8 --aux-quality-degradation-prob 0.25 --aux-quality-degradation-types 'noise,downsample_4,occlusion_50' --modality-dropout-prob 0.25 --epochs 3 --compact-finetune-epochs 0 --batch-size 32 --budget-metric macs --output-dir 'output\routing_profiles\quality_routing_profile'
+
+# priority 2: quality_routing_profile_budget0p8_seed0 - Fixed deployable budget profile for quality-conditioned routing experiments.
+conda run -n hslinets python scripts/run_brmnet_houston.py --data-root 'D:\Academic\HSLiNets-main\Huston2013' --data-format legacy --pair-modalities hsi+lidar --split-protocol official --split-seed 42 --seed 0 --target-budget 0.8 --gate-type hard_concrete --fusion-mode reliability --lambda-budget 1.0 --lambda-quality 1.0 --lambda-pre-quality 0.5 --pre-encoder-quality-hidden 8 --aux-quality-degradation-prob 0.25 --aux-quality-degradation-types 'noise,downsample_4,occlusion_50' --modality-dropout-prob 0.25 --epochs 3 --compact-finetune-epochs 0 --batch-size 32 --budget-metric macs --output-dir 'output\routing_profiles\quality_routing_profile'
+
+# priority 3: quality_routing_profile_budget1p0_seed0 - Fixed deployable budget profile for quality-conditioned routing experiments.
+conda run -n hslinets python scripts/run_brmnet_houston.py --data-root 'D:\Academic\HSLiNets-main\Huston2013' --data-format legacy --pair-modalities hsi+lidar --split-protocol official --split-seed 42 --seed 0 --target-budget 1.0 --gate-type hard_concrete --fusion-mode reliability --lambda-budget 1.0 --lambda-quality 1.0 --lambda-pre-quality 0.5 --pre-encoder-quality-hidden 8 --aux-quality-degradation-prob 0.25 --aux-quality-degradation-types 'noise,downsample_4,occlusion_50' --modality-dropout-prob 0.25 --epochs 3 --compact-finetune-epochs 0 --batch-size 32 --budget-metric macs --output-dir 'output\routing_profiles\quality_routing_profile'

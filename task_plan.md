@@ -129,4 +129,6 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add a fixed-dimension branch projection primitive for future independent-width encoders.
 - [completed] Train/supervise the probe through existing quality targets and aggregate its diagnostics in train/eval metrics.
 - [completed] Add a standalone quality-to-budget profile router with oracle labels and supervised routing loss.
-- [pending] Integrate the router with deployable 65/80/100 profile evaluation and learned selection.
+- [completed] Integrate the router with deployable 65/80/100 profile evaluation and oracle profile reporting.
+- [pending] Train learned profile selection from oracle/validation labels and compare against static 65/80/100 profiles.
+- [pending] Run formal 20-epoch, 3-seed routing-profile experiments before using the numbers as thesis evidence.

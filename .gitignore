@@ -27,5 +27,6 @@ output/structured_pruning_validation/
 output/modality_dropout_validation/
 output/experiments_priority/
 output/quality_probe_pilot/
+output/routing_profiles/
 output/experiments_smoke/
 output/experiments/

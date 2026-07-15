@@ -5,6 +5,7 @@ import torch
 from brmnet_core.profile_router import (
     QualityBudgetRouter,
     budget_profile_routing_loss,
+    evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
 )
 
@@ -56,6 +57,38 @@ class QualityBudgetRouterTest(unittest.TestCase):
         self.assertIn("routing_budget", losses)
         self.assertIn("routing_total", losses)
         self.assertGreater(float(losses["routing_total"]), 0.0)
+
+    def test_evaluates_oracle_profile_routing_from_budget_metrics(self):
+        profile_metrics = {
+            0.65: {
+                "full": {"oa": 0.80, "expected_macs_ratio": 0.65},
+                "aux_noise": {"oa": 0.70, "expected_macs_ratio": 0.65},
+                "main_only": {"oa": 0.60, "expected_macs_ratio": 0.50},
+            },
+            0.8: {
+                "full": {"oa": 0.85, "expected_macs_ratio": 0.8},
+                "aux_noise": {"oa": 0.78, "expected_macs_ratio": 0.8},
+                "main_only": {"oa": 0.62, "expected_macs_ratio": 0.60},
+            },
+            1.0: {
+                "full": {"oa": 0.90, "expected_macs_ratio": 1.0},
+                "aux_noise": {"oa": 0.76, "expected_macs_ratio": 1.0},
+                "main_only": {"oa": 0.64, "expected_macs_ratio": 0.78},
+            },
+        }
+        quality_by_mode = {
+            "full": [0.95, 0.90, 0.05, 0.10],
+            "aux_noise": [0.70, 0.45, 0.25, 0.55],
+            "main_only": [0.95, 0.00, 0.05, 1.00],
+        }
+
+        report = evaluate_budget_profile_routing(profile_metrics, quality_by_mode)
+
+        self.assertEqual(report["per_mode"]["full"]["selected_budget"], 1.0)
+        self.assertEqual(report["per_mode"]["aux_noise"]["selected_budget"], 0.8)
+        self.assertEqual(report["per_mode"]["main_only"]["selected_budget"], 0.65)
+        self.assertAlmostEqual(report["summary"]["mean_oa"], (0.90 + 0.78 + 0.60) / 3)
+        self.assertAlmostEqual(report["summary"]["mean_selected_budget"], (1.0 + 0.8 + 0.65) / 3)
 
 
 if __name__ == "__main__":
