@@ -12,6 +12,7 @@ if __package__ is None or __package__ == "":
 from brmnet_core.profile_router import (
     evaluate_budget_profile_routing,
     predict_budget_profile_selection,
+    select_utility_budget_profiles,
     train_quality_budget_router,
 )
 
@@ -103,6 +104,7 @@ def build_routing_reports(
     include_learned: bool = False,
     router_epochs: int = 200,
     router_seed: int = 0,
+    utility_resource_penalty: float | None = None,
 ) -> dict[str, dict[str, object]]:
     reports: dict[str, dict[str, object]] = {}
     for budget in profile_budgets:
@@ -140,6 +142,42 @@ def build_routing_reports(
         )
         learned_report["summary"]["training_final_loss"] = history[-1]
         reports["learned"] = learned_report
+    if utility_resource_penalty is not None:
+        utility_selection = select_utility_budget_profiles(
+            profile_metrics,
+            profile_budgets=profile_budgets,
+            resource_penalty=utility_resource_penalty,
+        )
+        utility_report = evaluate_budget_profile_routing(
+            profile_metrics,
+            quality_features,
+            profile_budgets=profile_budgets,
+            selected_budgets_by_mode=utility_selection,
+        )
+        utility_report["summary"]["utility_resource_penalty"] = float(utility_resource_penalty)
+        reports["utility"] = utility_report
+        if include_learned:
+            router, history = train_quality_budget_router(
+                quality_features,
+                utility_selection,
+                profile_budgets=profile_budgets,
+                epochs=router_epochs,
+                seed=router_seed,
+            )
+            learned_selection = predict_budget_profile_selection(router, quality_features)
+            learned_report = evaluate_budget_profile_routing(
+                profile_metrics,
+                quality_features,
+                profile_budgets=profile_budgets,
+                selected_budgets_by_mode=learned_selection,
+            )
+            learned_report["summary"]["routing_accuracy_vs_utility"] = _routing_accuracy(
+                learned_selection,
+                utility_selection,
+            )
+            learned_report["summary"]["training_final_loss"] = history[-1]
+            learned_report["summary"]["utility_resource_penalty"] = float(utility_resource_penalty)
+            reports["learned_utility"] = learned_report
     return reports
 
 
@@ -170,6 +208,8 @@ def write_comparison_csv(path: str | Path, reports: dict[str, dict[str, object]]
         "mean_selected_budget",
         "mean_expected_macs_ratio",
         "routing_accuracy_vs_oracle",
+        "routing_accuracy_vs_utility",
+        "utility_resource_penalty",
         "modes",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -201,6 +241,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--learned-routing", action="store_true")
     parser.add_argument("--router-epochs", type=int, default=200)
     parser.add_argument("--router-seed", type=int, default=0)
+    parser.add_argument("--utility-resource-penalty", type=float)
     return parser
 
 
@@ -218,6 +259,7 @@ def main(argv: list[str] | None = None) -> int:
             include_learned=args.learned_routing,
             router_epochs=args.router_epochs,
             router_seed=args.router_seed,
+            utility_resource_penalty=args.utility_resource_penalty,
         )
         if args.output_comparison_json:
             write_routing_json(args.output_comparison_json, reports)

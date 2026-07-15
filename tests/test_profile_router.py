@@ -8,6 +8,7 @@ from brmnet_core.profile_router import (
     evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
     predict_budget_profile_selection,
+    select_utility_budget_profiles,
     train_quality_budget_router,
 )
 
@@ -117,6 +118,17 @@ class QualityBudgetRouterTest(unittest.TestCase):
 
         self.assertLess(history[-1], history[0])
         self.assertEqual(selections, target_budgets_by_mode)
+
+    def test_selects_utility_budget_profiles_from_metrics(self):
+        profile_metrics = {
+            0.65: {"full": {"oa": 0.80, "expected_macs_ratio": 0.65}},
+            0.8: {"full": {"oa": 0.85, "expected_macs_ratio": 0.8}},
+            1.0: {"full": {"oa": 0.84, "expected_macs_ratio": 1.0}},
+        }
+
+        selections = select_utility_budget_profiles(profile_metrics, resource_penalty=0.2)
+
+        self.assertEqual(selections["full"], 0.8)
 
 
 if __name__ == "__main__":

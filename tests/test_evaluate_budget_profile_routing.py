@@ -11,6 +11,7 @@ from scripts.evaluate_budget_profile_routing import (
     load_profile_metrics,
     load_quality_features,
     main,
+    write_comparison_csv,
 )
 
 
@@ -153,12 +154,40 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
             include_learned=True,
             router_epochs=120,
             router_seed=7,
+            utility_resource_penalty=0.2,
         )
 
-        self.assertEqual(set(reports), {"static_0.65", "static_0.8", "static_1.0", "oracle", "learned"})
+        self.assertEqual(
+            set(reports),
+            {"static_0.65", "static_0.8", "static_1.0", "oracle", "learned", "utility", "learned_utility"},
+        )
         self.assertEqual(reports["oracle"]["per_mode"]["full"]["selected_budget"], 1.0)
         self.assertEqual(reports["learned"]["per_mode"]["full"]["selected_budget"], 1.0)
+        self.assertIn("routing_accuracy_vs_utility", reports["learned_utility"]["summary"])
         self.assertIn("routing_accuracy_vs_oracle", reports["learned"]["summary"])
+
+    def test_comparison_csv_keeps_utility_accuracy_field(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "comparison.csv"
+            write_comparison_csv(
+                path,
+                {
+                    "learned_utility": {
+                        "summary": {
+                            "mean_oa": 0.8,
+                            "mean_selected_budget": 0.65,
+                            "mean_expected_macs_ratio": 0.61,
+                            "routing_accuracy_vs_utility": 0.9,
+                            "modes": 11,
+                        }
+                    }
+                },
+            )
+
+            with path.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+
+        self.assertEqual(rows[0]["routing_accuracy_vs_utility"], "0.9")
 
     def test_script_can_run_from_file_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:

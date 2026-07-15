@@ -120,3 +120,32 @@ seed0 汇总如下：
 - 与 static 100% 相比，oracle/learned routing 在 seed0 上略高 0.0040 mean OA，同时平均 MACs 从 0.9420 降到 0.8835。
 - learned routing 当前是在同一组 mode-level oracle labels 上训练并评估，意义是验证路由器可拟合规则，不应写成泛化能力结论。
 - 真正可写进论文主表的结果仍需 seed1/2，以及更严格的 learned router 划分策略，例如 leave-one-state-out 或 validation-label 训练。
+
+## Formal Seed0/Seed1 更新
+
+新增 seed1 的 65%/80%/100% 正式 profile，并补充 utility-label routing：
+
+- `utility`：按 `OA - 0.2 * MACs` 为每个模态状态选择预算档位。
+- `learned_utility`：用预编码质量特征拟合 utility label。
+
+两 seed 当前汇总见：
+
+- `docs/generated/brmnet_routing_profile_formal_seed0_seed1_summary.csv`
+
+核心结论：
+
+| Policy | 2-seed mean OA | 2-seed mean MACs |
+|---|---:|---:|
+| Static 65% | 0.7315 | 0.6124 |
+| Static 80% | 0.7503 | 0.7554 |
+| Static 100% | 0.7374 | 0.9420 |
+| Hand oracle / learned oracle | 0.7391 | 0.8915 |
+| Utility label | 0.7425 | 0.6441 |
+| Learned utility | 0.7346 | 0.6166 |
+
+当前判断：
+
+- `static_0.8` 是两 seed 下最强的固定 profile baseline。
+- 手写 oracle 过于保守，经常选择 100%，没有稳定优于 static 80%。
+- utility label 显著降低 MACs，但 `λ=0.2` 在 seed0 上过于激进；下一步应扫描 `λ` 或改为“精度容忍约束下选择最低 MACs”的 Pareto 标签。
+- learned utility 目前还不能完全拟合 utility label，说明需要更多训练样本或按 patch/state 粒度训练 router，而不只是 11 个 mode-level 点。

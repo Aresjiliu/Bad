@@ -112,3 +112,11 @@
 - Oracle routing reaches mean OA 0.7501 at mean MACs 0.8835, compared with static 100% mean OA 0.7461 at mean MACs 0.9420. This is the first concrete evidence that quality-conditioned profile selection can improve the accuracy-efficiency-robustness tradeoff.
 - Learned routing currently matches oracle on the same mode-level labels. This verifies trainability but does not prove generalization; the paper should either mark it as in-sample policy fitting or add leave-one-state-out / validation-label experiments.
 - The oracle policy mostly selects 100% for degraded-but-available states, 80% for `aux_occlusion_50`, and 65% for `aux_only` / `main_only`, suggesting the current hand rule is conservative. Future work can learn less conservative labels from validation OA-resource utility.
+
+## 2026-07-16 formal seed0/seed1 routing findings
+
+- With seed0 and seed1 completed, static 80% is the current strongest fixed-profile baseline: 2-seed mean OA 0.7503 at mean MACs 0.7554.
+- Hand oracle / learned oracle reach 2-seed mean OA 0.7391 at mean MACs 0.8915, so the hand rule should not be the final thesis routing policy.
+- Utility-derived labels using `OA - 0.2 * MACs` reach 2-seed mean OA 0.7425 at mean MACs 0.6441. This is more compute-efficient but underperforms static 80% in mean OA.
+- Learned utility labels reach 0.7346 mean OA at 0.6166 MACs; the current 11-state mode-level training set is too small for a strong learned router.
+- The next defensible method upgrade is to define labels through a Pareto or constrained-utility rule, e.g. choose the lowest-MAC profile within an OA tolerance of the per-state best profile, then train/evaluate the router with held-out states.

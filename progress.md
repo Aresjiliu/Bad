@@ -164,3 +164,7 @@
 - Completed formal seed0 runs for 65%, 80%, and 100% profiles under the quality-routing setting.
 - Generated `docs/generated/brmnet_routing_profile_formal_comparison_seed0.csv` and `.json`.
 - Formal seed0 comparison: static 65% mean OA 0.7158 at 0.6121 MACs; static 80% 0.7231 at 0.7572 MACs; static 100% 0.7461 at 0.9420 MACs; oracle/learned routing 0.7501 at 0.8835 MACs.
+- Completed formal seed1 runs for 65%, 80%, and 100% profiles.
+- Added utility-derived budget labels through `select_utility_budget_profiles` and comparison-script support for `utility` / `learned_utility`.
+- Generated `docs/generated/brmnet_routing_profile_formal_comparison_seed1.*` and `docs/generated/brmnet_routing_profile_formal_seed0_seed1_summary.csv`.
+- Two-seed status: static 80% is the strongest fixed baseline so far; hand oracle is too conservative; utility labels reduce compute but require penalty/Pareto tuning.

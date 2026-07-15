@@ -28,6 +28,7 @@ from .profile_router import (
     evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
     predict_budget_profile_selection,
+    select_utility_budget_profiles,
     train_quality_budget_router,
 )
 from .gated_blocks import HardConcreteConvBlock
@@ -74,6 +75,7 @@ __all__ = [
     "evaluate_budget_profile_routing",
     "oracle_budget_profile_targets",
     "predict_budget_profile_selection",
+    "select_utility_budget_profiles",
     "train_quality_budget_router",
     "HardConcreteGate",
     "HardConcreteConvBlock",

@@ -193,6 +193,32 @@ def predict_budget_profile_selection(
     }
 
 
+def select_utility_budget_profiles(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    metric_key: str = "oa",
+    resource_key: str = "expected_macs_ratio",
+    resource_penalty: float = 0.0,
+) -> dict[str, float]:
+    budgets = tuple(float(budget) for budget in profile_budgets)
+    normalized_profile_metrics = {float(budget): metrics for budget, metrics in profile_metrics.items()}
+    modes = sorted({mode for metrics_by_mode in normalized_profile_metrics.values() for mode in metrics_by_mode})
+    selections: dict[str, float] = {}
+    for mode in modes:
+        best_budget = budgets[0]
+        best_utility = float("-inf")
+        for budget in budgets:
+            if mode not in normalized_profile_metrics[budget]:
+                continue
+            metrics = normalized_profile_metrics[budget][mode]
+            utility = float(metrics[metric_key]) - float(resource_penalty) * float(metrics.get(resource_key, budget))
+            if utility > best_utility:
+                best_utility = utility
+                best_budget = budget
+        selections[mode] = best_budget
+    return selections
+
+
 def evaluate_budget_profile_routing(
     profile_metrics: dict[float, dict[str, dict[str, float]]],
     quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],
