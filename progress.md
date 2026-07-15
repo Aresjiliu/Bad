@@ -168,3 +168,14 @@
 - Added utility-derived budget labels through `select_utility_budget_profiles` and comparison-script support for `utility` / `learned_utility`.
 - Generated `docs/generated/brmnet_routing_profile_formal_comparison_seed1.*` and `docs/generated/brmnet_routing_profile_formal_seed0_seed1_summary.csv`.
 - Two-seed status: static 80% is the strongest fixed baseline so far; hand oracle is too conservative; utility labels reduce compute but require penalty/Pareto tuning.
+
+## 2026-07-16 Pareto/utility routing sweep
+
+- Added `select_pareto_tolerance_budget_profiles` to choose the lowest-MAC profile within a per-state OA tolerance of the best available profile.
+- Added `build_sweep_reports` and CLI switches `--output-sweep-json`, `--output-sweep-csv`, `--pareto-tolerances`, and `--utility-resource-penalties`.
+- Generated seed0/seed1 Pareto and utility sweeps:
+  - `docs/generated/brmnet_routing_profile_formal_sweep_seed0.*`
+  - `docs/generated/brmnet_routing_profile_formal_sweep_seed1.*`
+  - `docs/generated/brmnet_routing_profile_formal_sweep_seed0_seed1_summary.csv`
+- Current 2-seed sweep finding: `pareto_delta_0.01` reaches mean OA 0.7424 at 0.8550 MACs with about 0.0010 mean regret; `utility_lambda_0.05` reaches mean OA 0.7419 at 0.8394 MACs.
+- Added `docs/PARETO_UTILITY_ROUTING_UPDATE_20260716_ZH.md` to summarize the strategy correction and next implementation steps.

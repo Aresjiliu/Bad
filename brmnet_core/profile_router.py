@@ -219,6 +219,42 @@ def select_utility_budget_profiles(
     return selections
 
 
+def select_pareto_tolerance_budget_profiles(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    metric_key: str = "oa",
+    resource_key: str = "expected_macs_ratio",
+    metric_tolerance: float = 0.0,
+) -> dict[str, float]:
+    if metric_tolerance < 0:
+        raise ValueError(f"metric_tolerance must be non-negative, got {metric_tolerance}")
+    budgets = tuple(float(budget) for budget in profile_budgets)
+    normalized_profile_metrics = {float(budget): metrics for budget, metrics in profile_metrics.items()}
+    modes = sorted({mode for metrics_by_mode in normalized_profile_metrics.values() for mode in metrics_by_mode})
+    selections: dict[str, float] = {}
+    for mode in modes:
+        available: list[tuple[float, float, float]] = []
+        for budget in budgets:
+            if mode not in normalized_profile_metrics.get(budget, {}):
+                continue
+            metrics = normalized_profile_metrics[budget][mode]
+            available.append(
+                (
+                    budget,
+                    float(metrics[metric_key]),
+                    float(metrics.get(resource_key, budget)),
+                )
+            )
+        if not available:
+            continue
+        best_metric = max(metric for _, metric, _ in available)
+        threshold = best_metric - float(metric_tolerance)
+        candidates = [item for item in available if item[1] >= threshold]
+        best_budget, _, _ = min(candidates, key=lambda item: (item[2], item[0]))
+        selections[mode] = best_budget
+    return selections
+
+
 def evaluate_budget_profile_routing(
     profile_metrics: dict[float, dict[str, dict[str, float]]],
     quality_by_mode: dict[str, list[float] | tuple[float, float, float, float]],

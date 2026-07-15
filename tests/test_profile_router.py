@@ -8,6 +8,7 @@ from brmnet_core.profile_router import (
     evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
     predict_budget_profile_selection,
+    select_pareto_tolerance_budget_profiles,
     select_utility_budget_profiles,
     train_quality_budget_router,
 )
@@ -129,6 +130,27 @@ class QualityBudgetRouterTest(unittest.TestCase):
         selections = select_utility_budget_profiles(profile_metrics, resource_penalty=0.2)
 
         self.assertEqual(selections["full"], 0.8)
+
+    def test_selects_pareto_tolerance_profile_with_lowest_resource_near_best_metric(self):
+        profile_metrics = {
+            0.65: {
+                "full": {"oa": 0.80, "expected_macs_ratio": 0.65},
+                "aux_noise": {"oa": 0.70, "expected_macs_ratio": 0.61},
+            },
+            0.8: {
+                "full": {"oa": 0.895, "expected_macs_ratio": 0.75},
+                "aux_noise": {"oa": 0.76, "expected_macs_ratio": 0.74},
+            },
+            1.0: {
+                "full": {"oa": 0.900, "expected_macs_ratio": 0.94},
+                "aux_noise": {"oa": 0.80, "expected_macs_ratio": 0.93},
+            },
+        }
+
+        selections = select_pareto_tolerance_budget_profiles(profile_metrics, metric_tolerance=0.01)
+
+        self.assertEqual(selections["full"], 0.8)
+        self.assertEqual(selections["aux_noise"], 1.0)
 
 
 if __name__ == "__main__":

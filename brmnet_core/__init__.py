@@ -28,6 +28,7 @@ from .profile_router import (
     evaluate_budget_profile_routing,
     oracle_budget_profile_targets,
     predict_budget_profile_selection,
+    select_pareto_tolerance_budget_profiles,
     select_utility_budget_profiles,
     train_quality_budget_router,
 )
@@ -75,6 +76,7 @@ __all__ = [
     "evaluate_budget_profile_routing",
     "oracle_budget_profile_targets",
     "predict_budget_profile_selection",
+    "select_pareto_tolerance_budget_profiles",
     "select_utility_budget_profiles",
     "train_quality_budget_router",
     "HardConcreteGate",

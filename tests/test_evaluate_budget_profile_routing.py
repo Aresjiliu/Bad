@@ -8,6 +8,7 @@ from pathlib import Path
 
 from scripts.evaluate_budget_profile_routing import (
     build_routing_reports,
+    build_sweep_reports,
     load_profile_metrics,
     load_quality_features,
     main,
@@ -134,6 +135,62 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
         self.assertEqual(report["per_mode"]["main_only"]["selected_budget"], 0.65)
         self.assertEqual(rows[0]["mode"], "full")
 
+    def test_main_writes_sweep_reports_when_requested(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            quality_path = root / "quality.json"
+            quality_path.write_text(
+                json.dumps(
+                    {
+                        "full": {
+                            "pre_q_main": 0.9,
+                            "pre_q_aux": 0.9,
+                            "pre_u_main": 0.1,
+                            "pre_u_aux": 0.1,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            profile_specs = []
+            for budget, full_oa in ((0.65, 0.80), (0.8, 0.895), (1.0, 0.900)):
+                path = root / f"profile_{budget}.json"
+                path.write_text(
+                    json.dumps({"full": {"oa": full_oa, "expected_macs_ratio": budget}}),
+                    encoding="utf-8",
+                )
+                profile_specs.extend(["--profile-metrics", f"{budget}:{path}"])
+            sweep_json = root / "sweep.json"
+            sweep_csv = root / "sweep.csv"
+
+            exit_code = main(
+                [
+                    *profile_specs,
+                    "--quality-metrics",
+                    str(quality_path),
+                    "--output-json",
+                    str(root / "routing.json"),
+                    "--output-csv",
+                    str(root / "routing.csv"),
+                    "--output-sweep-json",
+                    str(sweep_json),
+                    "--output-sweep-csv",
+                    str(sweep_csv),
+                    "--pareto-tolerances",
+                    "0,0.01",
+                    "--utility-resource-penalties",
+                    "0,0.2",
+                ]
+            )
+
+            reports = json.loads(sweep_json.read_text(encoding="utf-8"))
+            with sweep_csv.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("pareto_delta_0.01", reports)
+        self.assertTrue(any(row["policy"] == "utility_lambda_0.2" for row in rows))
+
     def test_builds_static_oracle_and_learned_comparison_reports(self):
         quality_features = {
             "full": [0.95, 0.90, 0.05, 0.10],
@@ -188,6 +245,41 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
                 rows = list(csv.DictReader(handle))
 
         self.assertEqual(rows[0]["routing_accuracy_vs_utility"], "0.9")
+
+    def test_builds_pareto_and_utility_sweep_reports(self):
+        quality_features = {
+            "full": [0.95, 0.90, 0.05, 0.10],
+            "aux_noise": [0.70, 0.45, 0.25, 0.55],
+        }
+        profile_metrics = {
+            0.65: {
+                "full": {"oa": 0.80, "expected_macs_ratio": 0.65},
+                "aux_noise": {"oa": 0.70, "expected_macs_ratio": 0.61},
+            },
+            0.8: {
+                "full": {"oa": 0.895, "expected_macs_ratio": 0.75},
+                "aux_noise": {"oa": 0.76, "expected_macs_ratio": 0.74},
+            },
+            1.0: {
+                "full": {"oa": 0.900, "expected_macs_ratio": 0.94},
+                "aux_noise": {"oa": 0.80, "expected_macs_ratio": 0.93},
+            },
+        }
+
+        reports = build_sweep_reports(
+            profile_metrics,
+            quality_features,
+            pareto_tolerances=(0.0, 0.01),
+            utility_resource_penalties=(0.0, 0.2),
+        )
+
+        self.assertEqual(
+            set(reports),
+            {"pareto_delta_0", "pareto_delta_0.01", "utility_lambda_0", "utility_lambda_0.2"},
+        )
+        self.assertEqual(reports["pareto_delta_0.01"]["per_mode"]["full"]["selected_budget"], 0.8)
+        self.assertIn("mean_metric_regret", reports["pareto_delta_0.01"]["summary"])
+        self.assertEqual(reports["utility_lambda_0"]["per_mode"]["full"]["selected_budget"], 1.0)
 
     def test_script_can_run_from_file_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:

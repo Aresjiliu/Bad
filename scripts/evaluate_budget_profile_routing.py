@@ -12,6 +12,7 @@ if __package__ is None or __package__ == "":
 from brmnet_core.profile_router import (
     evaluate_budget_profile_routing,
     predict_budget_profile_selection,
+    select_pareto_tolerance_budget_profiles,
     select_utility_budget_profiles,
     train_quality_budget_router,
 )
@@ -72,6 +73,13 @@ def load_quality_features(path: str | Path) -> dict[str, list[float]]:
     return features
 
 
+def _parse_float_list(text: str) -> tuple[float, ...]:
+    values = tuple(float(item.strip()) for item in text.split(",") if item.strip())
+    if not values:
+        raise ValueError("float list must contain at least one value")
+    return values
+
+
 def _static_budget_selection(quality_features: dict[str, list[float]], budget: float) -> dict[str, float]:
     return {mode: float(budget) for mode in quality_features}
 
@@ -95,6 +103,63 @@ def _routing_accuracy(
         if float(predicted_budgets_by_mode[mode]) == float(oracle_budget)
     )
     return correct / len(oracle_budgets_by_mode)
+
+
+def _best_metrics_by_mode(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    metric_key: str = "oa",
+    resource_key: str = "expected_macs_ratio",
+    reference_budget: float = 1.0,
+) -> dict[str, dict[str, float]]:
+    modes = sorted({mode for metrics_by_mode in profile_metrics.values() for mode in metrics_by_mode})
+    best_by_mode: dict[str, dict[str, float]] = {}
+    reference_metrics = profile_metrics.get(float(reference_budget), {})
+    for mode in modes:
+        available = [
+            metrics_by_mode[mode]
+            for metrics_by_mode in profile_metrics.values()
+            if mode in metrics_by_mode
+        ]
+        if not available:
+            continue
+        best_metric = max(float(metrics[metric_key]) for metrics in available)
+        reference_resource = reference_metrics.get(mode, {}).get(resource_key)
+        best_by_mode[mode] = {
+            f"best_{metric_key}": best_metric,
+            f"reference_{resource_key}": float(reference_resource) if reference_resource is not None else 0.0,
+        }
+    return best_by_mode
+
+
+def _add_tradeoff_diagnostics(
+    report: dict[str, object],
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    metric_key: str = "oa",
+    resource_key: str = "expected_macs_ratio",
+    reference_budget: float = 1.0,
+) -> None:
+    best_by_mode = _best_metrics_by_mode(
+        profile_metrics,
+        metric_key=metric_key,
+        resource_key=resource_key,
+        reference_budget=reference_budget,
+    )
+    regrets: list[float] = []
+    savings: list[float] = []
+    for mode, metrics in report["per_mode"].items():
+        best = best_by_mode.get(mode)
+        if not best:
+            continue
+        regret = float(best[f"best_{metric_key}"]) - float(metrics[metric_key])
+        reference_resource = float(best[f"reference_{resource_key}"])
+        saving = reference_resource - float(metrics[resource_key]) if reference_resource else 0.0
+        metrics["metric_regret"] = regret
+        metrics["resource_saving_vs_reference"] = saving
+        regrets.append(regret)
+        savings.append(saving)
+    count = max(len(regrets), 1)
+    report["summary"]["mean_metric_regret"] = sum(regrets) / count
+    report["summary"]["mean_resource_saving_vs_reference"] = sum(savings) / count
 
 
 def build_routing_reports(
@@ -181,6 +246,52 @@ def build_routing_reports(
     return reports
 
 
+def _format_sweep_value(value: float) -> str:
+    text = f"{float(value):.6g}"
+    return text.replace("-", "m")
+
+
+def build_sweep_reports(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    quality_features: dict[str, list[float]],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    pareto_tolerances: tuple[float, ...] = (0.0, 0.005, 0.01, 0.02, 0.03),
+    utility_resource_penalties: tuple[float, ...] = (0.0, 0.05, 0.1, 0.15, 0.2, 0.3),
+) -> dict[str, dict[str, object]]:
+    reports: dict[str, dict[str, object]] = {}
+    for tolerance in pareto_tolerances:
+        selection = select_pareto_tolerance_budget_profiles(
+            profile_metrics,
+            profile_budgets=profile_budgets,
+            metric_tolerance=tolerance,
+        )
+        report = evaluate_budget_profile_routing(
+            profile_metrics,
+            quality_features,
+            profile_budgets=profile_budgets,
+            selected_budgets_by_mode=selection,
+        )
+        report["summary"]["pareto_metric_tolerance"] = float(tolerance)
+        _add_tradeoff_diagnostics(report, profile_metrics)
+        reports[f"pareto_delta_{_format_sweep_value(tolerance)}"] = report
+    for penalty in utility_resource_penalties:
+        selection = select_utility_budget_profiles(
+            profile_metrics,
+            profile_budgets=profile_budgets,
+            resource_penalty=penalty,
+        )
+        report = evaluate_budget_profile_routing(
+            profile_metrics,
+            quality_features,
+            profile_budgets=profile_budgets,
+            selected_budgets_by_mode=selection,
+        )
+        report["summary"]["utility_resource_penalty"] = float(penalty)
+        _add_tradeoff_diagnostics(report, profile_metrics)
+        reports[f"utility_lambda_{_format_sweep_value(penalty)}"] = report
+    return reports
+
+
 def write_routing_csv(path: str | Path, report: dict[str, object]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -210,6 +321,9 @@ def write_comparison_csv(path: str | Path, reports: dict[str, dict[str, object]]
         "routing_accuracy_vs_oracle",
         "routing_accuracy_vs_utility",
         "utility_resource_penalty",
+        "pareto_metric_tolerance",
+        "mean_metric_regret",
+        "mean_resource_saving_vs_reference",
         "modes",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -242,6 +356,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--router-epochs", type=int, default=200)
     parser.add_argument("--router-seed", type=int, default=0)
     parser.add_argument("--utility-resource-penalty", type=float)
+    parser.add_argument("--output-sweep-json")
+    parser.add_argument("--output-sweep-csv")
+    parser.add_argument("--pareto-tolerances", default="0,0.005,0.01,0.02,0.03")
+    parser.add_argument("--utility-resource-penalties", default="0,0.05,0.1,0.15,0.2,0.3")
     return parser
 
 
@@ -265,6 +383,17 @@ def main(argv: list[str] | None = None) -> int:
             write_routing_json(args.output_comparison_json, reports)
         if args.output_comparison_csv:
             write_comparison_csv(args.output_comparison_csv, reports)
+    if args.output_sweep_json or args.output_sweep_csv:
+        sweep_reports = build_sweep_reports(
+            profile_metrics,
+            quality_features,
+            pareto_tolerances=_parse_float_list(args.pareto_tolerances),
+            utility_resource_penalties=_parse_float_list(args.utility_resource_penalties),
+        )
+        if args.output_sweep_json:
+            write_routing_json(args.output_sweep_json, sweep_reports)
+        if args.output_sweep_csv:
+            write_comparison_csv(args.output_sweep_csv, sweep_reports)
     print(json.dumps(report["summary"], ensure_ascii=False))
     return 0
 

@@ -120,3 +120,11 @@
 - Utility-derived labels using `OA - 0.2 * MACs` reach 2-seed mean OA 0.7425 at mean MACs 0.6441. This is more compute-efficient but underperforms static 80% in mean OA.
 - Learned utility labels reach 0.7346 mean OA at 0.6166 MACs; the current 11-state mode-level training set is too small for a strong learned router.
 - The next defensible method upgrade is to define labels through a Pareto or constrained-utility rule, e.g. choose the lowest-MAC profile within an OA tolerance of the per-state best profile, then train/evaluate the router with held-out states.
+
+## 2026-07-16 Pareto/utility sweep findings
+
+- Pareto-tolerance labels are now implemented and tested. They directly address the hand-oracle problem by choosing the lowest-cost profile among profiles whose OA is within a tolerance of the per-state best profile.
+- On the current seed0/seed1 sweep, `pareto_delta_0.01` gives 2-seed mean OA 0.7424 at 0.8550 MACs, with only about 0.0010 mean regret from the per-state best profile.
+- `utility_lambda_0.05` gives a similar tradeoff at lower cost: 2-seed mean OA 0.7419 at 0.8394 MACs. Larger penalties such as `lambda=0.2` are too aggressive for the current evidence.
+- The method still does not beat the old static 80% baseline on mean OA, so the correct thesis framing is not "dynamic routing already wins everywhere"; it is "hand-crafted routing fails, Pareto/utility labels provide a controlled resource-accuracy target, and learned routing should be trained against these corrected labels."
+- The next evidence gap is seed2 plus a learned Pareto/utility router with leave-one-state-out validation.
