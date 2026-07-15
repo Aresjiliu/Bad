@@ -88,6 +88,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--lambda-quality", type=float, default=0.0)
     parser.add_argument(
+        "--lambda-pre-quality",
+        type=float,
+        default=0.0,
+        help="Auxiliary loss weight for the pre-encoder quality and uncertainty probe.",
+    )
+    parser.add_argument(
+        "--pre-encoder-quality-hidden",
+        type=int,
+        default=16,
+        help="Hidden channel width of the optional pre-encoder quality probe.",
+    )
+    parser.add_argument(
         "--modality-dropout-prob",
         type=float,
         default=0.0,
@@ -530,6 +542,8 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
             init_score=score,
             gate_type="legacy_sigmoid",
             fusion_mode=cli_args.fusion_mode,
+            use_pre_encoder_quality_probe=cli_args.lambda_pre_quality > 0.0,
+            pre_encoder_quality_hidden=cli_args.pre_encoder_quality_hidden,
         )
         return model, retention, score
 
@@ -543,6 +557,8 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
         gate_type="hard_concrete",
         initial_retention=initial_retention,
         fusion_mode=cli_args.fusion_mode,
+        use_pre_encoder_quality_probe=cli_args.lambda_pre_quality > 0.0,
+        pre_encoder_quality_hidden=cli_args.pre_encoder_quality_hidden,
     )
     if cli_args.gate_init_retention is None:
         initial_retention = initialize_uniform_resource_budget(
@@ -588,6 +604,9 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "gate_type": cli_args.gate_type,
             "fusion_mode": cli_args.fusion_mode,
             "budget_metric": cli_args.budget_metric,
+            "lambda_pre_quality": cli_args.lambda_pre_quality,
+            "pre_encoder_quality_probe": cli_args.lambda_pre_quality > 0.0,
+            "pre_encoder_quality_hidden": cli_args.pre_encoder_quality_hidden,
         }
         summary["parameters"] = sum(param.numel() for param in model.parameters())
         print(json.dumps(summary, ensure_ascii=False))
@@ -672,6 +691,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     loss_kwargs = {
         "lambda_budget": cli_args.lambda_budget,
         "lambda_quality": cli_args.lambda_quality,
+        "lambda_pre_quality": cli_args.lambda_pre_quality,
         "target_budget": cli_args.target_budget,
     }
     if cli_args.gate_type == "hard_concrete":
@@ -785,6 +805,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 loss_kwargs={
                     "lambda_budget": 0.0,
                     "lambda_quality": cli_args.lambda_quality,
+                    "lambda_pre_quality": 0.0,
                 },
                 modality_dropout_prob=cli_args.modality_dropout_prob,
                 aux_quality_degradation_prob=cli_args.aux_quality_degradation_prob,
@@ -802,6 +823,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                     loss_kwargs={
                         "lambda_budget": 0.0,
                         "lambda_quality": cli_args.lambda_quality,
+                        "lambda_pre_quality": 0.0,
                     },
                 )
                 compact_score = compact_selection_score(
@@ -847,6 +869,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             loss_kwargs={
                 "lambda_budget": 0.0,
                 "lambda_quality": cli_args.lambda_quality,
+                "lambda_pre_quality": 0.0,
             },
             aux_noise_std=cli_args.aux_noise_std,
         )

@@ -129,3 +129,12 @@
 - Added `brmnet_core/projection.py` with `FeatureProjection`; equal input/output widths are parameter-free identities.
 - Followed red-green tests for both new modules: missing-module/unsupported-argument failures were observed before their implementations.
 - Fresh verification: `conda run -n hslinets python -m unittest discover -s tests` completed with 134 tests passing and 1 skipped; the Houston runner CPU dry-run also completed successfully.
+
+## 2026-07-15 pre-encoder quality supervision
+
+- Added `pre_encoder_quality_loss`, wired `lambda_pre_quality` into `brmnet_loss`, and exposed `pre_quality`, `pre_q_*`, and `pre_u_*` in train/eval metrics.
+- Added Houston runner switches `--lambda-pre-quality` and `--pre-encoder-quality-hidden`; the pre-encoder probe is enabled only when `lambda_pre_quality > 0`.
+- Verified red-green behavior: missing `pre_encoder_quality_loss` and missing CLI arguments failed before implementation, then targeted tests passed.
+- Fresh verification: `conda run -n hslinets python -m unittest discover -s tests` completed with 137 tests passing and 1 skipped.
+- Ran a one-epoch CUDA pilot on HSLiNets Houston legacy patches at `output/quality_probe_pilot/...`: train `pre_quality=0.8769`, validation `pre_quality=0.8858`, validation OA `0.4382`, full test OA `0.4010`.
+- Interpretation: the training/evaluation chain is now real, but a one-epoch pilot is only a smoke experiment. The probe outputs remain near 0.5 under many degraded states, so formal claims require longer training and routing ablations.

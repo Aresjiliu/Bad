@@ -335,6 +335,7 @@ def _new_meter() -> dict[str, float]:
         "cls": 0.0,
         "budget": 0.0,
         "quality": 0.0,
+        "pre_quality": 0.0,
         "soft_retention": 0.0,
         "hard_retention": 0.0,
         "target_budget": 0.0,
@@ -343,6 +344,10 @@ def _new_meter() -> dict[str, float]:
         "expected_macs_ratio": 0.0,
         "q_main": 0.0,
         "q_aux": 0.0,
+        "pre_q_main": 0.0,
+        "pre_q_aux": 0.0,
+        "pre_u_main": 0.0,
+        "pre_u_aux": 0.0,
         "fusion_weight_main": 0.0,
         "fusion_weight_aux": 0.0,
         "correct": 0.0,
@@ -362,6 +367,7 @@ def _update_meter(
         "cls",
         "budget",
         "quality",
+        "pre_quality",
         "soft_retention",
         "hard_retention",
         "target_budget",
@@ -375,6 +381,9 @@ def _update_meter(
         meter["q_main"] += float(outputs["q_main"].detach().mean().cpu()) * batch_size
     if "q_aux" in outputs:
         meter["q_aux"] += float(outputs["q_aux"].detach().mean().cpu()) * batch_size
+    for key in ("pre_q_main", "pre_q_aux", "pre_u_main", "pre_u_aux"):
+        if key in outputs:
+            meter[key] += float(outputs[key].detach().mean().cpu()) * batch_size
     if "fusion_weights" in outputs:
         weights = outputs["fusion_weights"].detach()
         meter["fusion_weight_main"] += float(weights[:, 0].mean().cpu()) * batch_size
@@ -391,6 +400,7 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
         "cls": meter["cls"] / samples,
         "budget": meter["budget"] / samples,
         "quality": meter["quality"] / samples,
+        "pre_quality": meter["pre_quality"] / samples,
         "soft_retention": meter["soft_retention"] / samples,
         "hard_retention": meter["hard_retention"] / samples,
         "target_budget": meter["target_budget"] / samples,
@@ -399,6 +409,10 @@ def _finalize_meter(meter: dict[str, float]) -> dict[str, float]:
         "expected_macs_ratio": meter["expected_macs_ratio"] / samples,
         "q_main": meter["q_main"] / samples,
         "q_aux": meter["q_aux"] / samples,
+        "pre_q_main": meter["pre_q_main"] / samples,
+        "pre_q_aux": meter["pre_q_aux"] / samples,
+        "pre_u_main": meter["pre_u_main"] / samples,
+        "pre_u_aux": meter["pre_u_aux"] / samples,
         "fusion_weight_main": meter["fusion_weight_main"] / samples,
         "fusion_weight_aux": meter["fusion_weight_aux"] / samples,
         "accuracy": meter["correct"] / samples,

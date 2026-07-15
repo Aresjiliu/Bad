@@ -127,4 +127,5 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add a standalone pre-encoder quality probe with availability-aware quality and uncertainty outputs.
 - [completed] Add the optional BRM-Net diagnostic output path without changing default inference behavior.
 - [completed] Add a fixed-dimension branch projection primitive for future independent-width encoders.
-- [pending] Train/supervise the probe, aggregate its diagnostics, and use it for budget-profile selection.
+- [completed] Train/supervise the probe through existing quality targets and aggregate its diagnostics in train/eval metrics.
+- [pending] Use the supervised pre-encoder probe for budget-profile selection.

@@ -83,3 +83,10 @@
 - BRMNet exposes probe outputs only through the opt-in `use_pre_encoder_quality_probe` flag. The values are deliberately not connected to fusion or loss yet, so current metrics and resource accounting remain valid.
 - `FeatureProjection` is available for future branch-independent encoder widths. Equal-width projections use `nn.Identity`, so the default path has no added parameters.
 - The next implementation batch must add quality targets/metrics and a runner switch before GPU experiments; running the current training loop would not yet test the new hypothesis.
+
+## 2026-07-15 pre-encoder quality supervision findings
+
+- The pre-encoder probe is now trainable through the existing degradation/missing-modality quality targets. Its uncertainty head is supervised toward `1 - quality`, giving the thesis a clearer reliability-estimation story than quality-only scoring.
+- Default behavior is preserved: with `--lambda-pre-quality 0`, the probe is not instantiated and the Houston dry-run remains at 466673 parameters. With `--lambda-pre-quality 0.5 --pre-encoder-quality-hidden 8`, parameters rise to 469174.
+- The one-epoch CUDA pilot confirms that metrics are recorded end to end, but does not prove routing quality. Full test OA is 0.4010 and pre-encoder quality predictions remain close to 0.5, so the probe needs longer training before it can drive profile selection.
+- The next thesis-level step should use the probe as an explicit routing input: first oracle labels over fixed 65/80/100 profiles, then a learned router with an added routing loss and calibration plots.

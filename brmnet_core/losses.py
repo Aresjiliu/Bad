@@ -18,6 +18,21 @@ def modality_quality_loss(
     return F.mse_loss(q_main, target_main) + F.mse_loss(q_aux, target_aux)
 
 
+def pre_encoder_quality_loss(
+    q_main: torch.Tensor,
+    q_aux: torch.Tensor,
+    u_main: torch.Tensor,
+    u_aux: torch.Tensor,
+    target_main: torch.Tensor,
+    target_aux: torch.Tensor,
+) -> torch.Tensor:
+    quality = modality_quality_loss(q_main, q_aux, target_main, target_aux)
+    target_main = target_main.reshape_as(u_main).to(dtype=u_main.dtype, device=u_main.device)
+    target_aux = target_aux.reshape_as(u_aux).to(dtype=u_aux.dtype, device=u_aux.device)
+    uncertainty = F.mse_loss(u_main, 1.0 - target_main) + F.mse_loss(u_aux, 1.0 - target_aux)
+    return quality + uncertainty
+
+
 def brmnet_loss(
     model,
     outputs: dict[str, torch.Tensor],
@@ -27,6 +42,7 @@ def brmnet_loss(
     patch_size: int | None = None,
     budget_metric: str = "macs",
     lambda_quality: float = 0.0,
+    lambda_pre_quality: float = 0.0,
     quality_targets: tuple[torch.Tensor, torch.Tensor] | None = None,
 ) -> dict[str, torch.Tensor]:
     cls = F.cross_entropy(outputs["logits"], labels)
@@ -67,12 +83,29 @@ def brmnet_loss(
     quality = torch.zeros((), dtype=cls.dtype, device=labels.device)
     if quality_targets is not None and lambda_quality > 0.0 and "q_main" in outputs and "q_aux" in outputs:
         quality = modality_quality_loss(outputs["q_main"], outputs["q_aux"], quality_targets[0], quality_targets[1])
-    total = cls + lambda_budget * budget + lambda_quality * quality
+    pre_quality = torch.zeros((), dtype=cls.dtype, device=labels.device)
+    if lambda_pre_quality > 0.0:
+        if quality_targets is None:
+            raise ValueError("quality_targets are required when lambda_pre_quality > 0")
+        required = ("pre_q_main", "pre_q_aux", "pre_u_main", "pre_u_aux")
+        missing = [key for key in required if key not in outputs]
+        if missing:
+            raise ValueError(f"Missing pre-encoder quality outputs: {', '.join(missing)}")
+        pre_quality = pre_encoder_quality_loss(
+            outputs["pre_q_main"],
+            outputs["pre_q_aux"],
+            outputs["pre_u_main"],
+            outputs["pre_u_aux"],
+            quality_targets[0],
+            quality_targets[1],
+        )
+    total = cls + lambda_budget * budget + lambda_quality * quality + lambda_pre_quality * pre_quality
     return {
         "total": total,
         "cls": cls,
         "budget": budget,
         "quality": quality,
+        "pre_quality": pre_quality,
         "soft_retention": soft_retention,
         "hard_retention": hard_retention,
         "target_budget": target,

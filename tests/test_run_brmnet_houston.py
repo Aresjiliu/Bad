@@ -58,6 +58,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.compact_finetune_epochs, 10)
         self.assertEqual(args.target_budget, 1.0)
         self.assertEqual(args.lambda_budget, 1.0)
+        self.assertEqual(args.lambda_pre_quality, 0.0)
         self.assertEqual(args.modality_dropout_prob, 0.0)
         self.assertEqual(args.min_active_ratio, 0.0)
         self.assertEqual(args.val_fraction, 0.1)
@@ -75,6 +76,12 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         args = build_parser().parse_args(["--modality-dropout-prob", "0.25"])
 
         self.assertEqual(args.modality_dropout_prob, 0.25)
+
+    def test_pre_encoder_quality_arguments(self):
+        args = build_parser().parse_args(["--lambda-pre-quality", "0.5", "--pre-encoder-quality-hidden", "8"])
+
+        self.assertEqual(args.lambda_pre_quality, 0.5)
+        self.assertEqual(args.pre_encoder_quality_hidden, 8)
 
     def test_aux_quality_degradation_arguments(self):
         args = build_parser().parse_args(
