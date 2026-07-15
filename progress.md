@@ -114,3 +114,10 @@
 - Added `docs/BRMNET_FULL_PIPELINE_ZH.md` as a clean Chinese runbook for the current `brmnet_core` and `scripts` mainline.
 - Documented the end-to-end flow from Houston raw data loading, source training, degradation evaluation, hard-concrete compact export, compact fine-tuning, multi-seed summarization, and paper table/figure generation.
 - Included Mermaid flowcharts, core module explanations, recommended commands, key parameter tables, output-file meanings, and paper-claim boundaries.
+
+## 2026-07-15 thesis innovation and demonstration planning
+
+- Audited the current BRM-Net method, experiment evidence, reusable legacy backbone assets, local thesis blueprints, and recent 2024-2026 literature.
+- Identified the core gap: reliability currently changes fusion but does not control encoder computation, so budget and robustness remain only loosely coupled.
+- Created `docs/THESIS_EXTENSION_AND_DEMO_PLAN_ZH.md` with a quality-conditioned budget routing design, multi-dataset experiment matrix, deployment plan, demonstration-system architecture, thesis chapter mapping, ten-week roadmap, and stop conditions.
+- Added the implementation roadmap to `task_plan.md` and recorded the literature-driven decisions in `findings.md`.

@@ -102,3 +102,22 @@ Continue the BRM-Net thesis/paper work according to the latest guidance: make th
 - Use `conda run -n hslinets ...` for experiments.
 - CUDA is available on RTX 4060 Laptop 8GB; run experiments serially.
 - After each meaningful result, regenerate summaries, run targeted tests when code changes, commit, and push.
+
+## 2026-07-15 Thesis Extension and Demonstration Plan
+
+### Goal
+
+Upgrade BRM-Net from a small static budget and robustness prototype into a thesis-level framework that couples modality quality with deployable compute allocation, validates the method on multiple datasets, and closes the loop with an inference demonstration system.
+
+### Phase G: Thesis-Level Method Upgrade
+
+1. [completed] Audit current reusable code, experiment evidence, local thesis plans, and recent literature.
+2. [completed] Define the quality-conditioned budget routing direction and its novelty boundary.
+3. [completed] Specify the multi-dataset experiment matrix, deployment evidence, thesis structure, and stop conditions.
+4. [completed] Specify the minimum demonstration system architecture, pages, APIs, and defense scenarios.
+5. [pending] Freeze current Houston artifacts with model/config hashes and source-vs-compact evidence.
+6. [pending] Introduce a larger clean dual-branch backbone and branch-independent fixed-dimension projections.
+7. [pending] Build 65/80/100 deployable branch profiles and a low-cost pre-encoder quality probe.
+8. [pending] Implement oracle and learned quality-conditioned budget routing.
+9. [pending] Add Trento and MUUFL protocols, then run three-seed experiments.
+10. [pending] Add ONNX Runtime benchmarks and the demonstration-system MVP.

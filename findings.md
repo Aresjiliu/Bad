@@ -66,3 +66,13 @@
 - p=0.25 is especially strong for occlusion: compact `aux_occlusion_50` OA is 0.8557, compared with 0.8466 for p=0.50, 0.7332 for noise-only quality degradation, and 0.7421 for the full baseline.
 - The remaining weakness is high-noise routing calibration. p=0.25 has `q_aux` 0.9086 and auxiliary fusion weight 0.4772 under `aux_noise_high`, so it relies more on the auxiliary branch than p=0.50. This keeps clean accuracy but may reduce robustness on some seeds.
 - Current default recommendation for the paper experiment table: use `quality_multi_degradation_p025` as the balanced main method, and report noise-only and p=0.50 multi-type as ablations that expose the robustness-clean-accuracy tradeoff.
+
+## 2026-07-15 thesis extension findings
+
+- The current codebase is reusable and should not be restarted: the clean mainline already contains structured budget learning, compact export, availability-conditioned fusion, degradation supervision, three-seed reporting, and 129 tests.
+- The main thesis risk is conceptual coupling rather than missing modules. Current quality estimates affect fusion after feature extraction, so they cannot change the computation already spent by the encoders.
+- Recent work including SimMLM, MaMOL, and DCMNet makes generic dynamic routing or missing-modality conditional computation an unsafe novelty claim.
+- The most defensible new direction is a low-cost pre-encoder quality probe plus a router over a finite set of dense, exportable branch-width profiles. This distinguishes the project through resource constraints, real deployment, and degradation calibration.
+- A first implementation should use separately exportable 65/80/100 profiles and oracle routing labels before attempting a shared-weight slimmable supernet.
+- Thesis-level evidence requires at least Houston2013, Trento, and MUUFL Gulfport, three seeds, fixed split manifests, missing/degradation matrices, calibration metrics, and ONNX Runtime latency.
+- The demonstration system should be an algorithm and deployment validation platform, not a claimed satellite production system. Core interactions are modality switches, degradation injection, budget/profile selection, backend selection, spatial predictions, and routing diagnostics.
