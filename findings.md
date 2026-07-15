@@ -90,3 +90,9 @@
 - Default behavior is preserved: with `--lambda-pre-quality 0`, the probe is not instantiated and the Houston dry-run remains at 466673 parameters. With `--lambda-pre-quality 0.5 --pre-encoder-quality-hidden 8`, parameters rise to 469174.
 - The one-epoch CUDA pilot confirms that metrics are recorded end to end, but does not prove routing quality. Full test OA is 0.4010 and pre-encoder quality predictions remain close to 0.5, so the probe needs longer training before it can drive profile selection.
 - The next thesis-level step should use the probe as an explicit routing input: first oracle labels over fixed 65/80/100 profiles, then a learned router with an added routing loss and calibration plots.
+
+## 2026-07-15 quality-to-budget routing findings
+
+- A finite-profile router is now represented in code, which is important for thesis defensibility: it avoids claiming an abstract dynamic network before there are deployable fixed profiles.
+- The first oracle rule is intentionally coarse. It is suitable for bootstrapping experiments and calibration plots, but should not be overclaimed as an optimal policy.
+- The next technical risk is profile materialization: current hard-concrete export can create target budgets, but the routing code still needs a run-level interface that evaluates or loads 65/80/100 profile checkpoints and reports oracle-vs-learned selection.

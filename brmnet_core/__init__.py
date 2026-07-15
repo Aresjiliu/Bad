@@ -22,6 +22,7 @@ from .encoders import BudgetGatedEncoder
 from .fusion import ModalityQualityEstimator, ReliabilityGatedFusion, BudgetGatedFusionHead
 from .quality_probe import PreEncoderQualityProbe
 from .projection import FeatureProjection
+from .profile_router import QualityBudgetRouter, budget_profile_routing_loss, oracle_budget_profile_targets
 from .gated_blocks import HardConcreteConvBlock
 from .hard_concrete import (
     HardConcreteGate,
@@ -61,6 +62,9 @@ __all__ = [
     "BudgetGatedFusionHead",
     "PreEncoderQualityProbe",
     "FeatureProjection",
+    "QualityBudgetRouter",
+    "budget_profile_routing_loss",
+    "oracle_budget_profile_targets",
     "HardConcreteGate",
     "HardConcreteConvBlock",
     "iter_hard_concrete_gates",

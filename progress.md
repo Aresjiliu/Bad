@@ -138,3 +138,10 @@
 - Fresh verification: `conda run -n hslinets python -m unittest discover -s tests` completed with 137 tests passing and 1 skipped.
 - Ran a one-epoch CUDA pilot on HSLiNets Houston legacy patches at `output/quality_probe_pilot/...`: train `pre_quality=0.8769`, validation `pre_quality=0.8858`, validation OA `0.4382`, full test OA `0.4010`.
 - Interpretation: the training/evaluation chain is now real, but a one-epoch pilot is only a smoke experiment. The probe outputs remain near 0.5 under many degraded states, so formal claims require longer training and routing ablations.
+
+## 2026-07-15 quality-to-budget router primitive
+
+- Added `brmnet_core/profile_router.py` with `QualityBudgetRouter`, `oracle_budget_profile_targets`, and `budget_profile_routing_loss`.
+- The router maps four pre-encoder diagnostics `[pre_q_main, pre_q_aux, pre_u_main, pre_u_aux]` to 65/80/100 budget-profile probabilities, expected budget, selected profile, and selected budget.
+- The oracle target function provides the first supervised labels: clean low-uncertainty states map to the full profile, severe low-quality/high-uncertainty states map to the low-budget profile, and intermediate states map to the middle profile.
+- Verified with `conda run -n hslinets python -m unittest tests.test_profile_router` and full `conda run -n hslinets python -m unittest discover -s tests`: 140 tests passed and 1 skipped.

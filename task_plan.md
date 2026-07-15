@@ -128,4 +128,5 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add the optional BRM-Net diagnostic output path without changing default inference behavior.
 - [completed] Add a fixed-dimension branch projection primitive for future independent-width encoders.
 - [completed] Train/supervise the probe through existing quality targets and aggregate its diagnostics in train/eval metrics.
-- [pending] Use the supervised pre-encoder probe for budget-profile selection.
+- [completed] Add a standalone quality-to-budget profile router with oracle labels and supervised routing loss.
+- [pending] Integrate the router with deployable 65/80/100 profile evaluation and learned selection.
