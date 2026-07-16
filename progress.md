@@ -228,3 +228,11 @@
 - Added `docs/TRENTO_SMOKE_RUN_20260716_ZH.md` to record the smoke result and the formal-experiment boundary.
 - Current smoke metrics: full OA 0.9042, AA 0.7442, Kappa 0.8719; main-only OA 0.8600; auxiliary-only OA 0.5881; auxiliary occlusion 50% OA 0.6050.
 - Next action: run a Trento 20-epoch 100% seed0 baseline, then compare the current 80% degradation-aware/lightweight setting.
+
+## 2026-07-16 Trento formal seed0 experiments
+
+- Completed Trento seed0 20-epoch 100% baseline under CUDA. Source full OA is 0.9947; compact full OA is 0.9924; compact MACs ratio is 1.0000.
+- Completed Trento seed0 20-epoch 80% p=0.25 multi-degradation run with 10 compact fine-tune epochs. Compact full OA is 0.9952; compact MACs ratio is 0.8001; compact Params ratio is 0.8037.
+- The 80% p=0.25 run improves compact high-noise/downsample/occlusion diagnostics relative to the 100% baseline, while aux-only drops substantially.
+- Added `docs/TRENTO_FORMAL_SEED0_RESULTS_20260716_ZH.md` to record the formal seed0 comparison and thesis-writing interpretation.
+- Push to GitHub was attempted after the Trento runner commit, but GitHub port 443 was unreachable from the current environment. Local branch remains ahead of origin.

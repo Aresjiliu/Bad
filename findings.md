@@ -160,3 +160,11 @@
 - A one-epoch CUDA smoke run with `aux_channel_mode=first` reached full-modality OA 0.9042, AA 0.7442, and Kappa 0.8719. This only proves the pipeline is correct; it is not competitive with Trento literature levels near 99% OA.
 - The smoke result is diagnostically useful: HSI-only OA is 0.8600, auxiliary-only OA is 0.5881, downsampled auxiliary OA is 0.8851, and 50% auxiliary occlusion OA is 0.6050. This suggests Trento can expose robustness behavior, but formal claims need longer training and multi-seed repeats.
 - Resource accounting works on Trento: the 100% smoke run reports 442,248 baseline parameters and 8.62M MACs. Because the target budget was 100%, compact export correctly keeps almost the full model.
+
+## 2026-07-16 Trento formal seed0 findings
+
+- Trento seed0 20-epoch baseline reaches source full OA 0.9947 and compact full OA 0.9924, which is close to local literature benchmark levels and confirms that the Trento protocol is viable.
+- The 80% p=0.25 multi-degradation setting is unexpectedly strong on seed0: compact full OA is 0.9952 at 0.8001 MACs and 0.8037 Params ratio.
+- The same 80% setting improves the harsh degraded-auxiliary diagnostics over the 100% baseline: high-noise OA 0.9957 vs 0.9840, downsample-4 OA 0.9922 vs 0.9820, and 50% occlusion OA 0.9938 vs 0.9712.
+- The tradeoff is clear in aux-only: 80% p=0.25 drops to 0.5206 OA compared with 0.7120 for the 100% baseline. The thesis should frame aux-only as an extreme diagnostic state, while the main deployment objective is full/main-available plus degraded auxiliary robustness.
+- Trento now gives a stronger multi-dataset story than expected: the current method is not merely transferring Houston trends; it can produce near-saturated accuracy with measurable MAC reduction on a second HS-LiDAR dataset. Seed1/2 are required before making a final claim.

@@ -1,0 +1,1122 @@
+[
+  {
+    "epoch": 1,
+    "elapsed_seconds": 0.22011509999720147,
+    "train": {
+      "loss": 0.47003056378249664,
+      "cls": 0.3833883853561907,
+      "budget": 0.0,
+      "quality": 0.08664218031139259,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8989207952855581,
+      "q_aux": 0.773472028324403,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5299296264188835,
+      "fusion_weight_aux": 0.4700703872255532,
+      "accuracy": 0.9171686746987951,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.25096823018044234,
+      "cls": 0.23928765224292875,
+      "budget": 0.0,
+      "quality": 0.01168057715985924,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9874954883257548,
+      "q_aux": 0.9084177184104919,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.519737720489502,
+      "fusion_weight_aux": 0.4802622882525126,
+      "accuracy": 0.9733333333333334,
+      "samples": 75,
+      "oa": 0.9733333333333334,
+      "aa": 0.9696969696969697,
+      "kappa": 0.9677696605070908,
+      "class_accuracy": [
+        1.0,
+        0.8181818181818182,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          9,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9733333333333334
+  },
+  {
+    "epoch": 2,
+    "elapsed_seconds": 0.18866590000106953,
+    "train": {
+      "loss": 0.3973541661917445,
+      "cls": 0.3210999369621277,
+      "budget": 0.0,
+      "quality": 0.07625423308955617,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.88772232704852,
+      "q_aux": 0.7524865607181227,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5167305160717792,
+      "fusion_weight_aux": 0.4832694947001446,
+      "accuracy": 0.927710843373494,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.17420846144358318,
+      "cls": 0.15375699559847514,
+      "budget": 0.0,
+      "quality": 0.02045146770775318,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9836878204345703,
+      "q_aux": 0.8715658577283224,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5279699158668518,
+      "fusion_weight_aux": 0.47203011393547056,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 3,
+    "elapsed_seconds": 0.18646029999945313,
+    "train": {
+      "loss": 0.35097591309662324,
+      "cls": 0.28702437428824873,
+      "budget": 0.0,
+      "quality": 0.06395153629492564,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8866293186164764,
+      "q_aux": 0.7502014852431883,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.520105265709291,
+      "fusion_weight_aux": 0.4798947192100157,
+      "accuracy": 0.9231927710843374,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.14843636254469553,
+      "cls": 0.1271179982026418,
+      "budget": 0.0,
+      "quality": 0.021318366974592207,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9845226605733236,
+      "q_aux": 0.863752346833547,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5301346079508463,
+      "fusion_weight_aux": 0.46986540079116823,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 4,
+    "elapsed_seconds": 0.17284099999960745,
+    "train": {
+      "loss": 0.30765885617359573,
+      "cls": 0.25424892643848096,
+      "budget": 0.0,
+      "quality": 0.053409929667790255,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8914403577884996,
+      "q_aux": 0.7613798659968088,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5287117067589817,
+      "fusion_weight_aux": 0.47128828462347927,
+      "accuracy": 0.9457831325301205,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.13626593858003616,
+      "cls": 0.1181780465443929,
+      "budget": 0.0,
+      "quality": 0.018087886087596417,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9878582453727722,
+      "q_aux": 0.8748335576057434,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5282072869936625,
+      "fusion_weight_aux": 0.4717927173773448,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 5,
+    "elapsed_seconds": 0.17685870000059367,
+    "train": {
+      "loss": 0.2899714137416288,
+      "cls": 0.24421762378819017,
+      "budget": 0.0,
+      "quality": 0.04575378770928785,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8815813639077795,
+      "q_aux": 0.7502046270542834,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5283387253083378,
+      "fusion_weight_aux": 0.4716612660741232,
+      "accuracy": 0.9337349397590361,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.14160272414485614,
+      "cls": 0.12185088103016217,
+      "budget": 0.0,
+      "quality": 0.019751846430202325,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9929469045003255,
+      "q_aux": 0.8698358464241028,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5307121173540751,
+      "fusion_weight_aux": 0.4692878870169322,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 6,
+    "elapsed_seconds": 0.17360939999707625,
+    "train": {
+      "loss": 0.3138011456972145,
+      "cls": 0.2572050744510559,
+      "budget": 0.0,
+      "quality": 0.05659607366984149,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8557577887213373,
+      "q_aux": 0.7682114236326103,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5026984911367117,
+      "fusion_weight_aux": 0.497301513890186,
+      "accuracy": 0.9246987951807228,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.12020352303981781,
+      "cls": 0.09865935603777568,
+      "budget": 0.0,
+      "quality": 0.021544167002042133,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.981500194867452,
+      "q_aux": 0.8775668636957804,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5259443084398906,
+      "fusion_weight_aux": 0.474055700302124,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 7,
+    "elapsed_seconds": 0.16370420000021113,
+    "train": {
+      "loss": 0.23438510226916118,
+      "cls": 0.1877087500081005,
+      "budget": 0.0,
+      "quality": 0.04667635181223054,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8779404141816748,
+      "q_aux": 0.7744285406836544,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5163045252662107,
+      "fusion_weight_aux": 0.4836954661162503,
+      "accuracy": 0.9608433734939759,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.09910843580961227,
+      "cls": 0.08637484222650528,
+      "budget": 0.0,
+      "quality": 0.012733593446513017,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9953712463378906,
+      "q_aux": 0.8943040752410889,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5252336716651916,
+      "fusion_weight_aux": 0.47476632833480836,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 8,
+    "elapsed_seconds": 0.17947020000065095,
+    "train": {
+      "loss": 0.24512654686548624,
+      "cls": 0.19012260293386068,
+      "budget": 0.0,
+      "quality": 0.055003945008817924,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8687505729227181,
+      "q_aux": 0.7640698659850891,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5064140231494444,
+      "fusion_weight_aux": 0.49358598726341524,
+      "accuracy": 0.947289156626506,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.0945990115404129,
+      "cls": 0.07768923123677572,
+      "budget": 0.0,
+      "quality": 0.016909778577586014,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9959518766403198,
+      "q_aux": 0.8818795649210612,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5284607871373495,
+      "fusion_weight_aux": 0.4715392216046651,
+      "accuracy": 1.0,
+      "samples": 75,
+      "oa": 1.0,
+      "aa": 1.0,
+      "kappa": 1.0,
+      "class_accuracy": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          11,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 1.0
+  },
+  {
+    "epoch": 9,
+    "elapsed_seconds": 0.1754709000015282,
+    "train": {
+      "loss": 0.24175599684198218,
+      "cls": 0.192423902362226,
+      "budget": 0.0,
+      "quality": 0.04933209465928825,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.8766917938209442,
+      "q_aux": 0.757691456610898,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5269642034208918,
+      "fusion_weight_aux": 0.47303580160600595,
+      "accuracy": 0.9442771084337349,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.09218970070282619,
+      "cls": 0.07259461690982183,
+      "budget": 0.0,
+      "quality": 0.019595080340902012,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9923729745546976,
+      "q_aux": 0.877896781762441,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5285524686177572,
+      "fusion_weight_aux": 0.47144758224487304,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        0.9090909090909091,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          10,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  },
+  {
+    "epoch": 10,
+    "elapsed_seconds": 0.18408430000272347,
+    "train": {
+      "loss": 0.2266026677855526,
+      "cls": 0.18404725553041482,
+      "budget": 0.0,
+      "quality": 0.042555414544171596,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.873723959348288,
+      "q_aux": 0.7519607357231968,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5243981545229992,
+      "fusion_weight_aux": 0.4756018339869488,
+      "accuracy": 0.9442771084337349,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.10365615169207255,
+      "cls": 0.0906022177139918,
+      "budget": 0.0,
+      "quality": 0.013053932090600332,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.9966154932975769,
+      "q_aux": 0.892751403649648,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5259330725669861,
+      "fusion_weight_aux": 0.4740669020016988,
+      "accuracy": 0.9866666666666667,
+      "samples": 75,
+      "oa": 0.9866666666666667,
+      "aa": 0.9848484848484849,
+      "kappa": 0.9838848302535453,
+      "class_accuracy": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9090909090909091
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          11,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          0,
+          10
+        ]
+      ]
+    },
+    "selection_score": 0.9866666666666667
+  }
+]
