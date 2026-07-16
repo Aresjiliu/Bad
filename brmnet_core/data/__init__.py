@@ -31,9 +31,15 @@ from .splits import (
     parse_envi_roi_records,
     save_coordinate_split,
 )
+from .dataset_specs import (
+    DATASET_SPECS,
+    MultimodalDatasetSpec,
+    recommended_dataset_sequence,
+)
 
 __all__ = [
     "CoordinateSplit",
+    "DATASET_SPECS",
     "HOUSTON_CLASS_NAMES",
     "HOUSTON_GT_FILENAME",
     "HOUSTON_GT_KEY",
@@ -54,8 +60,10 @@ __all__ = [
     "NormalizedScene",
     "normalize_scene",
     "HoustonDataBundle",
+    "MultimodalDatasetSpec",
     "build_houston_raw_loaders",
     "write_houston_data_artifacts",
     "parse_envi_roi_records",
+    "recommended_dataset_sequence",
     "save_coordinate_split",
 ]

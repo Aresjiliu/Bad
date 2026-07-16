@@ -136,3 +136,12 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Run formal 20-epoch seed2 routing-profile experiments and generate 3-seed summaries.
 - [pending] Replace in-sample learned routing with leave-one-state-out or validation-derived Pareto/utility labels.
 - [pending] Train learned routing against `pareto_delta_0.01` and report leave-one-state-out accuracy plus achieved OA/MAC.
+
+### 2026-07-16 multi-dataset evidence plan
+
+- [completed] Implement leave-one-state-out learned routing against `pareto_delta_0.01` labels and generate seed0/1/2 reports.
+- [completed] Add a dataset-spec registry for Houston2013, Trento, MUUFL, Augsburg, and Houston2018.
+- [completed] Produce a dataset feasibility and download plan for thesis-level multi-dataset validation.
+- [pending] After the user downloads Trento, implement `load_trento_scene` and a generic `MultimodalPatchDataset`.
+- [pending] Run Trento `--dataset-only` checks, then a smoke training run.
+- [pending] After Trento is stable, download and integrate MUUFL with explicit 64/72-band protocol handling.

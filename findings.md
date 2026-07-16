@@ -136,3 +136,11 @@
 - Hand oracle / learned hand-oracle routing reach 0.7461 mean OA at 0.9257 MACs. This is close to static 100% while saving compute, but its rule is still heuristic and should not be the final label source.
 - Pareto sweep gives the strongest current routing target. `pareto_delta_0.01` reaches 0.7537 mean OA at 0.8810 MACs, with only about 0.0010 mean regret from the per-state best profile and about 11.9% MAC saving versus 100%.
 - The next implementation should train the learned router against `pareto_delta_0.01` labels and evaluate leave-one-state-out generalization. This is now more defensible than learning either hand oracle or aggressive `utility_lambda_0.2` labels.
+
+## 2026-07-16 leave-one-state-out routing and multi-dataset findings
+
+- Leave-one-state-out learned Pareto routing is implemented and tested. It trains the profile router on all but one degradation/missing state, predicts the held-out state, and reports selected OA, MACs, routing accuracy versus Pareto labels, regret, and saving.
+- The three-seed LOO summary is mixed rather than conclusive: mean OA is 0.7464, mean MACs 0.8929, routing accuracy versus Pareto labels is 66.7%, mean regret is 0.0082, and mean saving is 10.7%. Seed2 over-selects the 100% profile, which removes compute saving.
+- This is useful negative evidence. Offline Pareto labels are strong, but the current learned router is underdetermined because it only sees 11 state-level samples per seed. The paper should not yet claim a mature generalizing router; it should claim that Pareto labels define a better routing target, while learned routing needs patch-level or validation-derived training samples.
+- Multi-dataset validation is now the main credibility gap. Based on local notes and HSLiNets materials, the priority should be Houston2013 + Trento + MUUFL. Trento is the first new dataset because it is small, standard, and closest to the current HS-LiDAR pipeline. MUUFL is second because its class imbalance and two LiDAR rasters create a more convincing stress test.
+- Augsburg and Houston2018 should be deferred. Augsburg depends on reconstructed labels in at least one recent paper, while Houston2018 has extreme class imbalance and much larger scale. Doing either before Trento/MUUFL would likely consume time without improving the thesis fastest.

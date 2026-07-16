@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from scripts.evaluate_budget_profile_routing import (
+    build_leave_one_state_out_report,
     build_routing_reports,
     build_sweep_reports,
     load_profile_metrics,
@@ -191,6 +192,63 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
         self.assertIn("pareto_delta_0.01", reports)
         self.assertTrue(any(row["policy"] == "utility_lambda_0.2" for row in rows))
 
+    def test_main_writes_leave_one_state_out_report_when_requested(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            quality_path = root / "quality.json"
+            quality_path.write_text(
+                json.dumps(
+                    {
+                        "clean_a": {"pre_q_main": 0.95, "pre_q_aux": 0.95, "pre_u_main": 0.05, "pre_u_aux": 0.05},
+                        "clean_b": {"pre_q_main": 0.94, "pre_q_aux": 0.94, "pre_u_main": 0.06, "pre_u_aux": 0.06},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            profile_specs = []
+            for budget, oa in ((0.65, 0.80), (0.8, 0.895), (1.0, 0.900)):
+                path = root / f"profile_{budget}.json"
+                path.write_text(
+                    json.dumps(
+                        {
+                            "clean_a": {"oa": oa, "expected_macs_ratio": budget},
+                            "clean_b": {"oa": oa, "expected_macs_ratio": budget},
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                profile_specs.extend(["--profile-metrics", f"{budget}:{path}"])
+            loo_json = root / "loo.json"
+            loo_csv = root / "loo.csv"
+
+            exit_code = main(
+                [
+                    *profile_specs,
+                    "--quality-metrics",
+                    str(quality_path),
+                    "--output-json",
+                    str(root / "routing.json"),
+                    "--output-csv",
+                    str(root / "routing.csv"),
+                    "--output-loo-json",
+                    str(loo_json),
+                    "--output-loo-csv",
+                    str(loo_csv),
+                    "--loo-pareto-tolerance",
+                    "0.01",
+                    "--router-epochs",
+                    "80",
+                ]
+            )
+
+            report = json.loads(loo_json.read_text(encoding="utf-8"))
+            with loo_csv.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(report["summary"]["heldout_modes"], 2)
+        self.assertEqual(rows[0]["target_budget"], "0.8")
+
     def test_builds_static_oracle_and_learned_comparison_reports(self):
         quality_features = {
             "full": [0.95, 0.90, 0.05, 0.10],
@@ -280,6 +338,48 @@ class EvaluateBudgetProfileRoutingScriptTest(unittest.TestCase):
         self.assertEqual(reports["pareto_delta_0.01"]["per_mode"]["full"]["selected_budget"], 0.8)
         self.assertIn("mean_metric_regret", reports["pareto_delta_0.01"]["summary"])
         self.assertEqual(reports["utility_lambda_0"]["per_mode"]["full"]["selected_budget"], 1.0)
+
+    def test_builds_leave_one_state_out_router_report(self):
+        quality_features = {
+            "clean_a": [0.95, 0.95, 0.05, 0.05],
+            "clean_b": [0.94, 0.94, 0.06, 0.06],
+            "degraded_a": [0.95, 0.20, 0.05, 0.85],
+            "degraded_b": [0.94, 0.18, 0.06, 0.86],
+        }
+        profile_metrics = {
+            0.65: {
+                "clean_a": {"oa": 0.80, "expected_macs_ratio": 0.65},
+                "clean_b": {"oa": 0.80, "expected_macs_ratio": 0.65},
+                "degraded_a": {"oa": 0.70, "expected_macs_ratio": 0.65},
+                "degraded_b": {"oa": 0.70, "expected_macs_ratio": 0.65},
+            },
+            0.8: {
+                "clean_a": {"oa": 0.895, "expected_macs_ratio": 0.8},
+                "clean_b": {"oa": 0.895, "expected_macs_ratio": 0.8},
+                "degraded_a": {"oa": 0.72, "expected_macs_ratio": 0.8},
+                "degraded_b": {"oa": 0.72, "expected_macs_ratio": 0.8},
+            },
+            1.0: {
+                "clean_a": {"oa": 0.900, "expected_macs_ratio": 1.0},
+                "clean_b": {"oa": 0.900, "expected_macs_ratio": 1.0},
+                "degraded_a": {"oa": 0.90, "expected_macs_ratio": 1.0},
+                "degraded_b": {"oa": 0.90, "expected_macs_ratio": 1.0},
+            },
+        }
+
+        report = build_leave_one_state_out_report(
+            profile_metrics,
+            quality_features,
+            pareto_tolerance=0.01,
+            router_epochs=120,
+            router_seed=7,
+        )
+
+        self.assertEqual(report["summary"]["heldout_modes"], 4)
+        self.assertIn("routing_accuracy_vs_pareto", report["summary"])
+        self.assertEqual(report["per_mode"]["clean_a"]["target_budget"], 0.8)
+        self.assertEqual(report["per_mode"]["degraded_a"]["target_budget"], 1.0)
+        self.assertIn("selected_budget", report["per_mode"]["clean_a"])
 
     def test_script_can_run_from_file_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:

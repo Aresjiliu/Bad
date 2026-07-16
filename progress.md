@@ -193,3 +193,13 @@
   - `docs/generated/brmnet_routing_profile_formal_sweep_seed0_seed1_seed2_summary.csv`
 - 3-seed comparison status: static 100% reaches mean OA 0.7483 at 1.0000 MACs; hand oracle / learned oracle reach 0.7461 at 0.9257 MACs; static 80% reaches 0.7399 at 0.8036 MACs.
 - 3-seed sweep status: `pareto_delta_0.01` reaches mean OA 0.7537 at 0.8810 MACs with mean regret about 0.0010 and mean saving about 0.1190 versus 100% profile.
+
+## 2026-07-16 leave-one-state-out routing and multi-dataset planning
+
+- Implemented leave-one-state-out Pareto routing report generation in `scripts/evaluate_budget_profile_routing.py`.
+- Added tests for the LOO report path and CLI output path in `tests/test_evaluate_budget_profile_routing.py`.
+- Generated LOO reports for formal seed0/seed1/seed2 and the summary file `docs/generated/brmnet_routing_profile_formal_loo_pareto_delta0p01_seed0_seed1_seed2_summary.csv`.
+- LOO 3-seed result: mean OA 0.7464, mean MACs 0.8929, routing accuracy versus Pareto labels 66.7%, mean regret 0.0082, mean saving 0.1071.
+- Added `brmnet_core/data/dataset_specs.py` and `tests/test_dataset_specs.py` to record the priority dataset registry before real Trento/MUUFL files are available.
+- Created `docs/MULTI_DATASET_FEASIBILITY_AND_DOWNLOAD_PLAN_ZH.md` with the recommended download order: Trento first, MUUFL second, Augsburg/Houston2018 deferred.
+- Verification passed: `conda run -n hslinets python -m unittest discover -s tests` ran 158 tests, all passed with 1 skipped.

@@ -292,11 +292,81 @@ def build_sweep_reports(
     return reports
 
 
+def build_leave_one_state_out_report(
+    profile_metrics: dict[float, dict[str, dict[str, float]]],
+    quality_features: dict[str, list[float]],
+    profile_budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
+    pareto_tolerance: float = 0.01,
+    router_epochs: int = 200,
+    router_seed: int = 0,
+) -> dict[str, object]:
+    target_selection = select_pareto_tolerance_budget_profiles(
+        profile_metrics,
+        profile_budgets=profile_budgets,
+        metric_tolerance=pareto_tolerance,
+    )
+    predicted_selection: dict[str, float] = {}
+    modes = list(quality_features)
+    for heldout_mode in modes:
+        train_quality = {
+            mode: features
+            for mode, features in quality_features.items()
+            if mode != heldout_mode
+        }
+        train_targets = {
+            mode: target_selection[mode]
+            for mode in train_quality
+            if mode in target_selection
+        }
+        if not train_quality or heldout_mode not in target_selection:
+            continue
+        router, _ = train_quality_budget_router(
+            train_quality,
+            train_targets,
+            profile_budgets=profile_budgets,
+            epochs=router_epochs,
+            seed=router_seed,
+        )
+        prediction = predict_budget_profile_selection(
+            router,
+            {heldout_mode: quality_features[heldout_mode]},
+        )
+        predicted_selection[heldout_mode] = prediction[heldout_mode]
+
+    report = evaluate_budget_profile_routing(
+        profile_metrics,
+        quality_features,
+        profile_budgets=profile_budgets,
+        selected_budgets_by_mode=predicted_selection,
+    )
+    correct = 0
+    for mode, metrics in report["per_mode"].items():
+        target_budget = float(target_selection[mode])
+        selected_budget = float(metrics["selected_budget"])
+        metrics["target_budget"] = target_budget
+        if selected_budget == target_budget:
+            correct += 1
+    heldout_count = len(report["per_mode"])
+    report["summary"]["heldout_modes"] = heldout_count
+    report["summary"]["pareto_metric_tolerance"] = float(pareto_tolerance)
+    report["summary"]["routing_accuracy_vs_pareto"] = correct / heldout_count if heldout_count else 0.0
+    _add_tradeoff_diagnostics(report, profile_metrics)
+    return report
+
+
 def write_routing_csv(path: str | Path, report: dict[str, object]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     per_mode = report["per_mode"]
-    fieldnames = ["mode", "selected_budget", "oa", "expected_macs_ratio"]
+    fieldnames = [
+        "mode",
+        "selected_budget",
+        "target_budget",
+        "oa",
+        "expected_macs_ratio",
+        "metric_regret",
+        "resource_saving_vs_reference",
+    ]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
@@ -320,10 +390,12 @@ def write_comparison_csv(path: str | Path, reports: dict[str, dict[str, object]]
         "mean_expected_macs_ratio",
         "routing_accuracy_vs_oracle",
         "routing_accuracy_vs_utility",
+        "routing_accuracy_vs_pareto",
         "utility_resource_penalty",
         "pareto_metric_tolerance",
         "mean_metric_regret",
         "mean_resource_saving_vs_reference",
+        "heldout_modes",
         "modes",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -360,6 +432,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-sweep-csv")
     parser.add_argument("--pareto-tolerances", default="0,0.005,0.01,0.02,0.03")
     parser.add_argument("--utility-resource-penalties", default="0,0.05,0.1,0.15,0.2,0.3")
+    parser.add_argument("--output-loo-json")
+    parser.add_argument("--output-loo-csv")
+    parser.add_argument("--loo-pareto-tolerance", type=float, default=0.01)
     return parser
 
 
@@ -394,6 +469,18 @@ def main(argv: list[str] | None = None) -> int:
             write_routing_json(args.output_sweep_json, sweep_reports)
         if args.output_sweep_csv:
             write_comparison_csv(args.output_sweep_csv, sweep_reports)
+    if args.output_loo_json or args.output_loo_csv:
+        loo_report = build_leave_one_state_out_report(
+            profile_metrics,
+            quality_features,
+            pareto_tolerance=args.loo_pareto_tolerance,
+            router_epochs=args.router_epochs,
+            router_seed=args.router_seed,
+        )
+        if args.output_loo_json:
+            write_routing_json(args.output_loo_json, loo_report)
+        if args.output_loo_csv:
+            write_routing_csv(args.output_loo_csv, loo_report)
     print(json.dumps(report["summary"], ensure_ascii=False))
     return 0
 

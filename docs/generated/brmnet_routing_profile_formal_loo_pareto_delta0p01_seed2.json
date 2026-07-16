@@ -1,0 +1,103 @@
+{
+  "per_mode": {
+    "aux_downsample_2": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8397146839386734,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_downsample_4": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8385668607034517,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_noise": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8083135197179634,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_noise_high": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.7965893252439125,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_noise_low": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8215954742969582,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_noise_mid": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8079035828482414,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_occlusion_25": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8352053783717307,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_occlusion_50": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8136426990243503,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_only": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.047716651635648144,
+      "oa": 0.3278675084037058,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 0.65
+    },
+    "full": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.8448798884971714,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 0.8
+    },
+    "main_only": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.7656800852668689,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 0.8
+    }
+  },
+  "summary": {
+    "heldout_modes": 11,
+    "mean_expected_macs_ratio": 0.9999983906745911,
+    "mean_metric_regret": 0.004337877421422559,
+    "mean_oa": 0.7727235460284572,
+    "mean_resource_saving_vs_reference": 0.0,
+    "mean_selected_budget": 1.0,
+    "modes": 11,
+    "pareto_metric_tolerance": 0.01,
+    "routing_accuracy_vs_pareto": 0.7272727272727273
+  }
+}

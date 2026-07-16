@@ -1,0 +1,103 @@
+{
+  "per_mode": {
+    "aux_downsample_2": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.0,
+      "oa": 0.8071656964827416,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.8
+    },
+    "aux_downsample_4": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.0,
+      "oa": 0.8056899237517422,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.8
+    },
+    "aux_noise": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.012954005083217202,
+      "oa": 0.7386242518652127,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.65
+    },
+    "aux_noise_high": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.007296876281052689,
+      "oa": 0.7061572517832254,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.8
+    },
+    "aux_noise_low": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.03205706321226531,
+      "oa": 0.7431335574321555,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 1.0
+    },
+    "aux_noise_mid": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.012134131343773058,
+      "oa": 0.7394441256046569,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.65
+    },
+    "aux_occlusion_25": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.81716815610396,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_occlusion_50": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.7901943100762483,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    },
+    "aux_only": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.07083709108797248,
+      "oa": 0.3049110436992703,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 0.65
+    },
+    "full": {
+      "expected_macs_ratio": 0.8035022616386414,
+      "metric_regret": 0.0,
+      "oa": 0.8147085348856277,
+      "resource_saving_vs_reference": 0.1964961290359497,
+      "selected_budget": 0.8,
+      "target_budget": 0.8
+    },
+    "main_only": {
+      "expected_macs_ratio": 0.9999983906745911,
+      "metric_regret": 0.0,
+      "oa": 0.7328031483151595,
+      "resource_saving_vs_reference": 0.0,
+      "selected_budget": 1.0,
+      "target_budget": 1.0
+    }
+  },
+  "summary": {
+    "heldout_modes": 11,
+    "mean_expected_macs_ratio": 0.8749553994698958,
+    "mean_metric_regret": 0.012298106091661886,
+    "mean_oa": 0.7272727272727273,
+    "mean_resource_saving_vs_reference": 0.12504299120469528,
+    "mean_selected_budget": 0.8727272727272727,
+    "modes": 11,
+    "pareto_metric_tolerance": 0.01,
+    "routing_accuracy_vs_pareto": 0.6363636363636364
+  }
+}
