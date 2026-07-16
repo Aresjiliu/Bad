@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\centering
+\caption{Multi-dataset evidence summary. Accuracy values are reported as mean $\pm$ standard deviation over three seeds. Houston2013 reports mean state OA for the Pareto routing evaluation, while Trento and MUUFL report compact full-modality OA.}
+\label{tab:multidataset_evidence}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrl}
+\toprule
+Dataset & Main evidence & OA (\%) & MACs (\%) & Main interpretation \\
+\midrule
+Houston2013 & Pareto routing ($\delta=0.01$) & $75.37 \pm 1.64$ & $88.10 \pm 4.03$ & Quality-conditioned routing saves compute with low regret \\
+Trento & 80\% multi-degradation compact model & $98.94 \pm 0.94$ & $79.90 \pm 0.10$ & Near-saturated accuracy with about 20\% MAC reduction \\
+MUUFL & 80\% multi-degradation compact model & $86.87 \pm 1.79$ & $79.97 \pm 0.07$ & Robustness gains under missing/degraded auxiliary modality \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}

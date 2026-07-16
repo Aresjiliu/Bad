@@ -175,5 +175,10 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Generate fixed MUUFL seed0/1/2 coordinate splits with 1550 train samples and 52137 test samples per seed.
 - [completed] Validate MUUFL seed0 `--dataset-only` on the downloaded data.
 - [completed] Run a one-epoch CUDA smoke experiment for MUUFL seed0.
-- [pending] Run MUUFL seed0 20-epoch 100% baseline.
-- [pending] Run MUUFL seed0 80% p=0.25 multi-degradation setting and decide whether to expand to seed1/seed2.
+- [completed] Run MUUFL seed0/seed1/seed2 20-epoch 100% baseline.
+- [completed] Run MUUFL seed0/seed1/seed2 80% p=0.25 multi-degradation setting.
+- [completed] Generate MUUFL 3-seed formal summary tables and a Chinese thesis-interpretation note.
+- [completed] Add MUUFL per-class accuracy summary to handle class imbalance explicitly.
+- [completed] Build one unified Houston2013/Trento/MUUFL multi-dataset evidence table in Markdown/CSV.
+- [pending] Convert the multi-dataset evidence table into LaTeX table snippets.
+- [pending] Decide whether to add a MUUFL class-balanced sampler or weighted-loss ablation after checking thesis table space.

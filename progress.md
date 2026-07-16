@@ -257,3 +257,17 @@
 - Verified real MUUFL seed0 `--dataset-only` on `D:\Academic\data\MUUFLGulfport-master` with channels `[64, 2]`.
 - Ran a one-epoch CUDA smoke run under `output\muufl_smoke\...`; full OA 0.8080, AA 0.6973, Kappa 0.7498, main-only OA 0.6540, aux-only OA 0.3327, occlusion50 OA 0.7386.
 - Added `docs/MUUFL_SMOKE_RUN_20260716_ZH.md` to record the protocol, command, metrics, and formal-experiment boundary.
+
+## 2026-07-16 MUUFL formal 3-seed experiments
+
+- Completed MUUFL seed0/seed1/seed2 for both 100% baseline and 80% p=0.25 multi-degradation settings.
+- Generated:
+  - `docs/generated/muufl_formal_seed0_seed1_seed2_runs.csv`
+  - `docs/generated/muufl_formal_seed0_seed1_seed2_summary.csv`
+  - `docs/generated/muufl_formal_seed0_seed1_seed2_summary.md`
+  - `docs/MUUFL_FORMAL_SEED0_SEED1_SEED2_RESULTS_20260716_ZH.md`
+- 3-seed compact full OA: 100% baseline 88.51 +/- 1.19; 80% p=0.25 multi-degradation 86.87 +/- 1.79.
+- 3-seed compact MACs: 100% baseline 100.00%; 80% p=0.25 multi-degradation 79.97 +/- 0.07%.
+- Robustness gain is substantial on MUUFL: 80% p=0.25 improves main-only OA by 11.94 points, aux-only OA by 30.96 points, downsample4 OA by 2.54 points, and occlusion50 OA by 5.91 points.
+- Current conclusion: MUUFL should be used as the hard-data robustness case, not as a pure clean-OA win.
+- Generated MUUFL per-class summaries under `docs/generated/muufl_formal_per_class_seed0_seed1_seed2_*`; the main clean full-OA losses are classes 3 and 9, while classes 4, 5, 7, and 10 improve under the 80% multi-degradation setting.

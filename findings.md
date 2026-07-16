@@ -183,3 +183,13 @@
 - Fixed seed0/1/2 splits are generated with 1550 train samples per seed: classes 1-9 use 150 samples each, classes 10-11 use 100 samples each. This keeps the rare classes in the training set while leaving 52137 test samples.
 - The one-epoch CUDA smoke is not a formal result, but it confirms end-to-end viability: full OA 0.8080, AA 0.6973, Kappa 0.7498; main-only OA 0.6540; aux-only OA 0.3327; occlusion50 OA 0.7386.
 - The short-run per-class results expose the key thesis issue: rare classes 9 and 10 remain near 0 accuracy, so MUUFL formal reporting must include AA, Kappa, and class accuracy. If 20-epoch training still fails on these classes, the next method-side addition should be weighted loss or a class-balanced sampler ablation.
+
+## 2026-07-16 MUUFL 3-seed formal findings
+
+- MUUFL 3-seed formal validation is complete for the 100% baseline and the 80% p=0.25 multi-degradation setting.
+- The 100% baseline has higher clean full-modality OA: 88.51 +/- 1.19 versus 86.87 +/- 1.79 for the 80% setting. This should be reported honestly rather than hidden.
+- The 80% p=0.25 setting gives the stronger robustness-efficiency story: main-only OA improves from 71.09 to 83.03, aux-only OA improves from 26.24 to 57.20, downsample4 OA improves from 84.12 to 86.66, and occlusion50 OA improves from 80.08 to 85.99.
+- Resource reduction is stable on MUUFL: MACs are 79.97 +/- 0.07 and Params are 82.25 +/- 0.33 for the compact 80% setting.
+- The correct thesis framing is now clear across datasets: Houston supports the routing/quality-aware method line, Trento supports near-saturated accuracy with about 20% MAC reduction, and MUUFL supports robustness under harder imbalance and degraded/missing auxiliary modalities.
+- The next writing step is a unified multi-dataset table plus a MUUFL-specific per-class/AA/Kappa discussion, because OA alone is not credible on this class distribution.
+- MUUFL per-class analysis shows that the 80% clean full-OA drop is mainly from classes 1, 3, 8, and 9, while classes 4, 5, 7, and 10 improve and class 11 remains essentially stable. This weakens the need for an immediate weighted-loss pivot; per-class reporting should come first, with weighted CE or class-balanced sampling kept as an optional ablation.

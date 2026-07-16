@@ -1,0 +1,4 @@
+dataset,main_comparison,target_oa_mean,target_oa_std,robustness_evidence,macs_mean,macs_std,thesis_role
+Houston2013,pareto_delta_0.01 routing,75.37,1.64,"Mean regret 0.10 points from per-state best profile",88.10,4.03,Quality-conditioned budget routing
+Trento,80% p=0.25 multi-degradation,98.94,0.94,"Occlusion50 96.46->98.16; downsample4 97.95->98.51",79.90,0.10,Near-saturated accuracy with compression
+MUUFL,80% p=0.25 multi-degradation,86.87,1.79,"Main-only 71.09->83.03; aux-only 26.24->57.20; occlusion50 80.08->85.99",79.97,0.07,Hard-data missing/degraded modality robustness
