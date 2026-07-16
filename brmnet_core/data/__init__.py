@@ -30,7 +30,9 @@ from .patch_dataset import (
 )
 from .factory import (
     HoustonDataBundle,
+    TrentoDataBundle,
     build_houston_raw_loaders,
+    build_trento_raw_loaders,
     write_houston_data_artifacts,
 )
 from .splits import (
@@ -82,8 +84,10 @@ __all__ = [
     "NormalizedScene",
     "normalize_scene",
     "HoustonDataBundle",
+    "TrentoDataBundle",
     "MultimodalDatasetSpec",
     "build_houston_raw_loaders",
+    "build_trento_raw_loaders",
     "write_houston_data_artifacts",
     "parse_envi_roi_records",
     "audit_label_map",

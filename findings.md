@@ -152,3 +152,11 @@
 - Downloaded MUUFL contains a usable 64-band scene-label file: HSI shape is 325x220x64, scene labels cover 11 classes, and LiDAR objects expose 325x220x2 arrays. This matches the common 64-band MUUFL protocol more closely than the raw 72-band files.
 - MUUFL should be adopted after Trento, but its imbalance is severe: class 1 has 23,246 pixels while class 10 has 183 and class 11 has 269, giving an imbalance ratio around 127. OA alone is not acceptable; AA, Kappa, and per-class accuracy must be included.
 - Same-task local benchmark levels show Trento is near-saturated in recent HS-LiDAR papers: MTNet 99.21 OA, DFNet 99.01, CAMFNet 99.49. MUUFL is harder: MTNet 89.53, CAMFNet 83.24 under a small-sample/pretraining protocol, and MSFFRN 90.70 under a 64-band protocol.
+
+## 2026-07-16 Trento smoke findings
+
+- Trento is now integrated into the same runner path as Houston raw data through `--dataset trento`, so it can reuse the existing training, degradation evaluation, compact export, and resource accounting code.
+- The seed0 fixed split follows the local protocol counts 129/125/105/154/184/122, giving 819 train pixels and 29,395 test pixels. This is a usable formal split, but the thesis must state it clearly because the downloaded package did not include an official train/test mask.
+- A one-epoch CUDA smoke run with `aux_channel_mode=first` reached full-modality OA 0.9042, AA 0.7442, and Kappa 0.8719. This only proves the pipeline is correct; it is not competitive with Trento literature levels near 99% OA.
+- The smoke result is diagnostically useful: HSI-only OA is 0.8600, auxiliary-only OA is 0.5881, downsampled auxiliary OA is 0.8851, and 50% auxiliary occlusion OA is 0.6050. This suggests Trento can expose robustness behavior, but formal claims need longer training and multi-seed repeats.
+- Resource accounting works on Trento: the 100% smoke run reports 442,248 baseline parameters and 8.62M MACs. Because the target budget was 100%, compact export correctly keeps almost the full model.

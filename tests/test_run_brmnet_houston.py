@@ -2,14 +2,18 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+from scipy.io import savemat
 
 from brmnet_core import BRMNet
+from brmnet_core.data import CoordinateSplit, save_coordinate_split
 from scripts.run_brmnet_houston import (
     build_parser,
     build_run_paths,
     compact_selection_score,
+    main,
     split_loader_for_validation,
     retention_to_gate_score,
     write_structured_pruning_artifacts,
@@ -20,6 +24,8 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
     def test_raw_data_arguments(self):
         args = build_parser().parse_args(
             [
+                "--dataset",
+                "houston2013",
                 "--data-format",
                 "raw",
                 "--data-root",
@@ -36,6 +42,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
             ]
         )
 
+        self.assertEqual(args.dataset, "houston2013")
         self.assertEqual(args.data_format, "raw")
         self.assertEqual(args.split_protocol, "random")
         self.assertEqual(args.split_seed, 9)
@@ -43,9 +50,64 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertTrue(args.dataset_only)
         self.assertEqual(args.num_workers, 0)
 
+    def test_trento_dataset_only_uses_trento_channels_and_split(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "trento"
+            root.mkdir()
+            hsi = np.ones((5, 6, 63), dtype=np.float32)
+            aux = np.ones((5, 6, 2), dtype=np.float32)
+            gt = np.zeros((5, 6), dtype=np.uint8)
+            gt[:2, :3] = 1
+            gt[2:4, :3] = 2
+            savemat(root / "Italy_hsi.mat", {"data": hsi})
+            savemat(root / "Italy_lidar.mat", {"data": aux})
+            savemat(root / "allgrd.mat", {"mask_test": gt})
+            split = CoordinateSplit(
+                protocol="random",
+                seed=5,
+                train_coords=np.array([[0, 0], [2, 0]], dtype=np.int64),
+                train_labels=np.array([1, 2], dtype=np.int64),
+                test_coords=np.array([[0, 1], [2, 1]], dtype=np.int64),
+                test_labels=np.array([1, 2], dtype=np.int64),
+            )
+            split_path = Path(tmpdir) / "split.npz"
+            save_coordinate_split(split_path, split)
+
+            result = main(
+                [
+                    "--dataset",
+                    "trento",
+                    "--data-root",
+                    str(root),
+                    "--split-file",
+                    str(split_path),
+                    "--split-protocol",
+                    "random",
+                    "--class-num",
+                    "6",
+                    "--aux-channel-mode",
+                    "first",
+                    "--dataset-only",
+                    "--latency-warmup",
+                    "0",
+                    "--latency-iterations",
+                    "1",
+                    "--output-dir",
+                    str(Path(tmpdir) / "runs"),
+                ]
+            )
+
+        self.assertEqual(result["dataset"]["dataset"], "trento")
+        self.assertEqual(result["dataset"]["train_samples"], 2)
+        self.assertEqual(result["dataset"]["test_samples"], 2)
+        self.assertEqual(result["dataset"]["aux_channel_mode"], "first")
+        self.assertEqual(result["channels"], [63, 1])
+        self.assertTrue(Path(result["run_dir"]).name.startswith("trento_"))
+
     def test_raw_protocol_defaults(self):
         args = build_parser().parse_args([])
 
+        self.assertEqual(args.dataset, "houston2013")
         self.assertEqual(args.data_format, "raw")
         self.assertEqual(args.split_protocol, "official")
         self.assertEqual(args.split_seed, 42)

@@ -217,3 +217,14 @@
   - `output/splits/trento_seed2.npz`
 - Trento split protocol uses per-class training counts 129/125/105/154/184/122, producing 819 train samples and 29,395 test samples per seed.
 - Verification passed: `conda run -n hslinets python -m unittest discover -s tests` ran 164 tests, all passed with 1 skipped.
+
+## 2026-07-16 Trento runner integration and smoke run
+
+- Added a Trento raw-loader factory that reuses normalized patch extraction and records split hashes, per-class train/test counts, patch size, and auxiliary-channel mode.
+- Extended `scripts/run_brmnet_houston.py` with `--dataset houston2013|trento` and `--aux-channel-mode first|both|mean`.
+- Verified that Trento `--dataset-only` uses 63 HSI channels plus the selected auxiliary channel and writes a `trento_...` run directory rather than a Houston-labelled output.
+- Ran a real Trento seed0 dataset-only check on `D:\Academic\data\Trento-main` using `output\splits\trento_seed0.npz`.
+- Ran a one-epoch CUDA smoke training run on Trento with 100% target budget and no compact fine-tuning. The run completed end to end and produced metrics, compact metrics, config, history, and resource stats under `output\trento_smoke\...`.
+- Added `docs/TRENTO_SMOKE_RUN_20260716_ZH.md` to record the smoke result and the formal-experiment boundary.
+- Current smoke metrics: full OA 0.9042, AA 0.7442, Kappa 0.8719; main-only OA 0.8600; auxiliary-only OA 0.5881; auxiliary occlusion 50% OA 0.6050.
+- Next action: run a Trento 20-epoch 100% seed0 baseline, then compare the current 80% degradation-aware/lightweight setting.

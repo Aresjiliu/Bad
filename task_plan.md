@@ -152,6 +152,15 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Collect local same-task benchmark levels for Houston2013, Trento, and MUUFL.
 - [completed] Implement `load_trento_scene` with `first|both|mean` auxiliary-channel handling.
 - [completed] Generate fixed Trento seed0/1/2 coordinate splits from the downloaded labels.
-- [pending] Generalize `HoustonPatchDataset` naming or add `MultimodalPatchDataset`.
-- [pending] Add Trento support to the training runner and run a CUDA smoke experiment.
+- [completed] Add Trento raw-loader factory support and wire `--dataset trento` into the training runner.
+- [completed] Run Trento `--dataset-only` checks and a one-epoch CUDA smoke experiment.
+- [pending] Generalize `HoustonPatchDataset` naming or add `MultimodalPatchDataset` after Trento/MUUFL loaders stabilize.
 - [pending] Implement MUUFL loader after Trento smoke is stable.
+
+### 2026-07-16 Trento smoke-to-formal transition
+
+- [completed] Validate Trento fixed split seed0: 819 train samples and 29,395 test samples.
+- [completed] Validate Trento training/evaluation/compact-export path with `aux_channel_mode=first`.
+- [pending] Run Trento seed0 formal baseline with 20 epochs at 100% budget.
+- [pending] Run Trento seed0 80% budget with the current balanced degradation-aware setting.
+- [pending] Decide whether Trento formal protocol should keep `first` DSM/LiDAR channel or compare `first|both|mean` as a small protocol ablation.

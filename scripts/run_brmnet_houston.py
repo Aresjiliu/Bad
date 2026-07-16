@@ -33,7 +33,9 @@ from brmnet_core import (
 )
 from brmnet_core.data import (
     build_houston_raw_loaders,
+    build_trento_raw_loaders,
     load_houston_scene,
+    load_trento_scene,
     write_houston_data_artifacts,
 )
 from brmnet_core.engine import evaluate, evaluate_degradation_matrix, train_one_epoch, unpack_batch
@@ -48,9 +50,11 @@ from brmnet_core.reporting import write_metrics_csv, write_metrics_json
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the minimal BRM-Net Houston2013 experiment loop.")
+    parser.add_argument("--dataset", choices=("houston2013", "trento"), default="houston2013")
     parser.add_argument("--data-root", default="../data/Huston2013")
     parser.add_argument("--data-format", choices=("raw", "legacy"), default="raw")
     parser.add_argument("--pair-modalities", default="hsi+lidar")
+    parser.add_argument("--aux-channel-mode", choices=("first", "both", "mean"), default="first")
     parser.add_argument("--split-protocol", choices=("official", "random"), default="official")
     parser.add_argument("--split-seed", type=int, default=42)
     parser.add_argument("--split-file", default="")
@@ -198,6 +202,7 @@ def build_run_paths(
     target_budget: float = 1.0,
     gate_type: str = "hard_concrete",
     budget_metric: str = "macs",
+    dataset: str = "houston2013",
 ) -> dict[str, Path]:
     pair_name = "-".join(normalize_pair_modalities(pair_modalities))
     gate_label = (
@@ -206,7 +211,7 @@ def build_run_paths(
         else f"{gate_type}-{gate_mode}"
     )
     run_name = (
-        f"houston2013_{pair_name}_{protocol}_splitseed{split_seed}"
+        f"{dataset}_{pair_name}_{protocol}_splitseed{split_seed}"
         f"_trainseed{train_seed}_gate{gate_label}"
         f"_budget{round(target_budget * 100):02d}_metric{budget_metric}"
     )
@@ -570,12 +575,22 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
     return model, initial_retention, None
 
 
+def _infer_raw_channels(dataset: str, aux_channel_mode: str) -> tuple[int, int]:
+    if dataset == "houston2013":
+        return 144, 1
+    if dataset == "trento":
+        return 63, 2 if aux_channel_mode == "both" else 1
+    raise ValueError(f"unsupported raw dataset: {dataset}")
+
+
 def main(argv: list[str] | None = None) -> dict[str, object]:
     cli_args = build_parser().parse_args(argv)
     seed_everything(cli_args.seed)
 
     device = torch.device(cli_args.device)
     pair_modalities = normalize_pair_modalities(cli_args.pair_modalities)
+    if cli_args.data_format == "legacy" and cli_args.dataset != "houston2013":
+        raise ValueError("legacy data format is supported only for Houston2013")
     legacy_args = build_houston_args(
         data_root=cli_args.data_root,
         pair_modalities=pair_modalities,
@@ -583,7 +598,13 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         patch_size=cli_args.patch_size,
         num_workers=cli_args.num_workers,
     )
-    main_channels, aux_channels = infer_channels(legacy_args.pair_modalities)
+    if cli_args.data_format == "raw":
+        main_channels, aux_channels = _infer_raw_channels(
+            cli_args.dataset,
+            cli_args.aux_channel_mode,
+        )
+    else:
+        main_channels, aux_channels = infer_channels(legacy_args.pair_modalities)
     model, gate_init_retention, gate_init_score = _build_model(
         cli_args,
         main_channels,
@@ -592,11 +613,13 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
 
     if cli_args.dry_run:
         summary = {
-            "data_root": legacy_args.data_root,
+            "dataset": cli_args.dataset,
+            "data_root": cli_args.data_root,
             "data_format": cli_args.data_format,
             "split_protocol": cli_args.split_protocol,
             "split_seed": cli_args.split_seed,
             "pair_modalities": legacy_args.pair_modalities,
+            "aux_channel_mode": cli_args.aux_channel_mode,
             "channels": [main_channels, aux_channels],
             "class_num": cli_args.class_num,
             "target_budget": cli_args.target_budget,
@@ -622,6 +645,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         cli_args.target_budget,
         cli_args.gate_type,
         cli_args.budget_metric,
+        cli_args.dataset,
     )
     paths["run_dir"].mkdir(parents=True, exist_ok=True)
     config = vars(cli_args).copy()
@@ -635,19 +659,37 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     data_metadata: dict[str, object]
     if cli_args.data_format == "raw":
         if pair_modalities != ["hsi", "lidar"]:
-            raise ValueError("raw Houston data currently supports only hsi+lidar")
-        require_roi = cli_args.split_protocol == "official" and not cli_args.split_file
-        scene = load_houston_scene(cli_args.data_root, require_roi=require_roi)
-        bundle = build_houston_raw_loaders(
-            scene=scene,
-            protocol=cli_args.split_protocol,
-            split_seed=cli_args.split_seed,
-            patch_size=cli_args.patch_size,
-            batch_size=cli_args.batch_size,
-            num_workers=cli_args.num_workers,
-            split_file=cli_args.split_file or None,
-        )
-        write_houston_data_artifacts(paths["run_dir"], bundle, scene)
+            raise ValueError("raw data currently supports only hsi+lidar")
+        if cli_args.dataset == "houston2013":
+            require_roi = cli_args.split_protocol == "official" and not cli_args.split_file
+            scene = load_houston_scene(cli_args.data_root, require_roi=require_roi)
+            bundle = build_houston_raw_loaders(
+                scene=scene,
+                protocol=cli_args.split_protocol,
+                split_seed=cli_args.split_seed,
+                patch_size=cli_args.patch_size,
+                batch_size=cli_args.batch_size,
+                num_workers=cli_args.num_workers,
+                split_file=cli_args.split_file or None,
+            )
+            write_houston_data_artifacts(paths["run_dir"], bundle, scene)
+        elif cli_args.dataset == "trento":
+            if cli_args.split_protocol != "random":
+                raise ValueError("Trento currently supports only random/fixed split protocol")
+            scene = load_trento_scene(
+                cli_args.data_root,
+                aux_channel_mode=cli_args.aux_channel_mode,
+            )
+            bundle = build_trento_raw_loaders(
+                scene=scene,
+                split_seed=cli_args.split_seed,
+                patch_size=cli_args.patch_size,
+                batch_size=cli_args.batch_size,
+                num_workers=cli_args.num_workers,
+                split_file=cli_args.split_file or None,
+            )
+        else:
+            raise ValueError(f"unsupported raw dataset: {cli_args.dataset}")
         train_loader = bundle.train_loader
         test_loader = bundle.test_loader
         data_metadata = bundle.metadata
@@ -662,7 +704,11 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         }
 
     if cli_args.dataset_only:
-        result = {"dataset": data_metadata, "run_dir": str(paths["run_dir"])}
+        result = {
+            "dataset": data_metadata,
+            "channels": [main_channels, aux_channels],
+            "run_dir": str(paths["run_dir"]),
+        }
         print(json.dumps(result, ensure_ascii=False))
         return result
 

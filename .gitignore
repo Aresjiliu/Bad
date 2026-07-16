@@ -5,6 +5,7 @@ output/depose/
 output/models/
 __pycache__/
 *.py[cod]
+*.pt
 *.out
 *.log
 .idea/

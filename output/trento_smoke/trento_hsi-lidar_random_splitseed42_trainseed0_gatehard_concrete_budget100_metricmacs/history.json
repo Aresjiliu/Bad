@@ -1,0 +1,114 @@
+[
+  {
+    "epoch": 1,
+    "elapsed_seconds": 1.2639434999982768,
+    "train": {
+      "loss": 0.9406061569311944,
+      "cls": 0.9406061569311944,
+      "budget": 3.4141578453272814e-12,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 1.0,
+      "resource_ratio": 0.999998152256012,
+      "expected_params_ratio": 0.9999982118606567,
+      "expected_macs_ratio": 0.999998152256012,
+      "q_main": 0.5557656564796406,
+      "q_aux": 0.4753310152497117,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5200774797889958,
+      "fusion_weight_aux": 0.47992252279199027,
+      "accuracy": 0.8186738836265224,
+      "samples": 739
+    },
+    "validation": {
+      "loss": 1.4293726205825805,
+      "cls": 1.4293726205825805,
+      "budget": 3.4141578453272814e-12,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 1.0,
+      "resource_ratio": 0.999998152256012,
+      "expected_params_ratio": 0.9999982118606567,
+      "expected_macs_ratio": 0.999998152256012,
+      "q_main": 0.5493023872375489,
+      "q_aux": 0.48835986852645874,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.515228807926178,
+      "fusion_weight_aux": 0.484771192073822,
+      "accuracy": 0.7375,
+      "samples": 80,
+      "oa": 0.7375,
+      "aa": 0.6955128205128206,
+      "kappa": 0.6810933940774488,
+      "class_accuracy": [
+        0.9230769230769231,
+        0.5833333333333334,
+        0.0,
+        0.6666666666666666,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0,
+          0,
+          4
+        ],
+        [
+          10,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          10,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          18,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          12
+        ]
+      ]
+    },
+    "selection_score": 0.7375
+  }
+]
