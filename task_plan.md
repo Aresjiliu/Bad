@@ -164,5 +164,6 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Run Trento seed0 formal baseline with 20 epochs at 100% budget.
 - [completed] Run Trento seed0 80% budget with the current balanced degradation-aware setting.
 - [pending] Decide whether Trento formal protocol should keep `first` DSM/LiDAR channel or compare `first|both|mean` as a small protocol ablation.
-- [pending] Run Trento seed1/seed2 for both 100% baseline and 80% p=0.25 multi-degradation setting.
-- [pending] Generate a Trento 3-seed summary table for the thesis and paper.
+- [completed] Run Trento seed1/seed2 for both 100% baseline and 80% p=0.25 multi-degradation setting.
+- [completed] Generate a Trento 3-seed summary table for the thesis and paper.
+- [pending] Add Trento 3-seed results into the LaTeX experiment table after deciding the exact multi-dataset table layout.

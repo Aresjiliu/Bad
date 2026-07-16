@@ -1,0 +1,338 @@
+[
+  {
+    "epoch": 1,
+    "elapsed_seconds": 0.15816909999921336,
+    "train": {
+      "loss": 0.24634728356298194,
+      "cls": 0.24634728356298194,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.539737828524716,
+      "q_aux": 0.3424537214170019,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5490522047123277,
+      "fusion_weight_aux": 0.4509477906198387,
+      "accuracy": 0.9743975903614458,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.14570643484592438,
+      "cls": 0.14570643484592438,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.5438141600290934,
+      "q_aux": 0.3491762125492096,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5484009289741516,
+      "fusion_weight_aux": 0.4515991218884786,
+      "accuracy": 1.0,
+      "samples": 75,
+      "oa": 1.0,
+      "aa": 1.0,
+      "kappa": 1.0,
+      "class_accuracy": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          11,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 1.0
+  },
+  {
+    "epoch": 2,
+    "elapsed_seconds": 0.12549479999870528,
+    "train": {
+      "loss": 0.18338331382676779,
+      "cls": 0.18338331382676779,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.5410984050796692,
+      "q_aux": 0.3470294234982456,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5482352167726999,
+      "fusion_weight_aux": 0.45176478035478707,
+      "accuracy": 0.983433734939759,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.08732452501853306,
+      "cls": 0.08732452501853306,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.556436105966568,
+      "q_aux": 0.34421910921732585,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.552682953675588,
+      "fusion_weight_aux": 0.4473170506954193,
+      "accuracy": 1.0,
+      "samples": 75,
+      "oa": 1.0,
+      "aa": 1.0,
+      "kappa": 1.0,
+      "class_accuracy": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          11,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 1.0
+  },
+  {
+    "epoch": 3,
+    "elapsed_seconds": 0.12716189999991911,
+    "train": {
+      "loss": 0.1490969970283738,
+      "cls": 0.1490969970283738,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.5417200642895986,
+      "q_aux": 0.35495730839579936,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.546402412006654,
+      "fusion_weight_aux": 0.4535975804529994,
+      "accuracy": 0.9864457831325302,
+      "samples": 664
+    },
+    "validation": {
+      "loss": 0.09337485353151957,
+      "cls": 0.09337485353151957,
+      "budget": 0.0,
+      "quality": 0.0,
+      "pre_quality": 0.0,
+      "soft_retention": 0.0,
+      "hard_retention": 0.0,
+      "target_budget": 0.0,
+      "resource_ratio": 0.0,
+      "expected_params_ratio": 0.0,
+      "expected_macs_ratio": 0.0,
+      "q_main": 0.541212743918101,
+      "q_aux": 0.37174349228541054,
+      "pre_q_main": 0.0,
+      "pre_q_aux": 0.0,
+      "pre_u_main": 0.0,
+      "pre_u_aux": 0.0,
+      "fusion_weight_main": 0.5420859773953756,
+      "fusion_weight_aux": 0.4579139717419942,
+      "accuracy": 1.0,
+      "samples": 75,
+      "oa": 1.0,
+      "aa": 1.0,
+      "kappa": 1.0,
+      "class_accuracy": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          11,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          10,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          17,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "selection_score": 1.0
+  }
+]

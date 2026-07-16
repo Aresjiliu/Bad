@@ -168,3 +168,11 @@
 - The same 80% setting improves the harsh degraded-auxiliary diagnostics over the 100% baseline: high-noise OA 0.9957 vs 0.9840, downsample-4 OA 0.9922 vs 0.9820, and 50% occlusion OA 0.9938 vs 0.9712.
 - The tradeoff is clear in aux-only: 80% p=0.25 drops to 0.5206 OA compared with 0.7120 for the 100% baseline. The thesis should frame aux-only as an extreme diagnostic state, while the main deployment objective is full/main-available plus degraded auxiliary robustness.
 - Trento now gives a stronger multi-dataset story than expected: the current method is not merely transferring Houston trends; it can produce near-saturated accuracy with measurable MAC reduction on a second HS-LiDAR dataset. Seed1/2 are required before making a final claim.
+
+## 2026-07-16 Trento 3-seed findings
+
+- Trento 3-seed validation is now complete for 100% baseline and 80% p=0.25 multi-degradation. The 80% setting reaches 0.9894 +/- 0.0094 compact full OA at 0.7990 +/- 0.0010 MACs, while 100% baseline reaches 0.9910 +/- 0.0036 full OA.
+- The correct claim is therefore not that 80% is uniformly more accurate. The defensible claim is that 80% preserves near-saturated Trento accuracy while reducing MACs by about 20%.
+- Robustness evidence is favorable for degradation states: 80% p=0.25 improves downsample4 OA to 0.9851 vs 0.9795 and occlusion50 OA to 0.9816 vs 0.9646. High-noise is also slightly higher, 0.9890 vs 0.9854, but with larger variance.
+- Latency is not yet aligned with MACs on Trento: compact full latency averages 2.16 ms for 80% vs 2.02 ms for 100%. This should be treated as an open deployment-benchmark issue, not hidden.
+- This result is thesis-useful because it supplies a second dataset with 3-seed accuracy-efficiency-robustness evidence, but the paper should report it as a compactness/robustness tradeoff rather than a clean accuracy win.

@@ -236,3 +236,11 @@
 - The 80% p=0.25 run improves compact high-noise/downsample/occlusion diagnostics relative to the 100% baseline, while aux-only drops substantially.
 - Added `docs/TRENTO_FORMAL_SEED0_RESULTS_20260716_ZH.md` to record the formal seed0 comparison and thesis-writing interpretation.
 - Push to GitHub was attempted after the Trento runner commit, but GitHub port 443 was unreachable from the current environment. Local branch remains ahead of origin.
+
+## 2026-07-16 Trento 3-seed closure
+
+- Completed Trento seed1 and seed2 for both 100% baseline and 80% p=0.25 multi-degradation, closing the first Trento 3-seed comparison.
+- Generated `docs/generated/trento_formal_seed0_seed1_seed2_runs.csv`, `docs/generated/trento_formal_seed0_seed1_seed2_summary.csv`, and `.md`.
+- 3-seed compact full OA: 100% baseline 0.9910 +/- 0.0036; 80% p=0.25 multi-degradation 0.9894 +/- 0.0094.
+- 3-seed compact MACs: 100% baseline 1.0000; 80% p=0.25 multi-degradation 0.7990 +/- 0.0010.
+- 3-seed robustness: 80% p=0.25 improves downsample4 OA from 0.9795 to 0.9851 and occlusion50 OA from 0.9646 to 0.9816, but compact latency does not yet improve.
