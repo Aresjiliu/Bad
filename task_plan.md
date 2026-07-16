@@ -142,9 +142,9 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Implement leave-one-state-out learned routing against `pareto_delta_0.01` labels and generate seed0/1/2 reports.
 - [completed] Add a dataset-spec registry for Houston2013, Trento, MUUFL, Augsburg, and Houston2018.
 - [completed] Produce a dataset feasibility and download plan for thesis-level multi-dataset validation.
-- [pending] After the user downloads Trento, implement `load_trento_scene` and a generic `MultimodalPatchDataset`.
-- [pending] Run Trento `--dataset-only` checks, then a smoke training run.
-- [pending] After Trento is stable, download and integrate MUUFL with explicit 64/72-band protocol handling.
+- [completed] After the user downloads Trento, implement `load_trento_scene` and a generic raw-loader path.
+- [completed] Run Trento `--dataset-only` checks, then a smoke training run.
+- [completed] After Trento is stable, download and integrate MUUFL with explicit 64-band scene-label protocol handling.
 
 ### 2026-07-16 downloaded dataset audit and Trento onboarding
 
@@ -155,7 +155,7 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add Trento raw-loader factory support and wire `--dataset trento` into the training runner.
 - [completed] Run Trento `--dataset-only` checks and a one-epoch CUDA smoke experiment.
 - [pending] Generalize `HoustonPatchDataset` naming or add `MultimodalPatchDataset` after Trento/MUUFL loaders stabilize.
-- [pending] Implement MUUFL loader after Trento smoke is stable.
+- [completed] Implement MUUFL loader after Trento smoke is stable.
 
 ### 2026-07-16 Trento smoke-to-formal transition
 
@@ -167,3 +167,13 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Run Trento seed1/seed2 for both 100% baseline and 80% p=0.25 multi-degradation setting.
 - [completed] Generate a Trento 3-seed summary table for the thesis and paper.
 - [pending] Add Trento 3-seed results into the LaTeX experiment table after deciding the exact multi-dataset table layout.
+
+### 2026-07-16 MUUFL onboarding and smoke validation
+
+- [completed] Implement `load_muufl_scene` for the 64-band scene-label file, two-channel LiDAR `z` cube, and `-1` background labels.
+- [completed] Add MUUFL raw-loader factory support and wire `--dataset muufl` into the runner.
+- [completed] Generate fixed MUUFL seed0/1/2 coordinate splits with 1550 train samples and 52137 test samples per seed.
+- [completed] Validate MUUFL seed0 `--dataset-only` on the downloaded data.
+- [completed] Run a one-epoch CUDA smoke experiment for MUUFL seed0.
+- [pending] Run MUUFL seed0 20-epoch 100% baseline.
+- [pending] Run MUUFL seed0 80% p=0.25 multi-degradation setting and decide whether to expand to seed1/seed2.

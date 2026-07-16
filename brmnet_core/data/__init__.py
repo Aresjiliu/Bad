@@ -22,6 +22,13 @@ from .trento import (
     TrentoScene,
     load_trento_scene,
 )
+from .muufl import (
+    MUUFL_SCENE_FILENAME,
+    MUUFL_SCENE_LABELS_DIR,
+    MUUFL_STRUCT_KEY,
+    MUUFLScene,
+    load_muufl_scene,
+)
 from .patch_dataset import (
     HoustonPatchDataset,
     NormalizationStats,
@@ -30,8 +37,10 @@ from .patch_dataset import (
 )
 from .factory import (
     HoustonDataBundle,
+    MUUFLDataBundle,
     TrentoDataBundle,
     build_houston_raw_loaders,
+    build_muufl_raw_loaders,
     build_trento_raw_loaders,
     write_houston_data_artifacts,
 )
@@ -72,21 +81,28 @@ __all__ = [
     "TRENTO_GT_KEY",
     "TRENTO_HSI_FILENAME",
     "TRENTO_HSI_KEY",
+    "MUUFL_SCENE_FILENAME",
+    "MUUFL_SCENE_LABELS_DIR",
+    "MUUFL_STRUCT_KEY",
     "HoustonScene",
+    "MUUFLScene",
     "TrentoScene",
     "build_official_split",
     "build_random_split",
     "load_coordinate_split",
     "load_houston_scene",
+    "load_muufl_scene",
     "load_trento_scene",
     "HoustonPatchDataset",
     "NormalizationStats",
     "NormalizedScene",
     "normalize_scene",
     "HoustonDataBundle",
+    "MUUFLDataBundle",
     "TrentoDataBundle",
     "MultimodalDatasetSpec",
     "build_houston_raw_loaders",
+    "build_muufl_raw_loaders",
     "build_trento_raw_loaders",
     "write_houston_data_artifacts",
     "parse_envi_roi_records",

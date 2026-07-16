@@ -33,8 +33,10 @@ from brmnet_core import (
 )
 from brmnet_core.data import (
     build_houston_raw_loaders,
+    build_muufl_raw_loaders,
     build_trento_raw_loaders,
     load_houston_scene,
+    load_muufl_scene,
     load_trento_scene,
     write_houston_data_artifacts,
 )
@@ -50,7 +52,7 @@ from brmnet_core.reporting import write_metrics_csv, write_metrics_json
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the minimal BRM-Net Houston2013 experiment loop.")
-    parser.add_argument("--dataset", choices=("houston2013", "trento"), default="houston2013")
+    parser.add_argument("--dataset", choices=("houston2013", "trento", "muufl"), default="houston2013")
     parser.add_argument("--data-root", default="../data/Huston2013")
     parser.add_argument("--data-format", choices=("raw", "legacy"), default="raw")
     parser.add_argument("--pair-modalities", default="hsi+lidar")
@@ -580,6 +582,8 @@ def _infer_raw_channels(dataset: str, aux_channel_mode: str) -> tuple[int, int]:
         return 144, 1
     if dataset == "trento":
         return 63, 2 if aux_channel_mode == "both" else 1
+    if dataset == "muufl":
+        return 64, 2 if aux_channel_mode == "both" else 1
     raise ValueError(f"unsupported raw dataset: {dataset}")
 
 
@@ -681,6 +685,21 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 aux_channel_mode=cli_args.aux_channel_mode,
             )
             bundle = build_trento_raw_loaders(
+                scene=scene,
+                split_seed=cli_args.split_seed,
+                patch_size=cli_args.patch_size,
+                batch_size=cli_args.batch_size,
+                num_workers=cli_args.num_workers,
+                split_file=cli_args.split_file or None,
+            )
+        elif cli_args.dataset == "muufl":
+            if cli_args.split_protocol != "random":
+                raise ValueError("MUUFL currently supports only random/fixed split protocol")
+            scene = load_muufl_scene(
+                cli_args.data_root,
+                aux_channel_mode=cli_args.aux_channel_mode,
+            )
+            bundle = build_muufl_raw_loaders(
                 scene=scene,
                 split_seed=cli_args.split_seed,
                 patch_size=cli_args.patch_size,

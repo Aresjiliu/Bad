@@ -8,6 +8,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from brmnet_core.data import build_random_split, save_coordinate_split
+from brmnet_core.data.muufl import load_muufl_scene
 from brmnet_core.data.trento import load_trento_scene
 
 
@@ -19,6 +20,19 @@ DEFAULT_TRAIN_COUNTS = {
         4: 154,
         5: 184,
         6: 122,
+    },
+    "muufl": {
+        1: 150,
+        2: 150,
+        3: 150,
+        4: 150,
+        5: 150,
+        6: 150,
+        7: 150,
+        8: 150,
+        9: 150,
+        10: 100,
+        11: 100,
     },
 }
 
@@ -35,7 +49,7 @@ def parse_train_counts(value: str) -> dict[int, int]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Create fixed coordinate splits for non-Houston datasets.")
-    parser.add_argument("--dataset", choices=("trento",), required=True)
+    parser.add_argument("--dataset", choices=("trento", "muufl"), required=True)
     parser.add_argument("--root", required=True)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--train-counts", default="")
@@ -52,6 +66,14 @@ def main(argv: list[str] | None = None) -> int:
             parse_train_counts(args.train_counts)
             if args.train_counts
             else DEFAULT_TRAIN_COUNTS["trento"]
+        )
+        split = build_random_split(scene.gt, train_counts, seed=args.seed)
+    elif args.dataset == "muufl":
+        scene = load_muufl_scene(args.root, aux_channel_mode="both")
+        train_counts = (
+            parse_train_counts(args.train_counts)
+            if args.train_counts
+            else DEFAULT_TRAIN_COUNTS["muufl"]
         )
         split = build_random_split(scene.gt, train_counts, seed=args.seed)
     else:

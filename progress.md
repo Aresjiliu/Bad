@@ -244,3 +244,16 @@
 - 3-seed compact full OA: 100% baseline 0.9910 +/- 0.0036; 80% p=0.25 multi-degradation 0.9894 +/- 0.0094.
 - 3-seed compact MACs: 100% baseline 1.0000; 80% p=0.25 multi-degradation 0.7990 +/- 0.0010.
 - 3-seed robustness: 80% p=0.25 improves downsample4 OA from 0.9795 to 0.9851 and occlusion50 OA from 0.9646 to 0.9816, but compact latency does not yet improve.
+
+## 2026-07-16 MUUFL onboarding and smoke run
+
+- Implemented `brmnet_core/data/muufl.py` for the MUUFL 64-band scene-label file, including two-channel LiDAR `z` cube extraction and `-1` to background label mapping.
+- Added MUUFL raw-loader factory support and extended `scripts/run_brmnet_houston.py` with `--dataset muufl`.
+- Extended `scripts/make_multidataset_splits.py` and generated fixed MUUFL splits:
+  - `output/splits/muufl_seed0.npz`
+  - `output/splits/muufl_seed1.npz`
+  - `output/splits/muufl_seed2.npz`
+- MUUFL split protocol uses 150 samples for classes 1-9 and 100 samples for classes 10-11, producing 1550 train samples and 52137 test samples per seed.
+- Verified real MUUFL seed0 `--dataset-only` on `D:\Academic\data\MUUFLGulfport-master` with channels `[64, 2]`.
+- Ran a one-epoch CUDA smoke run under `output\muufl_smoke\...`; full OA 0.8080, AA 0.6973, Kappa 0.7498, main-only OA 0.6540, aux-only OA 0.3327, occlusion50 OA 0.7386.
+- Added `docs/MUUFL_SMOKE_RUN_20260716_ZH.md` to record the protocol, command, metrics, and formal-experiment boundary.

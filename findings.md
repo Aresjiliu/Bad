@@ -176,3 +176,10 @@
 - Robustness evidence is favorable for degradation states: 80% p=0.25 improves downsample4 OA to 0.9851 vs 0.9795 and occlusion50 OA to 0.9816 vs 0.9646. High-noise is also slightly higher, 0.9890 vs 0.9854, but with larger variance.
 - Latency is not yet aligned with MACs on Trento: compact full latency averages 2.16 ms for 80% vs 2.02 ms for 100%. This should be treated as an open deployment-benchmark issue, not hidden.
 - This result is thesis-useful because it supplies a second dataset with 3-seed accuracy-efficiency-robustness evidence, but the paper should report it as a compactness/robustness tradeoff rather than a clean accuracy win.
+
+## 2026-07-16 MUUFL onboarding findings
+
+- MUUFL is now integrated through the same raw runner path as Houston2013 and Trento. The usable local protocol is the 64-band scene-label file with two LiDAR channels from the `z` cube; original `-1` labels are unmapped pixels and are converted to background `0`.
+- Fixed seed0/1/2 splits are generated with 1550 train samples per seed: classes 1-9 use 150 samples each, classes 10-11 use 100 samples each. This keeps the rare classes in the training set while leaving 52137 test samples.
+- The one-epoch CUDA smoke is not a formal result, but it confirms end-to-end viability: full OA 0.8080, AA 0.6973, Kappa 0.7498; main-only OA 0.6540; aux-only OA 0.3327; occlusion50 OA 0.7386.
+- The short-run per-class results expose the key thesis issue: rare classes 9 and 10 remain near 0 accuracy, so MUUFL formal reporting must include AA, Kappa, and class accuracy. If 20-epoch training still fails on these classes, the next method-side addition should be weighted loss or a class-balanced sampler ablation.

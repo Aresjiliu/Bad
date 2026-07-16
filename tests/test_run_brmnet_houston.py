@@ -104,6 +104,68 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(result["channels"], [63, 1])
         self.assertTrue(Path(result["run_dir"]).name.startswith("trento_"))
 
+    def test_muufl_dataset_only_uses_muufl_channels_and_split(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "muufl"
+            scene_dir = root / "MUUFLGulfportSceneLabels"
+            scene_dir.mkdir(parents=True)
+            hsi = np.ones((5, 6, 64), dtype=np.float32)
+            lidar = np.ones((5, 6, 2), dtype=np.float32)
+            gt = np.zeros((5, 6), dtype=np.int16)
+            gt[:2, :3] = 1
+            gt[2:4, :3] = 2
+            savemat(
+                scene_dir / "muufl_gulfport_campus_1_hsi_220_label.mat",
+                {
+                    "hsi": {
+                        "Data": hsi,
+                        "Lidar": lidar,
+                        "sceneLabels": {"labels": gt},
+                    }
+                },
+            )
+            split = CoordinateSplit(
+                protocol="random",
+                seed=5,
+                train_coords=np.array([[0, 0], [2, 0]], dtype=np.int64),
+                train_labels=np.array([1, 2], dtype=np.int64),
+                test_coords=np.array([[0, 1], [2, 1]], dtype=np.int64),
+                test_labels=np.array([1, 2], dtype=np.int64),
+            )
+            split_path = Path(tmpdir) / "muufl_split.npz"
+            save_coordinate_split(split_path, split)
+
+            result = main(
+                [
+                    "--dataset",
+                    "muufl",
+                    "--data-root",
+                    str(root),
+                    "--split-file",
+                    str(split_path),
+                    "--split-protocol",
+                    "random",
+                    "--class-num",
+                    "11",
+                    "--aux-channel-mode",
+                    "both",
+                    "--dataset-only",
+                    "--latency-warmup",
+                    "0",
+                    "--latency-iterations",
+                    "1",
+                    "--output-dir",
+                    str(Path(tmpdir) / "runs"),
+                ]
+            )
+
+        self.assertEqual(result["dataset"]["dataset"], "muufl")
+        self.assertEqual(result["dataset"]["train_samples"], 2)
+        self.assertEqual(result["dataset"]["test_samples"], 2)
+        self.assertEqual(result["dataset"]["aux_channel_mode"], "both")
+        self.assertEqual(result["channels"], [64, 2])
+        self.assertTrue(Path(result["run_dir"]).name.startswith("muufl_"))
+
     def test_raw_protocol_defaults(self):
         args = build_parser().parse_args([])
 
