@@ -128,3 +128,11 @@
 - `utility_lambda_0.05` gives a similar tradeoff at lower cost: 2-seed mean OA 0.7419 at 0.8394 MACs. Larger penalties such as `lambda=0.2` are too aggressive for the current evidence.
 - The method still does not beat the old static 80% baseline on mean OA, so the correct thesis framing is not "dynamic routing already wins everywhere"; it is "hand-crafted routing fails, Pareto/utility labels provide a controlled resource-accuracy target, and learned routing should be trained against these corrected labels."
 - The next evidence gap is seed2 plus a learned Pareto/utility router with leave-one-state-out validation.
+
+## 2026-07-16 seed2 and 3-seed routing findings
+
+- Seed2 is now complete for 65/80/100 formal routing profiles, closing the first 3-seed evidence gap on Houston2013.
+- Under the current resource-stat backfill convention, static 100% has the highest fixed-profile 3-seed mean OA: 0.7483 at 1.0000 MACs. Static 80% is no longer the highest-OA fixed baseline in the unified 3-seed table, but remains an important lower-cost baseline at 0.7399 OA and 0.8036 MACs.
+- Hand oracle / learned hand-oracle routing reach 0.7461 mean OA at 0.9257 MACs. This is close to static 100% while saving compute, but its rule is still heuristic and should not be the final label source.
+- Pareto sweep gives the strongest current routing target. `pareto_delta_0.01` reaches 0.7537 mean OA at 0.8810 MACs, with only about 0.0010 mean regret from the per-state best profile and about 11.9% MAC saving versus 100%.
+- The next implementation should train the learned router against `pareto_delta_0.01` labels and evaluate leave-one-state-out generalization. This is now more defensible than learning either hand oracle or aggressive `utility_lambda_0.2` labels.

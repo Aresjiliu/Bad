@@ -179,3 +179,17 @@
   - `docs/generated/brmnet_routing_profile_formal_sweep_seed0_seed1_summary.csv`
 - Current 2-seed sweep finding: `pareto_delta_0.01` reaches mean OA 0.7424 at 0.8550 MACs with about 0.0010 mean regret; `utility_lambda_0.05` reaches mean OA 0.7419 at 0.8394 MACs.
 - Added `docs/PARETO_UTILITY_ROUTING_UPDATE_20260716_ZH.md` to summarize the strategy correction and next implementation steps.
+
+## 2026-07-16 formal seed2 completion and 3-seed routing summary
+
+- Completed formal seed2 runs for 65%, 80%, and 100% routing profiles on Houston2013 in the `hslinets` CUDA environment.
+- Generated seed2 reports:
+  - `docs/generated/brmnet_routing_profile_formal_comparison_seed2.*`
+  - `docs/generated/brmnet_routing_profile_formal_oracle_seed2.*`
+  - `docs/generated/brmnet_routing_profile_formal_sweep_seed2.*`
+- Regenerated seed0/seed1 comparison reports with the current resource-stat backfill path so all three seeds use the same reporting convention.
+- Generated 3-seed summaries:
+  - `docs/generated/brmnet_routing_profile_formal_seed0_seed1_seed2_summary.csv`
+  - `docs/generated/brmnet_routing_profile_formal_sweep_seed0_seed1_seed2_summary.csv`
+- 3-seed comparison status: static 100% reaches mean OA 0.7483 at 1.0000 MACs; hand oracle / learned oracle reach 0.7461 at 0.9257 MACs; static 80% reaches 0.7399 at 0.8036 MACs.
+- 3-seed sweep status: `pareto_delta_0.01` reaches mean OA 0.7537 at 0.8810 MACs with mean regret about 0.0010 and mean saving about 0.1190 versus 100% profile.

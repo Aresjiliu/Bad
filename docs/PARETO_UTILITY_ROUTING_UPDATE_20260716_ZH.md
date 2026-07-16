@@ -73,23 +73,48 @@ Pareto / utility sweep 证明了一个重要事实：当前动态路由已经可
 
 ## 6. 下一步优先级
 
-### P0-1：补 seed2
+### P0-1：补 seed2（已完成）
 
-完成 seed2 的 65/80/100 profile 正式实验，然后重新生成：
+已完成 seed2 的 65/80/100 profile 正式实验，并重新生成：
 
 - static profile 3-seed summary
 - Pareto sweep 3-seed summary
 - utility sweep 3-seed summary
 
-### P0-2：确定标签方案
+新增文件：
 
-优先候选：
+- `docs/generated/brmnet_routing_profile_formal_comparison_seed2.csv`
+- `docs/generated/brmnet_routing_profile_formal_comparison_seed2.json`
+- `docs/generated/brmnet_routing_profile_formal_sweep_seed2.csv`
+- `docs/generated/brmnet_routing_profile_formal_sweep_seed2.json`
+- `docs/generated/brmnet_routing_profile_formal_seed0_seed1_seed2_summary.csv`
+- `docs/generated/brmnet_routing_profile_formal_sweep_seed0_seed1_seed2_summary.csv`
+
+### P0-2：3-seed 后的标签方案判断
+
+3-seed 主策略结果：
+
+| Policy | 3-seed mean OA | 3-seed mean MACs | 结论 |
+|---|---:|---:|---|
+| static_1.0 | 0.7483 | 1.0000 | 最高固定精度，但没有省算力。 |
+| oracle / learned oracle | 0.7461 | 0.9257 | 接近 100% 精度，同时节省约 7.4% MACs。 |
+| static_0.8 | 0.7399 | 0.8036 | 强固定低预算基线，但精度低于 100%。 |
+| utility_lambda_0.2 | 0.7334 | 0.7058 | 省算力明显，但过于激进。 |
+
+3-seed sweep 中的优先候选：
 
 - `pareto_delta_0.005`
 - `pareto_delta_0.01`
 - `utility_lambda_0.05`
 
-这三个策略在 2-seed 上保持较低 regret，同时有明确算力节省。
+| Policy | 3-seed mean OA | 3-seed mean MACs | Mean regret | Mean saving vs 100% |
+|---|---:|---:|---:|---:|
+| pareto_delta_0.005 | 0.7545 | 0.9138 | 0.0001 | 0.0862 |
+| pareto_delta_0.01 | 0.7537 | 0.8810 | 0.0010 | 0.1190 |
+| utility_lambda_0.05 | 0.7533 | 0.8706 | 0.0013 | 0.1294 |
+| utility_lambda_0.10 | 0.7498 | 0.8245 | 0.0048 | 0.1755 |
+
+当前最推荐的标签是 `pareto_delta_0.01`。它的解释最清楚：允许每个状态相对最优 profile 损失约 0.001 mean OA regret，换取约 11.9% 的 MACs 节省。`utility_lambda_0.05` 更省，但论文解释性略弱；`pareto_delta_0.005` 精度最高但节省不足。
 
 ### P1：训练 learned Pareto router
 

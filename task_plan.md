@@ -133,5 +133,6 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Train learned profile selection from oracle labels and compare against static 65/80/100 profiles on formal seed0.
 - [completed] Add utility-derived labels and complete formal seed1 routing-profile experiments.
 - [completed] Sweep utility penalty and implement Pareto tolerance labels because the hand oracle is too conservative.
+- [completed] Run formal 20-epoch seed2 routing-profile experiments and generate 3-seed summaries.
 - [pending] Replace in-sample learned routing with leave-one-state-out or validation-derived Pareto/utility labels.
-- [pending] Run formal 20-epoch seed2 routing-profile experiments before using the numbers as thesis evidence.
+- [pending] Train learned routing against `pareto_delta_0.01` and report leave-one-state-out accuracy plus achieved OA/MAC.
