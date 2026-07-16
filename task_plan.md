@@ -180,5 +180,15 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Generate MUUFL 3-seed formal summary tables and a Chinese thesis-interpretation note.
 - [completed] Add MUUFL per-class accuracy summary to handle class imbalance explicitly.
 - [completed] Build one unified Houston2013/Trento/MUUFL multi-dataset evidence table in Markdown/CSV.
-- [pending] Convert the multi-dataset evidence table into LaTeX table snippets.
+- [completed] Convert the multi-dataset evidence table into LaTeX table snippets.
 - [pending] Decide whether to add a MUUFL class-balanced sampler or weighted-loss ablation after checking thesis table space.
+
+### 2026-07-17 paper content and experiment-depth plan
+
+- [completed] Revise the external LaTeX paper to include multi-dataset validation in the abstract, introduction, experiments, discussion, and conclusion.
+- [completed] Add a detailed multi-dataset table with Full OA, AA, Kappa, missing-modality diagnostics, occlusion robustness, MACs, and Params.
+- [completed] Add MUUFL per-class table to the paper to avoid relying only on OA under severe class imbalance.
+- [completed] Compile the paper with TeX Live 2026 and verify that the PDF builds.
+- [pending] Generate MUUFL confusion matrix and class-delta visualization for a deeper failure-mode figure.
+- [pending] Run a MUUFL seed0 weighted CE or class-balanced sampler ablation if the thesis needs another method-side depth addition.
+- [pending] Convert Pareto routing labels from state-level evidence to patch-level or validation-derived training samples.

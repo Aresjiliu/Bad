@@ -271,3 +271,18 @@
 - Robustness gain is substantial on MUUFL: 80% p=0.25 improves main-only OA by 11.94 points, aux-only OA by 30.96 points, downsample4 OA by 2.54 points, and occlusion50 OA by 5.91 points.
 - Current conclusion: MUUFL should be used as the hard-data robustness case, not as a pure clean-OA win.
 - Generated MUUFL per-class summaries under `docs/generated/muufl_formal_per_class_seed0_seed1_seed2_*`; the main clean full-OA losses are classes 3 and 9, while classes 4, 5, 7, and 10 improve under the 80% multi-degradation setting.
+
+## 2026-07-17 paper and experiment-depth update
+
+- Updated the external LaTeX paper at `D:\Academic\paper_submission\brmnet_pricai2026` to include Houston2013, Trento, and MUUFL as a three-dataset evidence chain.
+- Revised the abstract, introduction contribution list, experiment section, discussion, and conclusion to frame the method as an accuracy-efficiency-robustness trade-off rather than a clean-accuracy-only method.
+- Added paper tables:
+  - `D:\Academic\paper_submission\brmnet_pricai2026\tables\multidataset_formal_evidence.tex`
+  - `D:\Academic\paper_submission\brmnet_pricai2026\tables\multidataset_detailed_proposed.tex`
+  - `D:\Academic\paper_submission\brmnet_pricai2026\tables\muufl_per_class_accuracy.tex`
+- Generated repository-side detailed table files:
+  - `docs/generated/multidataset_detailed_proposed_summary.csv`
+  - `docs/generated/multidataset_detailed_proposed_summary.md`
+  - `docs/generated/multidataset_detailed_proposed_table.tex`
+- Added `docs/EXPERIMENT_DEPTH_AND_PAPER_REVISION_20260717_ZH.md` to record the current paper logic, remaining experimental-depth gaps, and next-priority ablations.
+- Verified the paper with `D:\texlive\2026\bin\windows\latexmk.exe`; `paper.pdf` compiled successfully with no fatal errors, undefined references, or overfull boxes.

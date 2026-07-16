@@ -193,3 +193,10 @@
 - The correct thesis framing is now clear across datasets: Houston supports the routing/quality-aware method line, Trento supports near-saturated accuracy with about 20% MAC reduction, and MUUFL supports robustness under harder imbalance and degraded/missing auxiliary modalities.
 - The next writing step is a unified multi-dataset table plus a MUUFL-specific per-class/AA/Kappa discussion, because OA alone is not credible on this class distribution.
 - MUUFL per-class analysis shows that the 80% clean full-OA drop is mainly from classes 1, 3, 8, and 9, while classes 4, 5, 7, and 10 improve and class 11 remains essentially stable. This weakens the need for an immediate weighted-loss pivot; per-class reporting should come first, with weighted CE or class-balanced sampling kept as an optional ablation.
+
+## 2026-07-17 paper-depth findings
+
+- The paper now has a stronger three-dataset evidence structure: Houston2013 is the method/routing dataset, Trento is the near-saturated compression dataset, and MUUFL is the hard robustness dataset.
+- A detailed proposed-method table across Houston2013, Trento, and MUUFL reports Full OA, Full AA, Kappa, main-only OA, aux-only OA, occlusion50 OA, MACs, and Params. This is more defensible than reporting only clean OA.
+- The current experimental-depth gap is no longer "lack of multiple datasets"; it is now "lack of deeper per-dataset analysis." The most valuable additions are MUUFL confusion/class-delta visualization, weighted CE or class-balanced sampler seed0 ablation, and patch-level router supervision.
+- The paper wording was adjusted to preserve negative evidence: MUUFL clean full OA drops under the 80% setting, Trento latency is not guaranteed to decrease despite MAC reduction, and leave-one-state-out learned routing is not yet mature.
