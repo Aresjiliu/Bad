@@ -12,6 +12,16 @@ from .houston import (
     HoustonScene,
     load_houston_scene,
 )
+from .trento import (
+    TRENTO_AUX_FILENAME,
+    TRENTO_AUX_KEY,
+    TRENTO_GT_FILENAME,
+    TRENTO_GT_KEY,
+    TRENTO_HSI_FILENAME,
+    TRENTO_HSI_KEY,
+    TrentoScene,
+    load_trento_scene,
+)
 from .patch_dataset import (
     HoustonPatchDataset,
     NormalizationStats,
@@ -36,6 +46,10 @@ from .dataset_specs import (
     MultimodalDatasetSpec,
     recommended_dataset_sequence,
 )
+from .dataset_audit import (
+    audit_label_map,
+    recommend_dataset_usage,
+)
 
 __all__ = [
     "CoordinateSplit",
@@ -50,11 +64,19 @@ __all__ = [
     "HOUSTON_ROI_FILENAME",
     "HOUSTON_ROI_KEY",
     "HOUSTON_TRAIN_COUNTS",
+    "TRENTO_AUX_FILENAME",
+    "TRENTO_AUX_KEY",
+    "TRENTO_GT_FILENAME",
+    "TRENTO_GT_KEY",
+    "TRENTO_HSI_FILENAME",
+    "TRENTO_HSI_KEY",
     "HoustonScene",
+    "TrentoScene",
     "build_official_split",
     "build_random_split",
     "load_coordinate_split",
     "load_houston_scene",
+    "load_trento_scene",
     "HoustonPatchDataset",
     "NormalizationStats",
     "NormalizedScene",
@@ -64,6 +86,8 @@ __all__ = [
     "build_houston_raw_loaders",
     "write_houston_data_artifacts",
     "parse_envi_roi_records",
+    "audit_label_map",
     "recommended_dataset_sequence",
+    "recommend_dataset_usage",
     "save_coordinate_split",
 ]

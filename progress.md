@@ -203,3 +203,17 @@
 - Added `brmnet_core/data/dataset_specs.py` and `tests/test_dataset_specs.py` to record the priority dataset registry before real Trento/MUUFL files are available.
 - Created `docs/MULTI_DATASET_FEASIBILITY_AND_DOWNLOAD_PLAN_ZH.md` with the recommended download order: Trento first, MUUFL second, Augsburg/Houston2018 deferred.
 - Verification passed: `conda run -n hslinets python -m unittest discover -s tests` ran 158 tests, all passed with 1 skipped.
+
+## 2026-07-16 downloaded dataset audit and Trento onboarding
+
+- Located the downloaded datasets at `D:\Academic\data\Trento-main` and `D:\Academic\data\MUUFLGulfport-master`.
+- Added `brmnet_core/data/dataset_audit.py` and `scripts/audit_downloaded_datasets.py`.
+- Generated `docs/DOWNLOADED_DATASET_AUDIT_ZH.md` and `docs/generated/downloaded_dataset_audit.json`.
+- Added `docs/NEW_DATASETS_ADOPTION_AND_BENCHMARK_ZH.md` with same-task benchmark levels and adoption decisions.
+- Implemented `brmnet_core/data/trento.py` with `load_trento_scene` and auxiliary-channel modes `first`, `both`, and `mean`.
+- Added `scripts/make_multidataset_splits.py` and generated fixed Trento splits:
+  - `output/splits/trento_seed0.npz`
+  - `output/splits/trento_seed1.npz`
+  - `output/splits/trento_seed2.npz`
+- Trento split protocol uses per-class training counts 129/125/105/154/184/122, producing 819 train samples and 29,395 test samples per seed.
+- Verification passed: `conda run -n hslinets python -m unittest discover -s tests` ran 164 tests, all passed with 1 skipped.

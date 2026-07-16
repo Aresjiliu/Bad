@@ -145,3 +145,13 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [pending] After the user downloads Trento, implement `load_trento_scene` and a generic `MultimodalPatchDataset`.
 - [pending] Run Trento `--dataset-only` checks, then a smoke training run.
 - [pending] After Trento is stable, download and integrate MUUFL with explicit 64/72-band protocol handling.
+
+### 2026-07-16 downloaded dataset audit and Trento onboarding
+
+- [completed] Audit downloaded Trento and MUUFL files for shape, finite values, label distribution, class count, imbalance, and split availability.
+- [completed] Collect local same-task benchmark levels for Houston2013, Trento, and MUUFL.
+- [completed] Implement `load_trento_scene` with `first|both|mean` auxiliary-channel handling.
+- [completed] Generate fixed Trento seed0/1/2 coordinate splits from the downloaded labels.
+- [pending] Generalize `HoustonPatchDataset` naming or add `MultimodalPatchDataset`.
+- [pending] Add Trento support to the training runner and run a CUDA smoke experiment.
+- [pending] Implement MUUFL loader after Trento smoke is stable.

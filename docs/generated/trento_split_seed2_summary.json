@@ -1,0 +1,14 @@
+{
+  "dataset": "trento",
+  "seed": 2,
+  "train_samples": 819,
+  "test_samples": 29395,
+  "train_counts": {
+    "1": 129,
+    "2": 125,
+    "3": 105,
+    "4": 154,
+    "5": 184,
+    "6": 122
+  }
+}

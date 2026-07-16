@@ -1,0 +1,117 @@
+[
+  {
+    "dataset": "Trento",
+    "root": "D:\\Academic\\data\\Trento-main",
+    "hsi_shape": [
+      166,
+      600,
+      63
+    ],
+    "aux_shape": [
+      166,
+      600,
+      2
+    ],
+    "label_shape": [
+      166,
+      600
+    ],
+    "hsi_finite": true,
+    "aux_finite": true,
+    "label_audit": {
+      "shape": [
+        166,
+        600
+      ],
+      "labeled_pixels": 30214,
+      "background_pixels": 69386,
+      "class_count": 6,
+      "class_counts": {
+        "1": 4034,
+        "2": 2903,
+        "3": 479,
+        "4": 9123,
+        "5": 10501,
+        "6": 3174
+      },
+      "imbalance_ratio": 21.92275574112735,
+      "empty_classes": []
+    },
+    "has_fixed_split": false,
+    "decision": {
+      "status": "smoke_then_protocolize",
+      "reasons": [
+        "fixed train/test split is missing"
+      ]
+    },
+    "notes": [
+      "LiDAR file has two channels in this download; the current dataset spec expected one DSM channel, so loader should expose an aux-channel selection option.",
+      "Only allgrd.mat was detected as a label map; no explicit train/test masks were found."
+    ]
+  },
+  {
+    "dataset": "MUUFL Gulfport",
+    "root": "D:\\Academic\\data\\MUUFLGulfport-master",
+    "source_file": "D:\\Academic\\data\\MUUFLGulfport-master\\MUUFLGulfportSceneLabels\\muufl_gulfport_campus_1_hsi_220_label.mat",
+    "hsi_shape": [
+      325,
+      220,
+      64
+    ],
+    "aux_shape": [
+      [
+        325,
+        220,
+        2
+      ],
+      [
+        325,
+        220,
+        2
+      ]
+    ],
+    "label_shape": [
+      325,
+      220
+    ],
+    "hsi_finite": true,
+    "aux_finite": true,
+    "label_audit": {
+      "shape": [
+        325,
+        220
+      ],
+      "labeled_pixels": 53687,
+      "background_pixels": 17813,
+      "class_count": 11,
+      "class_counts": {
+        "1": 23246,
+        "2": 4270,
+        "3": 6882,
+        "4": 1826,
+        "5": 6687,
+        "6": 466,
+        "7": 2233,
+        "8": 6240,
+        "9": 1385,
+        "10": 183,
+        "11": 269
+      },
+      "imbalance_ratio": 127.02732240437159,
+      "empty_classes": []
+    },
+    "has_fixed_split": false,
+    "decision": {
+      "status": "smoke_then_protocolize",
+      "reasons": [
+        "fixed train/test split is missing",
+        "severe class imbalance requires AA/Kappa and per-class reporting"
+      ]
+    },
+    "notes": [
+      "The scene-label file matches the common 64-band MUUFL protocol and includes 11 material classes.",
+      "Class imbalance is severe; class 10 and 11 have only 183 and 269 labeled pixels.",
+      "No explicit train/test masks were detected in the downloaded folder."
+    ]
+  }
+]
