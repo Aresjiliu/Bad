@@ -15,6 +15,7 @@ from brmnet_core.engine import (
     train_one_epoch,
     unpack_batch,
 )
+from brmnet_core.losses import brmnet_loss
 
 
 class BRMNetEngineTest(unittest.TestCase):
@@ -319,6 +320,32 @@ class BRMNetEngineTest(unittest.TestCase):
         self.assertGreater(metrics["expected_params_ratio"], 0.0)
         self.assertGreater(metrics["expected_macs_ratio"], 0.0)
         self.assertAlmostEqual(metrics["target_budget"], 0.8)
+
+    def test_brmnet_loss_accepts_class_weights(self):
+        class NoGateModel(nn.Module):
+            pass
+
+        outputs = {
+            "logits": torch.tensor(
+                [
+                    [3.0, 0.0],
+                    [3.0, 0.0],
+                    [0.0, 3.0],
+                ]
+            )
+        }
+        labels = torch.tensor([0, 1, 1])
+
+        unweighted = brmnet_loss(NoGateModel(), outputs, labels, lambda_budget=0.0)["cls"]
+        weighted = brmnet_loss(
+            NoGateModel(),
+            outputs,
+            labels,
+            lambda_budget=0.0,
+            class_weights=torch.tensor([1.0, 4.0]),
+        )["cls"]
+
+        self.assertGreater(float(weighted), float(unweighted))
 
     def test_evaluate_supports_degradation_modes(self):
         torch.manual_seed(0)

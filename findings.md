@@ -200,3 +200,17 @@
 - A detailed proposed-method table across Houston2013, Trento, and MUUFL reports Full OA, Full AA, Kappa, main-only OA, aux-only OA, occlusion50 OA, MACs, and Params. This is more defensible than reporting only clean OA.
 - The current experimental-depth gap is no longer "lack of multiple datasets"; it is now "lack of deeper per-dataset analysis." The most valuable additions are MUUFL confusion/class-delta visualization, weighted CE or class-balanced sampler seed0 ablation, and patch-level router supervision.
 - The paper wording was adjusted to preserve negative evidence: MUUFL clean full OA drops under the 80% setting, Trento latency is not guaranteed to decrease despite MAC reduction, and leave-one-state-out learned routing is not yet mature.
+
+## 2026-07-17 MUUFL error-analysis findings
+
+- The MUUFL confusion/delta figure confirms that the 80% multi-degradation model changes the class-wise clean full-modality trade-off rather than simply failing on rare classes.
+- Classes 4 and 5 improve clearly, class 10 improves slightly despite being rare, and class 11 remains stable. The main drops are classes 1, 3, 8, and 9.
+- This supports a measured thesis claim: the method improves missing/degraded-modality robustness at compact cost, but future class-balanced or confusion-aware refinements are needed to recover all clean full-modality classes.
+
+## 2026-07-17 weighted CE and next-direction findings
+
+- MUUFL weighted CE is a useful diagnostic but not a strong new method component. Across three seeds it improves full OA from 86.87 to 87.28 and full AA from 89.31 to 89.75, but reduces main-only OA from 83.03 to 82.64 and aux-only OA from 57.20 to 56.41.
+- The per-class effect is mixed: classes 3 and 10 improve strongly, while class 2 drops by 6.93 points and classes 5/7 also decrease. Static inverse-frequency weighting therefore does not solve the robustness/class-balance conflict.
+- The paper should keep weighted CE as a supplemental ablation and use it to justify future confusion-aware or state-aware refinement. It should not be promoted as the core innovation.
+- The next technical direction with the best innovation-to-effort ratio is patch-level or validation-derived Pareto routing. The current state-level learned router is under-sampled, while Pareto labels themselves remain a strong target for accuracy-efficiency control.
+- The current thesis framing should remain accuracy-efficiency-robustness trade-off across Houston2013, Trento, and MUUFL, with negative evidence reported explicitly rather than hidden.

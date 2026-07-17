@@ -286,3 +286,29 @@
   - `docs/generated/multidataset_detailed_proposed_table.tex`
 - Added `docs/EXPERIMENT_DEPTH_AND_PAPER_REVISION_20260717_ZH.md` to record the current paper logic, remaining experimental-depth gaps, and next-priority ablations.
 - Verified the paper with `D:\texlive\2026\bin\windows\latexmk.exe`; `paper.pdf` compiled successfully with no fatal errors, undefined references, or overfull boxes.
+
+## 2026-07-17 MUUFL error analysis figure
+
+- Added `scripts/plot_muufl_error_analysis.py` to aggregate MUUFL compact full-modality confusion matrices and class-wise accuracy deltas across three seeds.
+- Added `tests/test_plot_muufl_error_analysis.py`; targeted tests passed.
+- Generated:
+  - `docs/generated/muufl_error_analysis.md`
+  - `docs/generated/muufl_error_analysis_per_class.csv`
+  - `docs/generated/muufl_error_analysis.pdf`
+  - `docs/generated/muufl_error_analysis.png`
+- Synced the figure to the external paper directory as `D:\Academic\paper_submission\brmnet_pricai2026\figures\generated\fig_muufl_error_analysis.pdf`.
+- Updated the paper experiment section to cite the MUUFL error-analysis figure as evidence that robustness training redistributes clean full-modality class accuracy rather than uniformly improving every category.
+
+## 2026-07-17 MUUFL weighted CE ablation and research plan
+
+- Added class-weighted loss support through `brmnet_core.losses.brmnet_loss` and `scripts/run_brmnet_houston.py --class-weighting inverse_frequency`.
+- Completed MUUFL weighted CE seed0/seed1/seed2 runs under the existing 80% MAC, p=0.25 multi-degradation setting.
+- Added `scripts/summarize_muufl_weighted_ce.py` and `tests/test_summarize_muufl_weighted_ce.py`.
+- Generated:
+  - `docs/generated/muufl_weighted_ce_seed0_seed1_seed2_runs.csv`
+  - `docs/generated/muufl_weighted_ce_seed0_seed1_seed2_summary.csv`
+  - `docs/generated/muufl_weighted_ce_seed0_seed1_seed2_class_delta.csv`
+  - `docs/generated/muufl_weighted_ce_seed0_seed1_seed2_summary.md`
+- Updated the external LaTeX paper with `tables/muufl_weighted_ce_ablation.tex` and a conservative interpretation paragraph in `sections/04_experiments.tex`.
+- Verified the paper with TeX Live 2026; `paper.pdf` compiled successfully with no undefined references, overfull boxes, fatal errors, or LaTeX errors detected by the final log grep.
+- Added `docs/RESEARCH_STATUS_AND_NEXT_PLAN_20260717_ZH.md` to record the latest research status, current thesis positioning, and next implementation priorities.

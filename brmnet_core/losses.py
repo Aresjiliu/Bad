@@ -44,8 +44,11 @@ def brmnet_loss(
     lambda_quality: float = 0.0,
     lambda_pre_quality: float = 0.0,
     quality_targets: tuple[torch.Tensor, torch.Tensor] | None = None,
+    class_weights: torch.Tensor | None = None,
 ) -> dict[str, torch.Tensor]:
-    cls = F.cross_entropy(outputs["logits"], labels)
+    if class_weights is not None:
+        class_weights = class_weights.to(device=labels.device, dtype=outputs["logits"].dtype)
+    cls = F.cross_entropy(outputs["logits"], labels, weight=class_weights)
     resource_ratio = torch.zeros((), dtype=cls.dtype, device=labels.device)
     expected_params_ratio = torch.zeros((), dtype=cls.dtype, device=labels.device)
     expected_macs_ratio = torch.zeros((), dtype=cls.dtype, device=labels.device)

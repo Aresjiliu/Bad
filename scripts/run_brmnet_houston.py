@@ -76,6 +76,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("oa", "accuracy", "loss"),
         default="oa",
     )
+    parser.add_argument(
+        "--class-weighting",
+        choices=("none", "inverse_frequency"),
+        default="none",
+        help="Optional class weighting for cross-entropy; intended for imbalanced datasets such as MUUFL.",
+    )
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-3)
     parser.add_argument("--lambda-budget", type=float, default=1.0)
@@ -241,6 +247,39 @@ def seed_everything(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def _label_from_dataset_item(item: object) -> int:
+    if isinstance(item, dict):
+        label = item.get("label", item.get("labels", item.get("target", item.get("y"))))
+    elif isinstance(item, (tuple, list)) and len(item) >= 3:
+        label = item[2]
+    else:
+        raise TypeError(f"Cannot extract label from dataset item of type {type(item)!r}")
+    if isinstance(label, torch.Tensor):
+        return int(label.detach().cpu().reshape(-1)[0].item())
+    return int(label)
+
+
+def labels_from_dataset(dataset) -> torch.Tensor:
+    labels = [_label_from_dataset_item(dataset[index]) for index in range(len(dataset))]
+    return torch.tensor(labels, dtype=torch.long)
+
+
+def inverse_frequency_class_weights(dataset, num_classes: int) -> torch.Tensor:
+    if num_classes <= 0:
+        raise ValueError(f"num_classes must be positive, got {num_classes}")
+    labels = labels_from_dataset(dataset)
+    if labels.numel() == 0:
+        raise ValueError("Cannot compute class weights from an empty dataset")
+    if int(labels.min()) < 0 or int(labels.max()) >= num_classes:
+        raise ValueError("Labels must be zero-based and smaller than num_classes")
+    counts = torch.bincount(labels, minlength=num_classes).float()
+    present = counts > 0
+    weights = torch.zeros(num_classes, dtype=torch.float32)
+    weights[present] = 1.0 / counts[present]
+    weights[present] = weights[present] / weights[present].mean()
+    return weights
 
 
 def split_loader_for_validation(
@@ -744,6 +783,16 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         "validation_fraction": cli_args.val_fraction,
         "validation_split_strategy": cli_args.val_split_strategy,
     }
+    class_weights = None
+    if cli_args.class_weighting == "inverse_frequency":
+        class_weights = inverse_frequency_class_weights(train_loader.dataset, cli_args.class_num)
+        data_metadata = {
+            **data_metadata,
+            "class_weighting": cli_args.class_weighting,
+            "class_weights": class_weights.tolist(),
+        }
+    else:
+        data_metadata = {**data_metadata, "class_weighting": "none"}
 
     if cli_args.gate_type == "legacy_sigmoid":
         set_gate_stochastic(model, cli_args.gate_mode == "stochastic")
@@ -759,6 +808,8 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         "lambda_pre_quality": cli_args.lambda_pre_quality,
         "target_budget": cli_args.target_budget,
     }
+    if class_weights is not None:
+        loss_kwargs["class_weights"] = class_weights
     if cli_args.gate_type == "hard_concrete":
         loss_kwargs.update(
             {
@@ -871,6 +922,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                     "lambda_budget": 0.0,
                     "lambda_quality": cli_args.lambda_quality,
                     "lambda_pre_quality": 0.0,
+                    **({"class_weights": class_weights} if class_weights is not None else {}),
                 },
                 modality_dropout_prob=cli_args.modality_dropout_prob,
                 aux_quality_degradation_prob=cli_args.aux_quality_degradation_prob,
@@ -889,6 +941,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                         "lambda_budget": 0.0,
                         "lambda_quality": cli_args.lambda_quality,
                         "lambda_pre_quality": 0.0,
+                        **({"class_weights": class_weights} if class_weights is not None else {}),
                     },
                 )
                 compact_score = compact_selection_score(
@@ -935,6 +988,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
                 "lambda_budget": 0.0,
                 "lambda_quality": cli_args.lambda_quality,
                 "lambda_pre_quality": 0.0,
+                **({"class_weights": class_weights} if class_weights is not None else {}),
             },
             aux_noise_std=cli_args.aux_noise_std,
         )

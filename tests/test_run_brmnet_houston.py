@@ -13,6 +13,7 @@ from scripts.run_brmnet_houston import (
     build_parser,
     build_run_paths,
     compact_selection_score,
+    inverse_frequency_class_weights,
     main,
     split_loader_for_validation,
     retention_to_gate_score,
@@ -49,6 +50,18 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.split_file, "D:/splits/random.npz")
         self.assertTrue(args.dataset_only)
         self.assertEqual(args.num_workers, 0)
+
+    def test_inverse_frequency_class_weights_normalize_present_classes(self):
+        dataset = TensorDataset(
+            torch.randn(6, 4, 3, 3),
+            torch.randn(6, 1, 3, 3),
+            torch.tensor([0, 0, 0, 1, 1, 2]),
+        )
+
+        weights = inverse_frequency_class_weights(dataset, num_classes=3)
+
+        torch.testing.assert_close(weights, torch.tensor([6 / 11, 9 / 11, 18 / 11]))
+        self.assertAlmostEqual(float(weights.mean()), 1.0)
 
     def test_trento_dataset_only_uses_trento_channels_and_split(self):
         with tempfile.TemporaryDirectory() as tmpdir:

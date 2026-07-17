@@ -189,6 +189,16 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add a detailed multi-dataset table with Full OA, AA, Kappa, missing-modality diagnostics, occlusion robustness, MACs, and Params.
 - [completed] Add MUUFL per-class table to the paper to avoid relying only on OA under severe class imbalance.
 - [completed] Compile the paper with TeX Live 2026 and verify that the PDF builds.
-- [pending] Generate MUUFL confusion matrix and class-delta visualization for a deeper failure-mode figure.
-- [pending] Run a MUUFL seed0 weighted CE or class-balanced sampler ablation if the thesis needs another method-side depth addition.
+- [completed] Generate MUUFL confusion matrix and class-delta visualization for a deeper failure-mode figure.
+- [completed] Run MUUFL weighted CE seed0/seed1/seed2 ablation and summarize it as a diagnostic rather than a core method.
+- [completed] Add the MUUFL weighted CE ablation table and interpretation into the external LaTeX paper.
+- [completed] Write the latest research-status and next-plan document.
 - [pending] Convert Pareto routing labels from state-level evidence to patch-level or validation-derived training samples.
+
+### 2026-07-17 next stable implementation plan
+
+- [pending] Design validation-derived Pareto routing samples from existing profile/degradation evaluation records.
+- [pending] Implement a patch-level routing dataset that stores quality-probe features, availability/degradation state, confidence, selected profile label, and oracle regret.
+- [pending] Train a small router on validation-derived labels and evaluate achieved OA/MAC/regret on held-out states or held-out validation patches.
+- [pending] Add a paper-ready routing table comparing static 80%, static 100%, Pareto oracle, current LOO router, and validation-derived router.
+- [pending] Prepare a lightweight demonstration-system MVP driven by existing JSON metrics and generated figures.

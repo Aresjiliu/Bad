@@ -53,9 +53,13 @@
 
 生成 MUUFL 混淆矩阵和 class-wise delta figure。目标不是证明所有类别都提升，而是解释哪些类别受益、哪些类别受损。该图能支撑“robustness-efficiency trade-off”叙事。
 
+已完成：新增 `scripts/plot_muufl_error_analysis.py` 和 `tests/test_plot_muufl_error_analysis.py`，生成 `docs/generated/muufl_error_analysis.{md,csv,pdf,png}`，并同步论文图 `D:\Academic\paper_submission\brmnet_pricai2026\figures\generated\fig_muufl_error_analysis.pdf`。论文实验节已加入 Figure `fig:muufl_error_analysis`。
+
 ### P2：补充小规模消融
 
 优先级最高的小消融不是大规模重新训练，而是 MUUFL weighted CE / class-balanced sampler 的 seed0 试验。它回答一个明确问题：类别 3 和 9 的 clean OA 损失是否可以通过类别均衡缓解。如果 seed0 有明显提升，再扩展到 seed1/seed2；如果没有，就作为负面结果说明鲁棒训练与类别混淆之间仍有取舍。
+
+已完成：新增 `--class-weighting inverse_frequency`，完成 MUUFL seed0/seed1/seed2 weighted CE 消融，并生成 `docs/generated/muufl_weighted_ce_seed0_seed1_seed2_summary.md`。三 seed 结果显示 weighted CE 仅小幅提升 full OA/AA，并带来 aux-only 和部分类别副作用。因此该消融应写作“类别不均衡诊断”，而不是新的主方法组件。外部 LaTeX 论文已加入 `tables/muufl_weighted_ce_ablation.tex` 和相应解释段落。
 
 ### P3：路由创新加深
 
