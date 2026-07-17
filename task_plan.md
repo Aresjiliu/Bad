@@ -219,3 +219,14 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [pending] Compare static profiles, Pareto oracle, stable-label state router, and patch-level router in one policy table.
 - [pending] Rebuild Figure 1/Figure 2 around Training, Export, Inference, AER Pareto, degradation curve, quality calibration, and failure analysis.
 - [pending] Build a JSON-backed demonstration MVP from existing metrics and generated figures.
+
+### 2026-07-17 paper-first split-track plan
+
+- [completed] Read the dual-goal split-track guidance and freeze the near-term objective as paper submission first.
+- [completed] Create the paper-first scope plan: `docs/PAPER_FIRST_TRACK_SUBMISSION_PLAN_20260717_ZH.md`.
+- [completed] Slim the submission manuscript so the main text only argues compact export, fusion compatibility, and degradation-supervised reliability.
+- [completed] Move routing, profile-router comparisons, weighted CE, and deep MUUFL class diagnostics out of the submission main text.
+- [pending] Create a paper claims-evidence matrix and canonical result source for all main tables/figures.
+- [pending] Build the submission ablation table around soft-mask-only, compact export, uniform width/fusion baseline, w/o availability, and w/o degradation reliability.
+- [pending] Generate or refresh controlled-corruption reliability curves for the submission.
+- [pending] Recompile the submission PDF and run a readiness check before adding any thesis-only work.

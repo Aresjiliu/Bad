@@ -1,4 +1,4 @@
-# 进度记录
+﻿# 进度记录
 
 ## 2026-07-05
 
@@ -328,3 +328,14 @@
 - Added `--label-strategy mean_profile_pareto` to derive stable labels from seed-averaged profile metrics.
 - Generated `docs/generated/brmnet_validation_mean_profile_pareto_routing.*`.
 - The mean-profile stable-label router reaches mean OA 0.7519 at mean MACs 0.7343, with routing accuracy 0.7273 against the stable target labels. This is now the strongest learned routing result.
+
+## 2026-07-17 paper-first split-track replanning
+
+- Read `D:\Download\BRM-Net_毕业设计与学术投稿双目标分轨规划.md`.
+- Confirmed the near-term objective should switch from thesis-wide expansion to paper submission first.
+- Added `docs/PAPER_FIRST_TRACK_SUBMISSION_PLAN_20260717_ZH.md`.
+- Updated `task_plan.md` with a paper-first split-track phase.
+- Updated `findings.md` with the key split-track findings.
+- Slimmed the external submission manuscript at `D:\Academic\paper_submission\brmnet_pricai2026` by removing routing-policy, weighted-CE, and deep MUUFL class-diagnostic content from the main text.
+- Recompiled `paper.pdf` successfully with TeX Live 2026 after the slimming pass.
+- Local branch already had one unpushed commit from the previous plan update because GitHub connection reset during push.

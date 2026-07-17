@@ -222,3 +222,12 @@
 - The main finding is label instability. Across seed0/seed1/seed2, `aux_downsample_4`, `aux_noise`, `aux_noise_low`, and `aux_noise_mid` each receive all three possible Pareto labels (0.65, 0.8, 1.0). `full` and `main_only` switch between 0.8 and 1.0. Only `aux_only` is stable at 0.65.
 - This changes the next-step diagnosis: the router is not merely under-trained; the state-level Pareto label is noisy under the current profile bank. A stronger router needs either patch-wise quality/confidence samples or a more stable constrained label rule.
 - A stable label rule is now implemented. The mean-profile stable-label router derives Pareto targets from seed-averaged profile metrics and reaches mean OA 0.7519 at mean MACs 0.7343, with routing accuracy 0.7273 against the stable targets. This is the strongest learned routing result so far and should replace the unstable per-seed validation-derived router in the main paper table.
+
+## 2026-07-17 split-track submission planning findings
+
+- The dual-goal guidance clarifies that the current project should keep one shared evidence base but separate two outputs: a focused submission paper and a broader thesis.
+- The submission paper should not try to prove the full thesis workload. Its core claim should be static compact export plus fusion compatibility plus degradation-supervised reliability.
+- Routing, profile banks, Pareto label stabilization, weighted CE, MUUFL class-imbalance diagnosis, and demo-system work are valuable, but they currently create scope drift for submission. They should move to thesis chapters, supplement, or future-paper reserves.
+- The current external paper still contains routing-policy tables, weighted CE tables, and extended MUUFL diagnostics in the main text. The first paper-first action should therefore be manuscript slimming rather than new experiments.
+- The new submission RQs should be limited to target/actual budget matching, compact export versus soft mask/uniform baseline, fusion-compatibility necessity, degradation-supervised reliability, and one external-scene validation.
+- The first slimming pass is complete: the submission main text no longer inputs the routing table, MUUFL per-class table, MUUFL error-analysis figure, or weighted-CE ablation table. These artifacts remain useful for thesis/supplement material.
