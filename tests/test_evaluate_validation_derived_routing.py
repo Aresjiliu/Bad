@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from scripts.evaluate_validation_derived_routing import (
+    average_profile_metrics,
     build_validation_samples,
     evaluate_validation_derived_router,
     metrics_path_for_seed_budget,
@@ -63,6 +64,38 @@ class EvaluateValidationDerivedRoutingTest(unittest.TestCase):
         self.assertEqual(targets["seed0::full"], 0.8)
         self.assertEqual(targets["seed1::aux_noise_high"], 1.0)
 
+    def test_builds_mean_profile_pareto_targets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_profile(root, 0, 0.65, full_oa=0.80, degraded_oa=0.70)
+            _write_profile(root, 0, 0.8, full_oa=0.895, degraded_oa=0.72)
+            _write_profile(root, 0, 1.0, full_oa=0.900, degraded_oa=0.90)
+            _write_profile(root, 1, 0.65, full_oa=0.80, degraded_oa=0.70)
+            _write_profile(root, 1, 0.8, full_oa=0.840, degraded_oa=0.72)
+            _write_profile(root, 1, 1.0, full_oa=0.900, degraded_oa=0.90)
+
+            _, per_seed_targets, metrics_by_seed = build_validation_samples(
+                root,
+                (0, 1),
+                (0.65, 0.8, 1.0),
+                pareto_tolerance=0.01,
+                label_strategy="per_seed_pareto",
+            )
+            _, mean_targets, _ = build_validation_samples(
+                root,
+                (0, 1),
+                (0.65, 0.8, 1.0),
+                pareto_tolerance=0.01,
+                label_strategy="mean_profile_pareto",
+            )
+            averaged = average_profile_metrics(metrics_by_seed, (0.65, 0.8, 1.0))
+
+        self.assertEqual(per_seed_targets["seed0::full"], 0.8)
+        self.assertEqual(per_seed_targets["seed1::full"], 1.0)
+        self.assertEqual(mean_targets["seed0::full"], 1.0)
+        self.assertEqual(mean_targets["seed1::full"], 1.0)
+        self.assertAlmostEqual(averaged[0.8]["full"]["oa"], (0.895 + 0.840) / 2)
+
     def test_evaluates_heldout_seed_router(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -76,6 +109,7 @@ class EvaluateValidationDerivedRoutingTest(unittest.TestCase):
                 seeds=(0, 1, 2),
                 budgets=(0.65, 0.8, 1.0),
                 pareto_tolerance=0.01,
+                label_strategy="per_seed_pareto",
                 router_epochs=100,
                 router_seed=3,
             )

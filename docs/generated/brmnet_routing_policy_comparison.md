@@ -9,9 +9,10 @@ Houston2013 routing profiles use the formal 65/80/100 compact profile bank acros
 | Pareto oracle delta=0.01 | oracle label | 0.7537 +/- 0.0164 | 0.8810 +/- 0.0403 | 0.0010 | 0.1190 | 1.0000 | Best current routing target; not deployable by itself. |
 | State-level LOO router | learned state-level | 0.7464 | 0.8929 | 0.0082 | 0.1071 | 0.6667 | Generalizes partly, but uses only 11 state samples per seed. |
 | Validation-state-derived router | learned seed/state-level | 0.7459 | 0.8622 | 0.0243 | 0.0799 | 0.3333 | Similar OA at lower MACs, but label instability hurts routing accuracy. |
+| Mean-profile stable-label router | learned stable seed/state-level | 0.7519 | 0.7343 | 0.0183 | 0.2077 | 0.7273 | Best learned policy so far; stabilizes labels using seed-averaged profile metrics. |
 
 ## Current conclusion
 
-The routing evidence should be written as a staged result rather than a solved module. Pareto labels define a strong accuracy-efficiency target, but learned routing is still limited by supervision quality. The validation-state-derived experiment expands supervision from 11 state samples to 33 seed/state samples and confirms that the next bottleneck is label stability: most degradation states receive different Pareto budgets across seeds.
+The routing evidence should be written as a staged result. Pareto labels define a strong accuracy-efficiency target, but per-seed labels are noisy. The validation-state-derived experiment expands supervision from 11 state samples to 33 seed/state samples and confirms that label stability is the bottleneck. The mean-profile stable-label router addresses this bottleneck by deriving targets from seed-averaged profile metrics, yielding the best learned routing trade-off so far.
 
 The most defensible next step is a true patch-level routing dataset with stored quality-probe outputs, prediction confidence, modality state, and profile-bank outcomes.

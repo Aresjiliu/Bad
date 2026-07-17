@@ -325,3 +325,6 @@
   - `docs/generated/brmnet_validation_derived_pareto_routing.md`
 - The first validation-derived router uses 33 seed/state samples. It reaches mean OA 0.7459 at mean MACs 0.8622, compared with the earlier state-level LOO router mean OA 0.7464 at mean MACs 0.8929.
 - Label stability analysis shows that Pareto targets are unstable across seeds for most states; only `aux_only` keeps the same 0.65 target across all three seeds.
+- Added `--label-strategy mean_profile_pareto` to derive stable labels from seed-averaged profile metrics.
+- Generated `docs/generated/brmnet_validation_mean_profile_pareto_routing.*`.
+- The mean-profile stable-label router reaches mean OA 0.7519 at mean MACs 0.7343, with routing accuracy 0.7273 against the stable target labels. This is now the strongest learned routing result.

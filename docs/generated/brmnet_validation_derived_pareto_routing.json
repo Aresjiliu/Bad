@@ -5,6 +5,7 @@
       0.8,
       1.0
     ],
+    "label_strategy": "per_seed_pareto",
     "pareto_tolerance": 0.01,
     "profile_root": "output/routing_profiles/quality_routing_profile_formal/quality_routing_profile",
     "router_epochs": 400,

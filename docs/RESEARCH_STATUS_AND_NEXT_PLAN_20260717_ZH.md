@@ -54,8 +54,9 @@
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | State-level LOO Pareto router | 11/seed | 0.7464 | 0.8929 | 0.6667 | 0.0082 | 0.1071 |
 | Validation-state-derived router | 33 total | 0.7459 | 0.8622 | 0.3333 | 0.0243 | 0.0799 |
+| Mean-profile stable-label router | 33 total | 0.7519 | 0.7343 | 0.7273 | 0.0183 | 0.2077 |
 
-解释：validation-state-derived router 以更低 MACs 达到接近旧 LOO 的 mean OA，但 routing accuracy 与 regret 更差。进一步检查发现，Pareto target 跨 seed 不稳定：除 aux-only 外，几乎所有状态在 seed0/1/2 中都出现不同 budget label。因此当前瓶颈不是“router 没训练好”这么简单，而是 profile label 本身随 seed 波动。后续如果继续强化路由，应优先保存 patch-wise quality/confidence 特征，或者改用更稳定的 constrained label。
+解释：validation-state-derived router 以更低 MACs 达到接近旧 LOO 的 mean OA，但 routing accuracy 与 regret 更差。进一步检查发现，Pareto target 跨 seed 不稳定：除 aux-only 外，几乎所有状态在 seed0/1/2 中都出现不同 budget label。因此当前瓶颈不是“router 没训练好”这么简单，而是 profile label 本身随 seed 波动。本轮新增的 mean-profile stable-label router 用三 seed 平均 profile 先生成稳定标签，再训练路由器，结果明显更好：mean OA 达到 0.7519，同时 mean MACs 降到 0.7343。这说明“标签稳定化”应成为当前路由部分的正式方法补强。
 
 ## 4. 现阶段最实在的取舍
 
@@ -83,7 +84,8 @@
 ### P1：路由创新加深
 
 - 已完成 validation-state-derived 初版：每个 seed/state 作为一个监督样本，输出 summary、sample table 和 label stability table。
-- 下一步应推进真正 patch-level：在验证集 batch 上保存质量探针、预测置信度、正确/错误、模态状态，并由 profile bank 生成更细的路由标签。
+- 已完成 mean-profile stable-label 初版：用 seed-averaged profile metrics 生成稳定 Pareto 标签，显著提升 learned router 的 accuracy-efficiency trade-off。
+- 下一步应推进真正 patch-level：在验证集 batch 上保存质量探针、预测置信度、正确/错误、模态状态，并由稳定 profile bank 生成更细的路由标签。
 - 指标继续使用 achieved OA、MACs、regret、saving 和 routing accuracy，但必须增加 label stability 或 label entropy，否则 learned router 的负面结果无法解释。
 
 ### P2：图表与答辩材料

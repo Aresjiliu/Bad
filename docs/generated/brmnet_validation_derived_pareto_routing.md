@@ -1,5 +1,6 @@
 # Validation-derived Pareto routing
 
+Label strategy: per_seed_pareto
 Samples: 33
 Target distribution: {'0.65': 7, '0.8': 10, '1.0': 16}
 Prediction distribution: {'0.65': 6, '0.8': 5, '1.0': 22}
@@ -28,4 +29,4 @@ Unstable target modes: aux_downsample_2, aux_downsample_4, aux_noise, aux_noise_
 | full | 2 | 1.00 | 0.67 | `{"0.8": 1, "1.0": 2}` |
 | main_only | 2 | 1.00 | 0.67 | `{"0.8": 1, "1.0": 2}` |
 
-This is a validation-state-derived router: each seed/state pair is treated as one supervised sample. It is a stronger training protocol than fitting only eleven state-level samples, but it is still not a true patch-level router because patch-wise quality features are not stored by the current formal runs.
+This is a validation-state-derived router: each seed/state pair is treated as one supervised sample. It is a stronger training protocol than fitting only eleven state-level samples, but it is still not a true patch-level router because patch-wise quality features are not stored by the current formal runs. The mean-profile label strategy reduces seed-to-seed label noise by deriving labels from seed-averaged profile metrics.

@@ -35,9 +35,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--budgets", default="0.65,0.8,1.0")
     parser.add_argument("--seeds", default="0,1,2")
     parser.add_argument("--pareto-tolerance", type=float, default=0.01)
+    parser.add_argument(
+        "--label-strategy",
+        choices=("per_seed_pareto", "mean_profile_pareto"),
+        default="per_seed_pareto",
+        help="per_seed_pareto uses each seed's own Pareto labels; mean_profile_pareto derives one stable label set from seed-averaged profile metrics.",
+    )
     parser.add_argument("--router-epochs", type=int, default=400)
     parser.add_argument("--router-seed", type=int, default=7)
     parser.add_argument("--output-dir", default="docs/generated")
+    parser.add_argument("--output-stem", default="brmnet_validation_derived_pareto_routing")
     return parser
 
 
@@ -77,6 +84,41 @@ def load_seed_profile_metrics(
     return load_profile_metrics(specs)
 
 
+def average_profile_metrics(
+    metrics_by_seed: dict[int, dict[float, dict[str, dict[str, float]]]],
+    budgets: tuple[float, ...],
+) -> dict[float, dict[str, dict[str, float]]]:
+    averaged: dict[float, dict[str, dict[str, float]]] = {}
+    for budget in budgets:
+        modes = sorted(
+            {
+                mode
+                for profile_metrics in metrics_by_seed.values()
+                for mode in profile_metrics.get(budget, {})
+            }
+        )
+        averaged[budget] = {}
+        for mode in modes:
+            keys = sorted(
+                {
+                    key
+                    for profile_metrics in metrics_by_seed.values()
+                    for key, value in profile_metrics.get(budget, {}).get(mode, {}).items()
+                    if isinstance(value, (int, float))
+                }
+            )
+            averaged[budget][mode] = {}
+            for key in keys:
+                values = [
+                    float(profile_metrics[budget][mode][key])
+                    for profile_metrics in metrics_by_seed.values()
+                    if mode in profile_metrics.get(budget, {}) and key in profile_metrics[budget][mode]
+                ]
+                if values:
+                    averaged[budget][mode][key] = sum(values) / len(values)
+    return averaged
+
+
 def quality_features_from_metrics(metrics_by_mode: dict[str, dict[str, float]]) -> dict[str, list[float]]:
     features: dict[str, list[float]] = {}
     for mode, metrics in metrics_by_mode.items():
@@ -110,6 +152,7 @@ def build_validation_samples(
     seeds: tuple[int, ...],
     budgets: tuple[float, ...],
     pareto_tolerance: float,
+    label_strategy: str = "per_seed_pareto",
 ) -> tuple[
     dict[str, list[float]],
     dict[str, float],
@@ -121,12 +164,30 @@ def build_validation_samples(
     for seed in seeds:
         profile_metrics = load_seed_profile_metrics(profile_root, seed, budgets)
         metrics_by_seed[seed] = profile_metrics
-        seed_quality = quality_features_from_metrics(profile_metrics[budgets[-1]])
-        seed_targets = select_pareto_tolerance_budget_profiles(
-            profile_metrics,
+
+    if label_strategy == "mean_profile_pareto":
+        mean_profile_metrics = average_profile_metrics(metrics_by_seed, budgets)
+        stable_targets = select_pareto_tolerance_budget_profiles(
+            mean_profile_metrics,
             profile_budgets=budgets,
             metric_tolerance=pareto_tolerance,
         )
+    elif label_strategy == "per_seed_pareto":
+        stable_targets = {}
+    else:
+        raise ValueError(f"Unknown label_strategy: {label_strategy}")
+
+    for seed in seeds:
+        profile_metrics = metrics_by_seed[seed]
+        seed_quality = quality_features_from_metrics(profile_metrics[budgets[-1]])
+        if label_strategy == "mean_profile_pareto":
+            seed_targets = stable_targets
+        else:
+            seed_targets = select_pareto_tolerance_budget_profiles(
+                profile_metrics,
+                profile_budgets=budgets,
+                metric_tolerance=pareto_tolerance,
+            )
         for mode, features in seed_quality.items():
             if mode not in seed_targets:
                 continue
@@ -177,6 +238,7 @@ def evaluate_validation_derived_router(
     seeds: tuple[int, ...] = (0, 1, 2),
     budgets: tuple[float, ...] = (0.65, 0.8, 1.0),
     pareto_tolerance: float = 0.01,
+    label_strategy: str = "per_seed_pareto",
     router_epochs: int = 400,
     router_seed: int = 7,
 ) -> dict[str, object]:
@@ -185,6 +247,7 @@ def evaluate_validation_derived_router(
         seeds,
         budgets,
         pareto_tolerance,
+        label_strategy=label_strategy,
     )
     per_seed_reports: dict[str, dict[str, object]] = {}
     summary_rows: list[dict[str, float | int]] = []
@@ -255,6 +318,7 @@ def evaluate_validation_derived_router(
             "seeds": list(seeds),
             "budgets": list(budgets),
             "pareto_tolerance": pareto_tolerance,
+            "label_strategy": label_strategy,
             "router_epochs": router_epochs,
             "router_seed": router_seed,
         },
@@ -346,6 +410,7 @@ def write_markdown(report: dict[str, object], path: str | Path) -> None:
     lines = [
         "# Validation-derived Pareto routing",
         "",
+        f"Label strategy: {report['config'].get('label_strategy', 'per_seed_pareto')}",
         f"Samples: {report['sample_count']}",
         f"Target distribution: {report['target_distribution']}",
         f"Prediction distribution: {report['prediction_distribution']}",
@@ -375,7 +440,8 @@ def write_markdown(report: dict[str, object], path: str | Path) -> None:
     lines += [
         "",
         "This is a validation-state-derived router: each seed/state pair is treated as one supervised sample. "
-        "It is a stronger training protocol than fitting only eleven state-level samples, but it is still not a true patch-level router because patch-wise quality features are not stored by the current formal runs.",
+        "It is a stronger training protocol than fitting only eleven state-level samples, but it is still not a true patch-level router because patch-wise quality features are not stored by the current formal runs. "
+        "The mean-profile label strategy reduces seed-to-seed label noise by deriving labels from seed-averaged profile metrics.",
     ]
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -389,12 +455,14 @@ def main(argv: list[str] | None = None) -> int:
         seeds,
         budgets,
         args.pareto_tolerance,
+        label_strategy=args.label_strategy,
     )
     report = evaluate_validation_derived_router(
         args.profile_root,
         seeds=seeds,
         budgets=budgets,
         pareto_tolerance=args.pareto_tolerance,
+        label_strategy=args.label_strategy,
         router_epochs=args.router_epochs,
         router_seed=args.router_seed,
     )
@@ -402,11 +470,12 @@ def main(argv: list[str] | None = None) -> int:
     report["mode_target_stability"] = stability_rows
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    json_path = output_dir / "brmnet_validation_derived_pareto_routing.json"
-    summary_csv = output_dir / "brmnet_validation_derived_pareto_routing_summary.csv"
-    sample_csv = output_dir / "brmnet_validation_derived_pareto_routing_samples.csv"
-    stability_csv = output_dir / "brmnet_validation_derived_pareto_routing_label_stability.csv"
-    markdown = output_dir / "brmnet_validation_derived_pareto_routing.md"
+    stem = args.output_stem
+    json_path = output_dir / f"{stem}.json"
+    summary_csv = output_dir / f"{stem}_summary.csv"
+    sample_csv = output_dir / f"{stem}_samples.csv"
+    stability_csv = output_dir / f"{stem}_label_stability.csv"
+    markdown = output_dir / f"{stem}.md"
     json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     write_summary_csv(summary_csv, report["summary_rows"])
     write_sample_csv(sample_csv, quality_by_sample, target_by_sample)
