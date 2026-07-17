@@ -312,3 +312,16 @@
 - Updated the external LaTeX paper with `tables/muufl_weighted_ce_ablation.tex` and a conservative interpretation paragraph in `sections/04_experiments.tex`.
 - Verified the paper with TeX Live 2026; `paper.pdf` compiled successfully with no undefined references, overfull boxes, fatal errors, or LaTeX errors detected by the final log grep.
 - Added `docs/RESEARCH_STATUS_AND_NEXT_PLAN_20260717_ZH.md` to record the latest research status, current thesis positioning, and next implementation priorities.
+
+## 2026-07-17 validation-derived Pareto routing
+
+- Added `scripts/evaluate_validation_derived_routing.py` to turn Houston2013 65/80/100 profile results into seed/state routing samples.
+- Added `tests/test_evaluate_validation_derived_routing.py`.
+- Generated:
+  - `docs/generated/brmnet_validation_derived_pareto_routing.json`
+  - `docs/generated/brmnet_validation_derived_pareto_routing_summary.csv`
+  - `docs/generated/brmnet_validation_derived_pareto_routing_samples.csv`
+  - `docs/generated/brmnet_validation_derived_pareto_routing_label_stability.csv`
+  - `docs/generated/brmnet_validation_derived_pareto_routing.md`
+- The first validation-derived router uses 33 seed/state samples. It reaches mean OA 0.7459 at mean MACs 0.8622, compared with the earlier state-level LOO router mean OA 0.7464 at mean MACs 0.8929.
+- Label stability analysis shows that Pareto targets are unstable across seeds for most states; only `aux_only` keeps the same 0.65 target across all three seeds.

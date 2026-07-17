@@ -1,0 +1,6 @@
+policy,type,mean_oa,std_oa,mean_macs,std_macs,mean_regret,mean_saving,routing_accuracy,interpretation
+Static 100%,fixed profile,0.74831863771767,0.0178218164976569,0.999998390674591,0,,"0",,Highest fixed-profile baseline and reference cost.
+Static 80%,fixed profile,0.739854062474379,0.0157736165612998,0.803606569766998,0.000121155390647345,,0.196391820907593,,Strong low-cost baseline; hard to beat with learned routing.
+Pareto oracle delta=0.01,oracle label,0.753677630614582,0.0163785382474617,0.881026022361987,0.0403163158972171,0.000956519362684812,0.118972368312604,1.0,Best current routing target; not deployable by itself.
+State-level LOO router,learned state-level,0.746418021321686,,0.892910077716365,,0.00821612865558098,0.107088312958226,0.666666666666667,Generalizes partly but uses only 11 state samples per seed.
+Validation-state-derived router,learned seed/state-level,0.7458962834874945,,0.8621753557858023,,0.02431546753921109,0.0798598578286278,0.3333333333333333,Similar OA at lower MACs but label instability hurts routing accuracy.

@@ -214,3 +214,10 @@
 - The paper should keep weighted CE as a supplemental ablation and use it to justify future confusion-aware or state-aware refinement. It should not be promoted as the core innovation.
 - The next technical direction with the best innovation-to-effort ratio is patch-level or validation-derived Pareto routing. The current state-level learned router is under-sampled, while Pareto labels themselves remain a strong target for accuracy-efficiency control.
 - The current thesis framing should remain accuracy-efficiency-robustness trade-off across Houston2013, Trento, and MUUFL, with negative evidence reported explicitly rather than hidden.
+
+## 2026-07-17 validation-derived routing findings
+
+- Validation-state-derived routing is implemented and tested. It expands the routing supervision from 11 state samples per seed to 33 seed/state samples across the three Houston2013 formal profile seeds.
+- The held-out-seed result is mixed: mean OA is 0.7459 and mean MACs is 0.8622. Compared with the previous state-level LOO router, it keeps similar mean OA while using less compute, but routing accuracy versus Pareto labels drops to 0.3333 and mean regret rises to 0.0243.
+- The main finding is label instability. Across seed0/seed1/seed2, `aux_downsample_4`, `aux_noise`, `aux_noise_low`, and `aux_noise_mid` each receive all three possible Pareto labels (0.65, 0.8, 1.0). `full` and `main_only` switch between 0.8 and 1.0. Only `aux_only` is stable at 0.65.
+- This changes the next-step diagnosis: the router is not merely under-trained; the state-level Pareto label is noisy under the current profile bank. A stronger router needs either patch-wise quality/confidence samples or a more stable constrained label rule.

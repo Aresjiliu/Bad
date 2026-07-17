@@ -1,0 +1,19 @@
+\begin{table*}[t]
+  \centering
+  \caption{Houston2013 budget-profile routing comparison over three seeds. Mean OA and MACs are averaged over modality/degradation states.}
+  \label{tab:routing_policy_comparison}
+  \setlength{\tabcolsep}{4pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lccccc}
+    \toprule
+    Policy & Type & Mean OA & Mean MACs & Regret & Routing acc. \\
+    \midrule
+    Static 100\% & Fixed & $0.7483{\pm}0.0178$ & $1.0000{\pm}0.0000$ & -- & -- \\
+    Static 80\% & Fixed & $0.7399{\pm}0.0158$ & $0.8036{\pm}0.0001$ & -- & -- \\
+    Pareto oracle $\delta=0.01$ & Oracle & $0.7537{\pm}0.0164$ & $0.8810{\pm}0.0403$ & $0.0010$ & $1.0000$ \\
+    State-level LOO router & Learned & $0.7464$ & $0.8929$ & $0.0082$ & $0.6667$ \\
+    Validation-state-derived router & Learned & $0.7459$ & $0.8622$ & $0.0243$ & $0.3333$ \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{table*}

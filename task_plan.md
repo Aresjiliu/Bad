@@ -197,8 +197,10 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 
 ### 2026-07-17 next stable implementation plan
 
-- [pending] Design validation-derived Pareto routing samples from existing profile/degradation evaluation records.
-- [pending] Implement a patch-level routing dataset that stores quality-probe features, availability/degradation state, confidence, selected profile label, and oracle regret.
-- [pending] Train a small router on validation-derived labels and evaluate achieved OA/MAC/regret on held-out states or held-out validation patches.
+- [completed] Design validation-derived Pareto routing samples from existing profile/degradation evaluation records.
+- [completed] Implement a validation-state-derived routing dataset with seed/state quality features, Pareto labels, and label-stability diagnostics.
+- [completed] Train a small router on validation-derived labels and evaluate achieved OA/MAC/regret with held-out seeds.
+- [pending] Implement a true patch-level routing dataset that stores quality-probe features, availability/degradation state, confidence, selected profile label, and oracle regret.
+- [pending] Stabilize the routing label rule, because current state-level Pareto labels vary strongly across seeds for most degradation states.
 - [pending] Add a paper-ready routing table comparing static 80%, static 100%, Pareto oracle, current LOO router, and validation-derived router.
 - [pending] Prepare a lightweight demonstration-system MVP driven by existing JSON metrics and generated figures.
