@@ -23,6 +23,7 @@ class BRMNet(nn.Module):
         gate_type: str = "legacy_sigmoid",
         initial_retention: float = 0.9,
         fusion_mode: str = "reliability",
+        fusion_use_availability_mask: bool = True,
         use_pre_encoder_quality_probe: bool = False,
         pre_encoder_quality_hidden: int = 16,
     ) -> None:
@@ -59,6 +60,7 @@ class BRMNet(nn.Module):
         self.reliability_fusion = ReliabilityGatedFusion(
             temperature=reliability_temperature,
             mode=fusion_mode,
+            use_availability_mask=fusion_use_availability_mask,
         )
         self.classifier = BudgetGatedFusionHead(
             self.main_encoder.out_channels,

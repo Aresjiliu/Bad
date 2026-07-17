@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\caption{Fusion availability-mask ablation on Houston2013-HS-LiDAR at the 80\% MAC budget. Values are compact-model OA (\%) averaged over three training seeds. The ablation disables only the availability mask inside the fusion softmax; branch-level availability-conditioned computation remains enabled.}
+\label{tab:fusion_availability_mask_ablation}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+State & Full BRM-Net & W/o fusion availability mask & $\Delta$ \\
+\midrule
+Full & $86.90{\pm}1.65$ & $87.02{\pm}1.47$ & $+0.12$ \\
+HSI only & $80.04{\pm}1.93$ & $76.72{\pm}2.97$ & $-3.32$ \\
+LiDAR only & $38.04{\pm}0.84$ & $37.59{\pm}3.41$ & $-0.45$ \\
+Noise-high & $84.55{\pm}2.82$ & $85.72{\pm}1.24$ & $+1.16$ \\
+Downsample-4 & $84.15{\pm}1.46$ & $84.44{\pm}1.32$ & $+0.29$ \\
+Occlusion-50 & $85.57{\pm}1.64$ & $85.67{\pm}0.94$ & $+0.10$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table*}

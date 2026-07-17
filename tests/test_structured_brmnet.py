@@ -94,6 +94,20 @@ class StructuredBRMNetTest(unittest.TestCase):
         torch.testing.assert_close(fused[0], main[0])
         torch.testing.assert_close(fused[1], aux[1])
 
+    def test_reliability_fusion_can_disable_availability_mask_for_ablation(self):
+        fusion = ReliabilityGatedFusion(use_availability_mask=False)
+        main = torch.ones(2, 3, 2, 2)
+        aux = torch.full((2, 3, 2, 2), 2.0)
+        q_main = torch.tensor([[0.1], [0.9]])
+        q_aux = torch.tensor([[0.9], [0.1]])
+        availability_mask = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+
+        _fused, weights = fusion(main, aux, q_main, q_aux, availability_mask=availability_mask)
+
+        self.assertGreater(float(weights[0, 1]), 0.0)
+        self.assertGreater(float(weights[1, 0]), 0.0)
+        self.assertFalse(torch.equal(weights, availability_mask))
+
     def test_uniform_fusion_ignores_quality_scores_but_respects_availability(self):
         fusion = ReliabilityGatedFusion(mode="uniform")
         main = torch.ones(2, 3, 2, 2)
@@ -125,6 +139,27 @@ class StructuredBRMNetTest(unittest.TestCase):
         )
 
         torch.testing.assert_close(outputs["fusion_weights"], availability_mask)
+
+    def test_model_can_disable_fusion_availability_mask_for_ablation(self):
+        torch.manual_seed(0)
+        model = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            fusion_use_availability_mask=False,
+        )
+        model.eval()
+        availability_mask = torch.tensor([[1.0, 0.0], [0.0, 1.0]])
+
+        outputs = model(
+            torch.randn(2, 4, 7, 7),
+            torch.randn(2, 1, 7, 7),
+            availability_mask=availability_mask,
+        )
+
+        self.assertGreater(float(outputs["fusion_weights"][0, 1]), 0.0)
+        self.assertGreater(float(outputs["fusion_weights"][1, 0]), 0.0)
+        self.assertFalse(torch.equal(outputs["fusion_weights"], availability_mask))
 
     def test_model_optionally_reports_pre_encoder_quality(self):
         model = BRMNet(

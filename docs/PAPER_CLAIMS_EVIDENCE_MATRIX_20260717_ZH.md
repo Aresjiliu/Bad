@@ -8,10 +8,10 @@
 |---|---|---|---|
 | C1: BRM-Net exports physically compact models whose actual MAC ratios match the requested budgets. | Table 1 / Figure 2 | ready | E_BUDGET_65, E_BUDGET_80, E_BUDGET_90 |
 | C2: The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim. | Table: source-vs-compact export | ready | E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY |
-| C3: Availability-aware training improves fallback behavior under missing single-modality inference. | Table 2 | ready | E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY |
+| C3: Availability-aware training improves fallback behavior under missing single-modality inference. | Table 2 | ready | E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY, E_FUSION_MASK_MAIN_ONLY, E_FUSION_MASK_AUX_ONLY |
 | C4: Degradation-supervised reliability improves robustness under noisy, low-resolution, and occluded auxiliary inputs. | Table 3 / Figure 3 | ready | E_ROBUST_FULL_BASELINE, E_ROBUST_UNIFORM, E_ROBUST_NOISE_ONLY, E_ROBUST_MULTI_P025 |
 | C5: The compact degradation-aware setting transfers to external HSI-LiDAR scenes as an accuracy-efficiency-robustness trade-off. | Table 4 | ready | E_MULTI_HOUSTON, E_MULTI_TRENTO, E_MULTI_MUUFL |
-| G1: Uniform-width compression, w/o availability mask, and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming. | Readiness checklist | needs_ablation_or_rewording | GAP_UNIFORM_WIDTH, GAP_NO_AVAILABILITY, GAP_TERMINAL_TIE |
+| G1: Uniform-width compression and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming. | Readiness checklist | needs_ablation_or_rewording | GAP_UNIFORM_WIDTH, GAP_TERMINAL_TIE |
 
 ## Canonical Evidence
 
@@ -25,6 +25,8 @@
 | E_SOURCE_COMPACT_AUX_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | aux_only | oa | 38.04 +/- 0.84 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 38.43%. |
 | E_DROPOUT_MAIN_ONLY | C3 | Houston2013 | full | main_only | oa | 76.62 +/- 0.89 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout main_only row; full 3-seed refresh for no-dropout remains incomplete. |
 | E_DROPOUT_AUX_ONLY | C3 | Houston2013 | full | aux_only | oa | 43.87 +/- 3.19 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout aux_only row; full 3-seed refresh for no-dropout remains incomplete. |
+| E_FUSION_MASK_MAIN_ONLY | C3 | Houston2013 | without_fusion_availability_mask | main_only | oa | 76.72 +/- 2.97 | `docs/generated/brmnet_priority_summary.csv` | ready | Disables only the fusion softmax availability mask; compare against quality_multi_degradation_p025 main_only. |
+| E_FUSION_MASK_AUX_ONLY | C3 | Houston2013 | without_fusion_availability_mask | aux_only | oa | 37.59 +/- 3.41 | `docs/generated/brmnet_priority_summary.csv` | ready | Disables only the fusion softmax availability mask; branch-level availability-conditioned computation remains enabled. |
 | E_ROBUST_FULL_BASELINE_FULL | C4 | Houston2013 | full | full | oa | 86.97 +/- 0.71 | `docs/generated/brmnet_priority_summary.csv` | ready | Full baseline |
 | E_ROBUST_FULL_BASELINE_AUX_NOISE_HIGH | C4 | Houston2013 | full | aux_noise_high | oa | 72.08 +/- 1.45 | `docs/generated/brmnet_priority_summary.csv` | ready | Full baseline |
 | E_ROBUST_FULL_BASELINE_AUX_DOWNSAMPLE_4 | C4 | Houston2013 | full | aux_downsample_4 | oa | 78.37 +/- 1.91 | `docs/generated/brmnet_priority_summary.csv` | ready | Full baseline |
@@ -48,6 +50,6 @@
 ## 当前投稿缺口
 
 - `uniform fusion` 已完成，但它不是严格的 `uniform width scaling`。投稿中必须按真实含义命名；若要写 uniform width，需要另做固定宽度 baseline。
-- `w/o availability mask` 仍未形成投稿级三种子消融。若短期不补，应降低 availability mask 的独立贡献强度。
+- `w/o fusion availability mask` 已完成 Houston2013 三种子消融；可作为缺失模态融合诊断进入主消融表。
 - `w/o fusion-compatible terminal constraint` 当前没有稳定代码路径。不要把该消融写成已经完成。
 - `without_modality_dropout` 目前不是完整三种子刷新结果，不适合单独支撑最终主张，可作为早期诊断或补跑。

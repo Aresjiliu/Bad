@@ -190,6 +190,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.gate_mode, "deterministic")
         self.assertEqual(args.gate_type, "hard_concrete")
         self.assertEqual(args.fusion_mode, "reliability")
+        self.assertFalse(args.disable_fusion_availability_mask)
         self.assertEqual(args.budget_metric, "macs")
         self.assertIsNone(args.gate_threshold)
         self.assertEqual(args.compact_finetune_epochs, 10)
@@ -240,6 +241,11 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         args = build_parser().parse_args(["--fusion-mode", "uniform"])
 
         self.assertEqual(args.fusion_mode, "uniform")
+
+    def test_disable_fusion_availability_mask_argument(self):
+        args = build_parser().parse_args(["--disable-fusion-availability-mask"])
+
+        self.assertTrue(args.disable_fusion_availability_mask)
 
     def test_retention_to_gate_score_round_trips_probability(self):
         import math

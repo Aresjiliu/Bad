@@ -52,6 +52,7 @@ def _routing_profile_rows(args: argparse.Namespace) -> list[dict[str, object]]:
                 "variant": "quality_routing_profile",
                 "gate_type": "hard_concrete",
                 "fusion_mode": "reliability",
+                "disable_fusion_availability_mask": False,
                 "lambda_budget": 1.0,
                 "lambda_quality": 1.0,
                 "lambda_pre_quality": 0.5,
@@ -185,6 +186,19 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
             "note": "Light multi-degradation supervision for balancing clean OA and adverse-modality robustness.",
         },
         {
+            "variant": "without_fusion_availability_mask",
+            "target_budget": None,
+            "modality_dropout_prob": 0.25,
+            "lambda_budget": 1.0,
+            "lambda_quality": 1.0,
+            "aux_quality_degradation_prob": 0.25,
+            "aux_quality_degradation_types": "noise,downsample_4,occlusion_50",
+            "gate_type": "hard_concrete",
+            "fusion_mode": "reliability",
+            "disable_fusion_availability_mask": True,
+            "note": "Ablates masked fusion by letting unavailable zero features still enter the reliability softmax.",
+        },
+        {
             "variant": "legacy_sigmoid_reference",
             "target_budget": None,
             "modality_dropout_prob": 0.25,
@@ -218,6 +232,7 @@ def experiment_rows(args: argparse.Namespace) -> list[dict[str, object]]:
                 "variant": variant["variant"],
                 "gate_type": variant["gate_type"],
                 "fusion_mode": variant["fusion_mode"],
+                "disable_fusion_availability_mask": variant.get("disable_fusion_availability_mask", False),
                 "lambda_budget": variant["lambda_budget"],
                 "lambda_quality": variant["lambda_quality"],
                 "lambda_pre_quality": 0.0,
@@ -280,6 +295,8 @@ def command_for_row(row: dict[str, object], args: argparse.Namespace) -> str:
         "--output-dir",
         str(Path(args.output_dir) / str(row["variant"])),
     ]
+    if row.get("disable_fusion_availability_mask"):
+        parts.append("--disable-fusion-availability-mask")
     return " ".join(_quote_shell_arg(part) for part in parts)
 
 

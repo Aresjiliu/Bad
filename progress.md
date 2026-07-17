@@ -345,3 +345,13 @@
 - Added `docs/generated/paper_source_compact_table.csv/.md` and the external LaTeX table `tables/source_vs_compact_export.tex`.
 - Inserted the source-gated versus physically exported compact-model comparison into the submission experiments section and recompiled `paper.pdf` successfully.
 - Local branch already had one unpushed commit from the previous plan update because GitHub connection reset during push.
+
+## 2026-07-17 fusion availability-mask ablation
+
+- Added `--disable-fusion-availability-mask` for the reviewer-critical `w/o availability mask` ablation.
+- The switch disables only the fusion softmax availability mask while preserving branch-level availability-conditioned computation and modality-dropout/degradation generation, so the ablation isolates whether masked reliability fusion is necessary.
+- Preserved the switch in `BRMNet`, `CompactBRMNet`, compact export metadata, the Houston runner dry-run summary, and the generated priority experiment matrix.
+- Regenerated `docs/generated/brmnet_priority_matrix.csv` and `docs/generated/run_brmnet_priority_matrix.ps1`; the new `without_fusion_availability_mask` variant is scheduled for seed0/1/2.
+- Verified with targeted unit tests and a seed0 dry-run using `conda run -n hslinets`.
+- Ran Houston2013 seed0/1/2 for the new ablation on CUDA and refreshed `docs/generated/brmnet_priority_summary.csv/.md`.
+- Added `docs/generated/fusion_availability_mask_ablation_seed0_seed1_seed2_summary.md`. The three-seed result shows main-only compact OA drops from 80.04 +/- 1.93 to 76.72 +/- 2.97 when fusion masking is disabled, while full and degraded-but-available states remain close.

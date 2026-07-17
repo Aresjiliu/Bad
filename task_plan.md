@@ -229,6 +229,8 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Create a paper claims-evidence matrix and canonical result source for all main tables/figures.
 - [in_progress] Build the submission ablation table around soft-mask-only, compact export, uniform width/fusion baseline, w/o availability, and w/o degradation reliability.
   - [completed] Add the source-gated versus physically exported compact-model table to support the compact-export claim.
-  - [pending] Decide whether to run strict uniform-width and w/o-availability ablations or reword them as missing limitations.
+  - [completed] Add a runnable `without_fusion_availability_mask` ablation path for the availability-mask claim.
+  - [completed] Run the new w/o fusion availability mask ablation for seed0/1/2; it is strong enough as a missing-modality fusion diagnostic.
+  - [pending] Decide whether to run strict uniform-width ablation or reword it as a limitation.
 - [pending] Generate or refresh controlled-corruption reliability curves for the submission.
 - [pending] Recompile the submission PDF and run a readiness check before adding any thesis-only work.

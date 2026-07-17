@@ -84,6 +84,7 @@ class CompactBRMNet(nn.Module):
         head_width: tuple[int, int],
         reliability_temperature: float = 1.0,
         fusion_mode: str = "reliability",
+        fusion_use_availability_mask: bool = True,
     ) -> None:
         super().__init__()
         if main_width[2] != aux_width[2]:
@@ -96,6 +97,7 @@ class CompactBRMNet(nn.Module):
         self.reliability_fusion = ReliabilityGatedFusion(
             temperature=reliability_temperature,
             mode=fusion_mode,
+            use_availability_mask=fusion_use_availability_mask,
         )
         self.classifier = CompactFusionHead(shared_channels, head_width, num_classes)
 

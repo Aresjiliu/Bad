@@ -145,6 +145,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="reliability",
         help="Use reliability-weighted fusion or uniform available-modality fusion for ablation.",
     )
+    parser.add_argument(
+        "--disable-fusion-availability-mask",
+        action="store_true",
+        help="Ablation: do not mask unavailable modalities inside the fusion softmax.",
+    )
     parser.add_argument("--budget-metric", choices=("params", "macs"), default="macs")
     parser.add_argument(
         "--gate-threshold",
@@ -588,6 +593,7 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
             init_score=score,
             gate_type="legacy_sigmoid",
             fusion_mode=cli_args.fusion_mode,
+            fusion_use_availability_mask=not cli_args.disable_fusion_availability_mask,
             use_pre_encoder_quality_probe=cli_args.lambda_pre_quality > 0.0,
             pre_encoder_quality_hidden=cli_args.pre_encoder_quality_hidden,
         )
@@ -603,6 +609,7 @@ def _build_model(cli_args, main_channels: int, aux_channels: int) -> tuple[BRMNe
         gate_type="hard_concrete",
         initial_retention=initial_retention,
         fusion_mode=cli_args.fusion_mode,
+        fusion_use_availability_mask=not cli_args.disable_fusion_availability_mask,
         use_pre_encoder_quality_probe=cli_args.lambda_pre_quality > 0.0,
         pre_encoder_quality_hidden=cli_args.pre_encoder_quality_hidden,
     )
@@ -669,6 +676,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "gate_init_retention": gate_init_retention,
             "gate_type": cli_args.gate_type,
             "fusion_mode": cli_args.fusion_mode,
+            "fusion_use_availability_mask": not cli_args.disable_fusion_availability_mask,
             "budget_metric": cli_args.budget_metric,
             "lambda_pre_quality": cli_args.lambda_pre_quality,
             "pre_encoder_quality_probe": cli_args.lambda_pre_quality > 0.0,

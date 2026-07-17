@@ -28,12 +28,18 @@ class ModalityQualityEstimator(nn.Module):
 class ReliabilityGatedFusion(nn.Module):
     """Reliability-gated additive fusion for two modalities."""
 
-    def __init__(self, temperature: float = 1.0, mode: str = "reliability") -> None:
+    def __init__(
+        self,
+        temperature: float = 1.0,
+        mode: str = "reliability",
+        use_availability_mask: bool = True,
+    ) -> None:
         super().__init__()
         if mode not in {"reliability", "uniform"}:
             raise ValueError(f"Unsupported fusion mode: {mode}")
         self.temperature = temperature
         self.mode = mode
+        self.use_availability_mask = use_availability_mask
 
     def forward(
         self,
@@ -50,7 +56,7 @@ class ReliabilityGatedFusion(nn.Module):
             logits = torch.ones_like(quality)
         else:
             logits = quality / self.temperature
-        if availability_mask is not None:
+        if availability_mask is not None and self.use_availability_mask:
             availability_mask = availability_mask.to(device=logits.device, dtype=torch.bool)
             if availability_mask.shape != logits.shape:
                 raise ValueError(f"Availability mask must have shape {tuple(logits.shape)}, got {tuple(availability_mask.shape)}")

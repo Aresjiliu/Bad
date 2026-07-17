@@ -27,7 +27,7 @@ CLAIMS = [
         "claim": "Availability-aware training improves fallback behavior under missing single-modality inference.",
         "paper_location": "Table 2",
         "status": "ready",
-        "evidence": "E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY",
+        "evidence": "E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY, E_FUSION_MASK_MAIN_ONLY, E_FUSION_MASK_AUX_ONLY",
     },
     {
         "claim_id": "C4",
@@ -45,10 +45,10 @@ CLAIMS = [
     },
     {
         "claim_id": "G1",
-        "claim": "Uniform-width compression, w/o availability mask, and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming.",
+        "claim": "Uniform-width compression and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming.",
         "paper_location": "Readiness checklist",
         "status": "needs_ablation_or_rewording",
-        "evidence": "GAP_UNIFORM_WIDTH, GAP_NO_AVAILABILITY, GAP_TERMINAL_TIE",
+        "evidence": "GAP_UNIFORM_WIDTH, GAP_TERMINAL_TIE",
     },
 ]
 
@@ -249,6 +249,30 @@ def _priority_rows(priority_rows: list[dict[str, str]]) -> list[dict[str, str]]:
         paper_target="Table 2",
         note="Compare with without_modality_dropout aux_only row; full 3-seed refresh for no-dropout remains incomplete.",
     )
+    if ("without_fusion_availability_mask", "main_only") in lookup:
+        _priority_row(
+            rows,
+            lookup,
+            evidence_id="E_FUSION_MASK_MAIN_ONLY",
+            claim_id="C3",
+            variant="without_fusion_availability_mask",
+            mode="main_only",
+            metric_key="oa",
+            paper_target="Table 2",
+            note="Disables only the fusion softmax availability mask; compare against quality_multi_degradation_p025 main_only.",
+        )
+    if ("without_fusion_availability_mask", "aux_only") in lookup:
+        _priority_row(
+            rows,
+            lookup,
+            evidence_id="E_FUSION_MASK_AUX_ONLY",
+            claim_id="C3",
+            variant="without_fusion_availability_mask",
+            mode="aux_only",
+            metric_key="oa",
+            paper_target="Table 2",
+            note="Disables only the fusion softmax availability mask; branch-level availability-conditioned computation remains enabled.",
+        )
 
     robustness_specs = [
         ("E_ROBUST_FULL_BASELINE", "full", "Full baseline"),
@@ -371,7 +395,7 @@ def write_claims_md(rows: list[dict[str, str]], path: str | Path) -> None:
             "## 当前投稿缺口",
             "",
             "- `uniform fusion` 已完成，但它不是严格的 `uniform width scaling`。投稿中必须按真实含义命名；若要写 uniform width，需要另做固定宽度 baseline。",
-            "- `w/o availability mask` 仍未形成投稿级三种子消融。若短期不补，应降低 availability mask 的独立贡献强度。",
+            "- `w/o fusion availability mask` 已完成 Houston2013 三种子消融；可作为缺失模态融合诊断进入主消融表。",
             "- `w/o fusion-compatible terminal constraint` 当前没有稳定代码路径。不要把该消融写成已经完成。",
             "- `without_modality_dropout` 目前不是完整三种子刷新结果，不适合单独支撑最终主张，可作为早期诊断或补跑。",
         ]

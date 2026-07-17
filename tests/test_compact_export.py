@@ -155,6 +155,20 @@ class CompactBRMNetExportTest(unittest.TestCase):
         self.assertEqual(compact.reliability_fusion.mode, "uniform")
         self.assertEqual(metadata["fusion_mode"], "uniform")
 
+    def test_exporter_preserves_fusion_availability_mask_flag(self):
+        source = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+            fusion_use_availability_mask=False,
+        )
+
+        compact, metadata = export_compact_brmnet(source)
+
+        self.assertFalse(compact.reliability_fusion.use_availability_mask)
+        self.assertFalse(metadata["fusion_use_availability_mask"])
+
     def test_exporter_keeps_highest_probability_channel_for_empty_mask(self):
         source = BRMNet(
             main_channels=4,
