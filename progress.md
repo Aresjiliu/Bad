@@ -338,4 +338,8 @@
 - Updated `findings.md` with the key split-track findings.
 - Slimmed the external submission manuscript at `D:\Academic\paper_submission\brmnet_pricai2026` by removing routing-policy, weighted-CE, and deep MUUFL class-diagnostic content from the main text.
 - Recompiled `paper.pdf` successfully with TeX Live 2026 after the slimming pass.
+- Added `scripts/make_paper_submission_evidence.py` and `tests/test_make_paper_submission_evidence.py`.
+- Generated `docs/generated/paper_canonical_results.csv` and `docs/PAPER_CLAIMS_EVIDENCE_MATRIX_20260717_ZH.md`.
+- Regenerated the submission multi-dataset table so Houston2013 now reports the static 80% multi-degradation compact setting rather than Pareto routing.
+- Recompiled the external submission PDF successfully after the table correction; log scan found no fatal, undefined, or overfull-box matches.
 - Local branch already had one unpushed commit from the previous plan update because GitHub connection reset during push.
