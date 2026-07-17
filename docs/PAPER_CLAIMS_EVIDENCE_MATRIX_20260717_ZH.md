@@ -7,7 +7,7 @@
 | Claim | 投稿位置 | 状态 | 证据 |
 |---|---|---|---|
 | C1: BRM-Net exports physically compact models whose actual MAC ratios match the requested budgets. | Table 1 / Figure 2 | ready | E_BUDGET_65, E_BUDGET_80, E_BUDGET_90 |
-| C2: The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim. | Table 1 / planned compact-vs-source table | ready_for_table | E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY |
+| C2: The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim. | Table: source-vs-compact export | ready | E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY |
 | C3: Availability-aware training improves fallback behavior under missing single-modality inference. | Table 2 | ready | E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY |
 | C4: Degradation-supervised reliability improves robustness under noisy, low-resolution, and occluded auxiliary inputs. | Table 3 / Figure 3 | ready | E_ROBUST_FULL_BASELINE, E_ROBUST_UNIFORM, E_ROBUST_NOISE_ONLY, E_ROBUST_MULTI_P025 |
 | C5: The compact degradation-aware setting transfers to external HSI-LiDAR scenes as an accuracy-efficiency-robustness trade-off. | Table 4 | ready | E_MULTI_HOUSTON, E_MULTI_TRENTO, E_MULTI_MUUFL |
@@ -20,9 +20,9 @@
 | E_BUDGET_65 | C1 | Houston2013 | budgeted compact export | full | actual_macs_ratio | 64.96 +/- 0.12 | `docs/generated/structured_pruning_multiseed_runs.csv` | ready | Target MAC ratio 0.65; compact OA 85.53 +/- 2.20%. Params 64.79 +/- 1.93%. |
 | E_BUDGET_80 | C1 | Houston2013 | budgeted compact export | full | actual_macs_ratio | 80.01 +/- 0.10 | `docs/generated/structured_pruning_multiseed_runs.csv` | ready | Target MAC ratio 0.80; compact OA 85.84 +/- 0.92%. Params 79.92 +/- 0.37%. |
 | E_BUDGET_90 | C1 | Houston2013 | budgeted compact export | full | actual_macs_ratio | 90.07 +/- 0.08 | `docs/generated/structured_pruning_multiseed_runs.csv` | ready | Target MAC ratio 0.90; compact OA 85.74 +/- 0.88%. Params 89.78 +/- 0.84%. |
-| E_SOURCE_COMPACT_FULL | C2 | Houston2013 | quality_multi_degradation_p025 | full | oa | 86.90 +/- 1.65 | `docs/generated/brmnet_priority_summary.csv` | ready_for_table | Source-vs-compact metrics are in the same summary row; source OA is 86.15%. |
-| E_SOURCE_COMPACT_MAIN_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | main_only | oa | 80.04 +/- 1.93 | `docs/generated/brmnet_priority_summary.csv` | ready_for_table | Source-vs-compact metrics are in the same summary row; source OA is 78.18%. |
-| E_SOURCE_COMPACT_AUX_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | aux_only | oa | 38.04 +/- 0.84 | `docs/generated/brmnet_priority_summary.csv` | ready_for_table | Source-vs-compact metrics are in the same summary row; source OA is 38.43%. |
+| E_SOURCE_COMPACT_FULL | C2 | Houston2013 | quality_multi_degradation_p025 | full | oa | 86.90 +/- 1.65 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 86.15%. |
+| E_SOURCE_COMPACT_MAIN_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | main_only | oa | 80.04 +/- 1.93 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 78.18%. |
+| E_SOURCE_COMPACT_AUX_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | aux_only | oa | 38.04 +/- 0.84 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 38.43%. |
 | E_DROPOUT_MAIN_ONLY | C3 | Houston2013 | full | main_only | oa | 76.62 +/- 0.89 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout main_only row; full 3-seed refresh for no-dropout remains incomplete. |
 | E_DROPOUT_AUX_ONLY | C3 | Houston2013 | full | aux_only | oa | 43.87 +/- 3.19 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout aux_only row; full 3-seed refresh for no-dropout remains incomplete. |
 | E_ROBUST_FULL_BASELINE_FULL | C4 | Houston2013 | full | full | oa | 86.97 +/- 0.71 | `docs/generated/brmnet_priority_summary.csv` | ready | Full baseline |

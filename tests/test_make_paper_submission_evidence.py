@@ -37,6 +37,9 @@ class PaperSubmissionEvidenceTest(unittest.TestCase):
                 "oa_mean",
                 "oa_std",
                 "source_oa_mean",
+                "source_oa_std",
+                "compact_macs_ratio_mean",
+                "compact_params_ratio_mean",
             ]
             variants = [
                 "quality_multi_degradation_p025",
@@ -65,6 +68,9 @@ class PaperSubmissionEvidenceTest(unittest.TestCase):
                                 "oa_mean": "0.8",
                                 "oa_std": "0.01",
                                 "source_oa_mean": "0.82",
+                                "source_oa_std": "0.02",
+                                "compact_macs_ratio_mean": "0.8",
+                                "compact_params_ratio_mean": "0.83",
                             }
                         )
 
@@ -97,6 +103,8 @@ class PaperSubmissionEvidenceTest(unittest.TestCase):
             output_md = root / "claims.md"
             latex = root / "multidataset.tex"
             repo_latex = root / "repo_multidataset.tex"
+            source_compact_prefix = root / "source_compact"
+            source_compact_latex = root / "source_compact.tex"
             rows = main(
                 [
                     "--priority-summary",
@@ -113,15 +121,23 @@ class PaperSubmissionEvidenceTest(unittest.TestCase):
                     str(latex),
                     "--repo-latex-multidataset-output",
                     str(repo_latex),
+                    "--source-compact-output-prefix",
+                    str(source_compact_prefix),
+                    "--latex-source-compact-output",
+                    str(source_compact_latex),
                 ]
             )
 
             self.assertTrue(output_csv.is_file())
             self.assertTrue(output_md.is_file())
             self.assertTrue(latex.is_file())
+            self.assertTrue(source_compact_prefix.with_suffix(".csv").is_file())
+            self.assertTrue(source_compact_prefix.with_suffix(".md").is_file())
+            self.assertTrue(source_compact_latex.is_file())
             self.assertGreater(len(rows), 10)
             self.assertIn("Routing", output_md.read_text(encoding="utf-8"))
             self.assertIn("dynamic profile routing is excluded", latex.read_text(encoding="utf-8"))
+            self.assertIn("Source gated model", source_compact_latex.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

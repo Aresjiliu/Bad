@@ -342,4 +342,6 @@
 - Generated `docs/generated/paper_canonical_results.csv` and `docs/PAPER_CLAIMS_EVIDENCE_MATRIX_20260717_ZH.md`.
 - Regenerated the submission multi-dataset table so Houston2013 now reports the static 80% multi-degradation compact setting rather than Pareto routing.
 - Recompiled the external submission PDF successfully after the table correction; log scan found no fatal, undefined, or overfull-box matches.
+- Added `docs/generated/paper_source_compact_table.csv/.md` and the external LaTeX table `tables/source_vs_compact_export.tex`.
+- Inserted the source-gated versus physically exported compact-model comparison into the submission experiments section and recompiled `paper.pdf` successfully.
 - Local branch already had one unpushed commit from the previous plan update because GitHub connection reset during push.

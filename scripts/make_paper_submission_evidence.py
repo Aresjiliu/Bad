@@ -18,8 +18,8 @@ CLAIMS = [
     {
         "claim_id": "C2",
         "claim": "The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim.",
-        "paper_location": "Table 1 / planned compact-vs-source table",
-        "status": "ready_for_table",
+        "paper_location": "Table: source-vs-compact export",
+        "status": "ready",
         "evidence": "E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY",
     },
     {
@@ -67,6 +67,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--repo-latex-multidataset-output",
         default="docs/generated/multidataset_formal_evidence_table.tex",
+    )
+    parser.add_argument("--source-compact-output-prefix", default="docs/generated/paper_source_compact_table")
+    parser.add_argument(
+        "--latex-source-compact-output",
+        default="D:/Academic/paper_submission/brmnet_pricai2026/tables/source_vs_compact_export.tex",
     )
     return parser
 
@@ -214,8 +219,8 @@ def _priority_rows(priority_rows: list[dict[str, str]]) -> list[dict[str, str]]:
             variant="quality_multi_degradation_p025",
             mode=mode,
             metric_key="oa",
-            paper_target="planned compact-vs-source table",
-            status="ready_for_table",
+            paper_target="Table: source-vs-compact export",
+            status="ready",
             note=(
                 "Source-vs-compact metrics are in the same summary row; source OA is "
                 f"{float(lookup[('quality_multi_degradation_p025', mode)]['source_oa_mean']) * 100:.2f}%."
@@ -417,6 +422,98 @@ Dataset & Setting & Full OA & Main-only OA & Occlusion-50 OA & MACs \\
     path.write_text(content, encoding="utf-8")
 
 
+def _source_compact_table_rows(priority_rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    lookup = _priority_lookup(priority_rows)
+    modes = [
+        ("Full", "full"),
+        ("HSI only", "main_only"),
+        ("LiDAR only", "aux_only"),
+        ("Noise-high", "aux_noise_high"),
+        ("Downsample-4", "aux_downsample_4"),
+        ("Occlusion-50", "aux_occlusion_50"),
+    ]
+    rows: list[dict[str, object]] = []
+    for label, mode in modes:
+        row = lookup[("quality_multi_degradation_p025", mode)]
+        source_oa = float(row["source_oa_mean"]) * 100.0
+        source_std = float(row["source_oa_std"]) * 100.0
+        compact_oa = float(row["oa_mean"]) * 100.0
+        compact_std = float(row["oa_std"]) * 100.0
+        rows.append(
+            {
+                "state": label,
+                "source_oa": source_oa,
+                "source_std": source_std,
+                "compact_oa": compact_oa,
+                "compact_std": compact_std,
+                "delta": compact_oa - source_oa,
+                "compact_macs": float(row["compact_macs_ratio_mean"]) * 100.0,
+                "compact_params": float(row["compact_params_ratio_mean"]) * 100.0,
+                "runs": int(row["runs"]),
+            }
+        )
+    return rows
+
+
+def write_source_compact_outputs(rows: list[dict[str, object]], output_prefix: str | Path, latex_output: str | Path) -> None:
+    prefix = Path(output_prefix)
+    prefix.parent.mkdir(parents=True, exist_ok=True)
+    csv_path = prefix.with_suffix(".csv")
+    md_path = prefix.with_suffix(".md")
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    lines = [
+        "# Source Gated Model vs Compact Export",
+        "",
+        "| State | Source OA | Compact OA | Delta | Compact MACs | Compact Params |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        lines.append(
+            f"| {row['state']} | {row['source_oa']:.2f} +/- {row['source_std']:.2f} | "
+            f"{row['compact_oa']:.2f} +/- {row['compact_std']:.2f} | {row['delta']:+.2f} | "
+            f"{row['compact_macs']:.2f} | {row['compact_params']:.2f} |"
+        )
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    body = []
+    for row in rows:
+        body.append(
+            " & ".join(
+                [
+                    str(row["state"]),
+                    rf"${row['source_oa']:.2f}{{\pm}}{row['source_std']:.2f}$",
+                    rf"${row['compact_oa']:.2f}{{\pm}}{row['compact_std']:.2f}$",
+                    rf"${row['delta']:+.2f}$",
+                    f"{row['compact_macs']:.2f}",
+                    f"{row['compact_params']:.2f}",
+                ]
+            )
+            + r" \\"
+        )
+    content = r"""\begin{table*}[t]
+\centering
+\caption{Source gated model versus physically exported compact model on Houston2013 under the 80\% multi-degradation setting. Source evaluates the gated source network before structural export, while Compact evaluates the channel-removed model. Values are OA (\%) over three seeds.}
+\label{tab:source_vs_compact_export}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+State & Source OA & Compact OA & $\Delta$ & Compact MACs & Compact Params \\
+\midrule
+""" + "\n".join(body) + r"""
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+"""
+    latex_path = Path(latex_output)
+    latex_path.parent.mkdir(parents=True, exist_ok=True)
+    latex_path.write_text(content, encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> list[dict[str, str]]:
     args = build_parser().parse_args(argv)
     structured_rows = _read_csv(args.structured_runs)
@@ -432,6 +529,8 @@ def main(argv: list[str] | None = None) -> list[dict[str, str]]:
     write_claims_md(rows, args.output_md)
     write_multidataset_latex(multidataset_rows, args.latex_multidataset_output)
     write_multidataset_latex(multidataset_rows, args.repo_latex_multidataset_output)
+    source_compact_rows = _source_compact_table_rows(priority_rows)
+    write_source_compact_outputs(source_compact_rows, args.source_compact_output_prefix, args.latex_source_compact_output)
     return rows
 
 
