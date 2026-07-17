@@ -234,3 +234,13 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
   - [pending] Decide whether to run strict uniform-width ablation or reword it as a limitation.
 - [pending] Generate or refresh controlled-corruption reliability curves for the submission.
 - [pending] Recompile the submission PDF and run a readiness check before adding any thesis-only work.
+
+### 2026-07-18 paper-first ablation update
+
+- [completed] Implement strict `uniform_width_export` as a target-matched fixed-width compact export strategy.
+- [completed] Run Houston2013 seed0/seed1/seed2 for `uniform_width_export` under the 80% p=0.25 multi-degradation setting.
+- [completed] Regenerate `docs/generated/brmnet_priority_summary.csv/.md` and the paper claims/evidence matrix.
+- [completed] Add `docs/generated/uniform_width_export_ablation.csv/.md` and the external LaTeX table `tables/uniform_width_export_ablation.tex`.
+- [completed] Insert the uniform-width export ablation into the submission experiment section and compile the paper successfully.
+- [pending] Generate or refresh controlled-corruption reliability curves for the submission.
+- [pending] Run the final submission readiness scan after the reliability-curve pass.

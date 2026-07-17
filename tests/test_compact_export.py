@@ -169,6 +169,30 @@ class CompactBRMNetExportTest(unittest.TestCase):
         self.assertFalse(compact.reliability_fusion.use_availability_mask)
         self.assertFalse(metadata["fusion_use_availability_mask"])
 
+    def test_exporter_supports_uniform_width_strategy(self):
+        source = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+        )
+
+        compact, metadata = export_compact_brmnet(
+            source,
+            selection_strategy="uniform_width",
+            uniform_width_ratio=0.5,
+        )
+
+        self.assertEqual(compact.main_encoder.net[0].conv.out_channels, 16)
+        self.assertEqual(compact.main_encoder.net[1].conv.out_channels, 32)
+        self.assertEqual(compact.main_encoder.net[2].conv.out_channels, 64)
+        self.assertEqual(compact.aux_encoder.net[0].conv.out_channels, 16)
+        self.assertEqual(compact.aux_encoder.net[1].conv.out_channels, 32)
+        self.assertEqual(compact.classifier.net[0].conv.out_channels, 64)
+        self.assertEqual(compact.classifier.net[1].conv.out_channels, 32)
+        self.assertEqual(metadata["selection_strategy"], "uniform_width")
+        self.assertEqual(metadata["uniform_width_ratio"], 0.5)
+
     def test_exporter_keeps_highest_probability_channel_for_empty_mask(self):
         source = BRMNet(
             main_channels=4,

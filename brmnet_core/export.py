@@ -14,6 +14,13 @@ def _selected_indices(gate: HardConcreteGate, threshold: float) -> torch.Tensor:
     return mask.nonzero(as_tuple=False).flatten()
 
 
+def _uniform_width_indices(gate: HardConcreteGate, width_ratio: float) -> torch.Tensor:
+    if not 0.0 < width_ratio <= 1.0:
+        raise ValueError(f"width_ratio must be in (0, 1], got {width_ratio}")
+    active = max(1, min(gate.channels, round(gate.channels * width_ratio)))
+    return torch.arange(active, device=gate.log_alpha.device)
+
+
 def _copy_conv_block(source, target, input_indices: torch.Tensor | None, output_indices: torch.Tensor) -> None:
     weight = source.conv.weight.index_select(0, output_indices)
     if input_indices is not None:
@@ -40,20 +47,31 @@ def _copy_quality_estimator(source, target, shared_indices: torch.Tensor) -> Non
 def export_compact_brmnet(
     model,
     threshold: float = 0.5,
+    selection_strategy: str = "learned_threshold",
+    uniform_width_ratio: float | None = None,
 ) -> tuple[CompactBRMNet, dict[str, object]]:
     if getattr(model, "gate_type", None) != "hard_concrete":
         raise ValueError("Compact export requires a hard_concrete BRMNet.")
     if not 0.0 <= threshold <= 1.0:
         raise ValueError(f"threshold must be in [0, 1], got {threshold}")
+    if selection_strategy not in {"learned_threshold", "uniform_width"}:
+        raise ValueError(f"Unsupported compact export selection_strategy: {selection_strategy}")
+
+    def select(gate: HardConcreteGate) -> torch.Tensor:
+        if selection_strategy == "uniform_width":
+            if uniform_width_ratio is None:
+                raise ValueError("uniform_width_ratio is required for uniform_width export.")
+            return _uniform_width_indices(gate, uniform_width_ratio)
+        return _selected_indices(gate, threshold)
 
     indices = {
-        "main_1": _selected_indices(model.main_encoder.net[0].gate, threshold),
-        "main_2": _selected_indices(model.main_encoder.net[1].gate, threshold),
-        "aux_1": _selected_indices(model.aux_encoder.net[0].gate, threshold),
-        "aux_2": _selected_indices(model.aux_encoder.net[1].gate, threshold),
-        "shared": _selected_indices(model.shared_fusion_gate, threshold),
-        "head_1": _selected_indices(model.classifier.net[0].gate, threshold),
-        "head_2": _selected_indices(model.classifier.net[1].gate, threshold),
+        "main_1": select(model.main_encoder.net[0].gate),
+        "main_2": select(model.main_encoder.net[1].gate),
+        "aux_1": select(model.aux_encoder.net[0].gate),
+        "aux_2": select(model.aux_encoder.net[1].gate),
+        "shared": select(model.shared_fusion_gate),
+        "head_1": select(model.classifier.net[0].gate),
+        "head_2": select(model.classifier.net[1].gate),
     }
     widths = {name: int(value.numel()) for name, value in indices.items()}
     compact = CompactBRMNet(
@@ -118,6 +136,8 @@ def export_compact_brmnet(
 
     metadata = {
         "threshold": float(threshold),
+        "selection_strategy": selection_strategy,
+        "uniform_width_ratio": None if uniform_width_ratio is None else float(uniform_width_ratio),
         "widths": {
             "main": [widths["main_1"], widths["main_2"], widths["shared"]],
             "aux": [widths["aux_1"], widths["aux_2"], widths["shared"]],

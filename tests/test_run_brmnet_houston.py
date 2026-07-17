@@ -191,6 +191,7 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         self.assertEqual(args.gate_type, "hard_concrete")
         self.assertEqual(args.fusion_mode, "reliability")
         self.assertFalse(args.disable_fusion_availability_mask)
+        self.assertEqual(args.compact_export_strategy, "learned_threshold")
         self.assertEqual(args.budget_metric, "macs")
         self.assertIsNone(args.gate_threshold)
         self.assertEqual(args.compact_finetune_epochs, 10)
@@ -246,6 +247,11 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
         args = build_parser().parse_args(["--disable-fusion-availability-mask"])
 
         self.assertTrue(args.disable_fusion_availability_mask)
+
+    def test_compact_export_strategy_argument(self):
+        args = build_parser().parse_args(["--compact-export-strategy", "uniform_width"])
+
+        self.assertEqual(args.compact_export_strategy, "uniform_width")
 
     def test_retention_to_gate_score_round_trips_probability(self):
         import math
@@ -350,6 +356,37 @@ class BRMNetHoustonRunnerTest(unittest.TestCase):
                         0.0,
                     )
                     self.assertEqual(stats["latency_ms"][family][state]["iterations"], 1)
+            self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
+
+    def test_structured_artifact_writer_supports_uniform_width_export(self):
+        model = BRMNet(
+            main_channels=4,
+            aux_channels=1,
+            num_classes=3,
+            gate_type="hard_concrete",
+            initial_retention=0.8,
+        )
+        model.eval()
+        with tempfile.TemporaryDirectory() as tmp:
+            compact, stats = write_structured_pruning_artifacts(
+                model=model,
+                run_dir=Path(tmp),
+                patch_size=7,
+                threshold=None,
+                sample_main=torch.randn(2, 4, 7, 7),
+                sample_aux=torch.randn(2, 1, 7, 7),
+                target_budget=0.8,
+                budget_metric="macs",
+                latency_warmup=0,
+                latency_iterations=1,
+                export_strategy="uniform_width",
+            )
+
+            self.assertEqual(stats["export_strategy"], "uniform_width")
+            self.assertEqual(stats["structure"]["selection_strategy"], "uniform_width")
+            self.assertIsNone(stats["equivalence_max_abs_error"])
+            self.assertIsNone(stats["equivalence_l2_relative_error"])
+            self.assertLess(abs(stats["compact"]["macs_ratio"] - 0.8), 0.05)
             self.assertGreater(sum(parameter.numel() for parameter in compact.parameters()), 0)
 
     def test_split_loader_for_validation_uses_train_subset_and_deterministic_val_subset(self):

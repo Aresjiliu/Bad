@@ -17,10 +17,10 @@ CLAIMS = [
     },
     {
         "claim_id": "C2",
-        "claim": "The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim.",
-        "paper_location": "Table: source-vs-compact export",
+        "claim": "The exported compact model is evaluated separately from the source gated model, and learned nonuniform export is compared with target-matched uniform-width export.",
+        "paper_location": "Table: source-vs-compact export / Table: uniform-width export ablation",
         "status": "ready",
-        "evidence": "E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY",
+        "evidence": "E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY, E_UNIFORM_WIDTH_FULL, E_UNIFORM_WIDTH_DOWNSAMPLE4",
     },
     {
         "claim_id": "C3",
@@ -45,10 +45,10 @@ CLAIMS = [
     },
     {
         "claim_id": "G1",
-        "claim": "Uniform-width compression and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming.",
+        "claim": "The w/o fusion-compatible terminal constraint remains incomplete or needs stricter naming.",
         "paper_location": "Readiness checklist",
         "status": "needs_ablation_or_rewording",
-        "evidence": "GAP_UNIFORM_WIDTH, GAP_TERMINAL_TIE",
+        "evidence": "GAP_TERMINAL_TIE",
     },
 ]
 
@@ -72,6 +72,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--latex-source-compact-output",
         default="D:/Academic/paper_submission/brmnet_pricai2026/tables/source_vs_compact_export.tex",
+    )
+    parser.add_argument("--uniform-width-output-prefix", default="docs/generated/uniform_width_export_ablation")
+    parser.add_argument(
+        "--latex-uniform-width-output",
+        default="D:/Academic/paper_submission/brmnet_pricai2026/tables/uniform_width_export_ablation.tex",
     )
     return parser
 
@@ -226,6 +231,24 @@ def _priority_rows(priority_rows: list[dict[str, str]]) -> list[dict[str, str]]:
                 f"{float(lookup[('quality_multi_degradation_p025', mode)]['source_oa_mean']) * 100:.2f}%."
             ),
         )
+
+    if ("uniform_width_export", "full") in lookup:
+        for mode in ("full", "main_only", "aux_noise_high", "aux_downsample_4", "aux_occlusion_50"):
+            _priority_row(
+                rows,
+                lookup,
+                evidence_id=f"E_UNIFORM_WIDTH_{mode.upper()}",
+                claim_id="C2",
+                variant="uniform_width_export",
+                mode=mode,
+                metric_key="oa",
+                paper_target="Table: uniform-width export ablation",
+                status="ready",
+                note=(
+                    "Target-matched uniform-width export baseline; compare against learned nonuniform "
+                    "quality_multi_degradation_p025 export at the same 80% MAC budget."
+                ),
+            )
 
     _priority_row(
         rows,
@@ -394,7 +417,7 @@ def write_claims_md(rows: list[dict[str, str]], path: str | Path) -> None:
             "",
             "## 当前投稿缺口",
             "",
-            "- `uniform fusion` 已完成，但它不是严格的 `uniform width scaling`。投稿中必须按真实含义命名；若要写 uniform width，需要另做固定宽度 baseline。",
+            "- `uniform_width_export` 已完成 Houston2013 三种子消融；它是 target-matched 固定宽度导出对照，不等价于 `uniform fusion`。",
             "- `w/o fusion availability mask` 已完成 Houston2013 三种子消融；可作为缺失模态融合诊断进入主消融表。",
             "- `w/o fusion-compatible terminal constraint` 当前没有稳定代码路径。不要把该消融写成已经完成。",
             "- `without_modality_dropout` 目前不是完整三种子刷新结果，不适合单独支撑最终主张，可作为早期诊断或补跑。",
@@ -538,6 +561,105 @@ State & Source OA & Compact OA & $\Delta$ & Compact MACs & Compact Params \\
     latex_path.write_text(content, encoding="utf-8")
 
 
+def _uniform_width_table_rows(priority_rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    lookup = _priority_lookup(priority_rows)
+    if ("uniform_width_export", "full") not in lookup:
+        return []
+    modes = [
+        ("Full", "full"),
+        ("HSI only", "main_only"),
+        ("LiDAR only", "aux_only"),
+        ("Noise-high", "aux_noise_high"),
+        ("Downsample-4", "aux_downsample_4"),
+        ("Occlusion-50", "aux_occlusion_50"),
+    ]
+    rows: list[dict[str, object]] = []
+    for label, mode in modes:
+        learned = lookup[("quality_multi_degradation_p025", mode)]
+        uniform = lookup[("uniform_width_export", mode)]
+        learned_oa = float(learned["oa_mean"]) * 100.0
+        learned_std = float(learned["oa_std"]) * 100.0
+        uniform_oa = float(uniform["oa_mean"]) * 100.0
+        uniform_std = float(uniform["oa_std"]) * 100.0
+        rows.append(
+            {
+                "state": label,
+                "learned_oa": learned_oa,
+                "learned_std": learned_std,
+                "uniform_oa": uniform_oa,
+                "uniform_std": uniform_std,
+                "delta": uniform_oa - learned_oa,
+                "learned_macs": float(learned["compact_macs_ratio_mean"]) * 100.0,
+                "uniform_macs": float(uniform["compact_macs_ratio_mean"]) * 100.0,
+                "runs": int(uniform["runs"]),
+            }
+        )
+    return rows
+
+
+def write_uniform_width_outputs(rows: list[dict[str, object]], output_prefix: str | Path, latex_output: str | Path) -> None:
+    if not rows:
+        return
+    prefix = Path(output_prefix)
+    prefix.parent.mkdir(parents=True, exist_ok=True)
+    csv_path = prefix.with_suffix(".csv")
+    md_path = prefix.with_suffix(".md")
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    lines = [
+        "# Uniform-Width Export Ablation",
+        "",
+        "This diagnostic compares the selected learned nonuniform compact export with a target-matched uniform-width export. The uniform-width baseline keeps the same width ratio in every gated block and is not logit-equivalent to the learned hard-mask source model.",
+        "",
+        "| State | Learned nonuniform OA | Uniform-width OA | Delta | Learned MACs | Uniform MACs |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        lines.append(
+            f"| {row['state']} | {row['learned_oa']:.2f} +/- {row['learned_std']:.2f} | "
+            f"{row['uniform_oa']:.2f} +/- {row['uniform_std']:.2f} | {row['delta']:+.2f} | "
+            f"{row['learned_macs']:.2f} | {row['uniform_macs']:.2f} |"
+        )
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    body = []
+    for row in rows:
+        body.append(
+            " & ".join(
+                [
+                    str(row["state"]),
+                    rf"${row['learned_oa']:.2f}{{\pm}}{row['learned_std']:.2f}$",
+                    rf"${row['uniform_oa']:.2f}{{\pm}}{row['uniform_std']:.2f}$",
+                    rf"${row['delta']:+.2f}$",
+                    f"{row['learned_macs']:.2f}",
+                    f"{row['uniform_macs']:.2f}",
+                ]
+            )
+            + r" \\"
+        )
+    content = r"""\begin{table*}[t]
+\centering
+\caption{Learned nonuniform compact export versus target-matched uniform-width export on Houston2013. Both settings use the 80\% multi-degradation recipe and report compact-model OA (\%) over three seeds. Uniform-width export keeps the same width ratio in each gated block, whereas learned export uses gate-derived nonuniform widths.}
+\label{tab:uniform_width_export_ablation}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+State & Learned export OA & Uniform-width OA & $\Delta$ & Learned MACs & Uniform MACs \\
+\midrule
+""" + "\n".join(body) + r"""
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+"""
+    latex_path = Path(latex_output)
+    latex_path.parent.mkdir(parents=True, exist_ok=True)
+    latex_path.write_text(content, encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> list[dict[str, str]]:
     args = build_parser().parse_args(argv)
     structured_rows = _read_csv(args.structured_runs)
@@ -555,6 +677,8 @@ def main(argv: list[str] | None = None) -> list[dict[str, str]]:
     write_multidataset_latex(multidataset_rows, args.repo_latex_multidataset_output)
     source_compact_rows = _source_compact_table_rows(priority_rows)
     write_source_compact_outputs(source_compact_rows, args.source_compact_output_prefix, args.latex_source_compact_output)
+    uniform_width_rows = _uniform_width_table_rows(priority_rows)
+    write_uniform_width_outputs(uniform_width_rows, args.uniform_width_output_prefix, args.latex_uniform_width_output)
     return rows
 
 

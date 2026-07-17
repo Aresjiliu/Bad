@@ -7,11 +7,11 @@
 | Claim | 投稿位置 | 状态 | 证据 |
 |---|---|---|---|
 | C1: BRM-Net exports physically compact models whose actual MAC ratios match the requested budgets. | Table 1 / Figure 2 | ready | E_BUDGET_65, E_BUDGET_80, E_BUDGET_90 |
-| C2: The exported compact model is evaluated separately from the source gated model, supporting the physical-export claim. | Table: source-vs-compact export | ready | E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY |
+| C2: The exported compact model is evaluated separately from the source gated model, and learned nonuniform export is compared with target-matched uniform-width export. | Table: source-vs-compact export / Table: uniform-width export ablation | ready | E_SOURCE_COMPACT_FULL, E_SOURCE_COMPACT_MAIN_ONLY, E_SOURCE_COMPACT_AUX_ONLY, E_UNIFORM_WIDTH_FULL, E_UNIFORM_WIDTH_DOWNSAMPLE4 |
 | C3: Availability-aware training improves fallback behavior under missing single-modality inference. | Table 2 | ready | E_DROPOUT_MAIN_ONLY, E_DROPOUT_AUX_ONLY, E_FUSION_MASK_MAIN_ONLY, E_FUSION_MASK_AUX_ONLY |
 | C4: Degradation-supervised reliability improves robustness under noisy, low-resolution, and occluded auxiliary inputs. | Table 3 / Figure 3 | ready | E_ROBUST_FULL_BASELINE, E_ROBUST_UNIFORM, E_ROBUST_NOISE_ONLY, E_ROBUST_MULTI_P025 |
 | C5: The compact degradation-aware setting transfers to external HSI-LiDAR scenes as an accuracy-efficiency-robustness trade-off. | Table 4 | ready | E_MULTI_HOUSTON, E_MULTI_TRENTO, E_MULTI_MUUFL |
-| G1: Uniform-width compression and w/o fusion-compatible terminal constraint remain incomplete or need stricter naming. | Readiness checklist | needs_ablation_or_rewording | GAP_UNIFORM_WIDTH, GAP_TERMINAL_TIE |
+| G1: The w/o fusion-compatible terminal constraint remains incomplete or needs stricter naming. | Readiness checklist | needs_ablation_or_rewording | GAP_TERMINAL_TIE |
 
 ## Canonical Evidence
 
@@ -23,6 +23,11 @@
 | E_SOURCE_COMPACT_FULL | C2 | Houston2013 | quality_multi_degradation_p025 | full | oa | 86.90 +/- 1.65 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 86.15%. |
 | E_SOURCE_COMPACT_MAIN_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | main_only | oa | 80.04 +/- 1.93 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 78.18%. |
 | E_SOURCE_COMPACT_AUX_ONLY | C2 | Houston2013 | quality_multi_degradation_p025 | aux_only | oa | 38.04 +/- 0.84 | `docs/generated/brmnet_priority_summary.csv` | ready | Source-vs-compact metrics are in the same summary row; source OA is 38.43%. |
+| E_UNIFORM_WIDTH_FULL | C2 | Houston2013 | uniform_width_export | full | oa | 86.29 +/- 0.77 | `docs/generated/brmnet_priority_summary.csv` | ready | Target-matched uniform-width export baseline; compare against learned nonuniform quality_multi_degradation_p025 export at the same 80% MAC budget. |
+| E_UNIFORM_WIDTH_MAIN_ONLY | C2 | Houston2013 | uniform_width_export | main_only | oa | 79.22 +/- 1.47 | `docs/generated/brmnet_priority_summary.csv` | ready | Target-matched uniform-width export baseline; compare against learned nonuniform quality_multi_degradation_p025 export at the same 80% MAC budget. |
+| E_UNIFORM_WIDTH_AUX_NOISE_HIGH | C2 | Houston2013 | uniform_width_export | aux_noise_high | oa | 84.93 +/- 0.83 | `docs/generated/brmnet_priority_summary.csv` | ready | Target-matched uniform-width export baseline; compare against learned nonuniform quality_multi_degradation_p025 export at the same 80% MAC budget. |
+| E_UNIFORM_WIDTH_AUX_DOWNSAMPLE_4 | C2 | Houston2013 | uniform_width_export | aux_downsample_4 | oa | 82.88 +/- 0.75 | `docs/generated/brmnet_priority_summary.csv` | ready | Target-matched uniform-width export baseline; compare against learned nonuniform quality_multi_degradation_p025 export at the same 80% MAC budget. |
+| E_UNIFORM_WIDTH_AUX_OCCLUSION_50 | C2 | Houston2013 | uniform_width_export | aux_occlusion_50 | oa | 85.00 +/- 0.67 | `docs/generated/brmnet_priority_summary.csv` | ready | Target-matched uniform-width export baseline; compare against learned nonuniform quality_multi_degradation_p025 export at the same 80% MAC budget. |
 | E_DROPOUT_MAIN_ONLY | C3 | Houston2013 | full | main_only | oa | 76.62 +/- 0.89 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout main_only row; full 3-seed refresh for no-dropout remains incomplete. |
 | E_DROPOUT_AUX_ONLY | C3 | Houston2013 | full | aux_only | oa | 43.87 +/- 3.19 | `docs/generated/brmnet_priority_summary.csv` | ready | Compare with without_modality_dropout aux_only row; full 3-seed refresh for no-dropout remains incomplete. |
 | E_FUSION_MASK_MAIN_ONLY | C3 | Houston2013 | without_fusion_availability_mask | main_only | oa | 76.72 +/- 2.97 | `docs/generated/brmnet_priority_summary.csv` | ready | Disables only the fusion softmax availability mask; compare against quality_multi_degradation_p025 main_only. |
@@ -49,7 +54,7 @@
 
 ## 当前投稿缺口
 
-- `uniform fusion` 已完成，但它不是严格的 `uniform width scaling`。投稿中必须按真实含义命名；若要写 uniform width，需要另做固定宽度 baseline。
+- `uniform_width_export` 已完成 Houston2013 三种子消融；它是 target-matched 固定宽度导出对照，不等价于 `uniform fusion`。
 - `w/o fusion availability mask` 已完成 Houston2013 三种子消融；可作为缺失模态融合诊断进入主消融表。
 - `w/o fusion-compatible terminal constraint` 当前没有稳定代码路径。不要把该消融写成已经完成。
 - `without_modality_dropout` 目前不是完整三种子刷新结果，不适合单独支撑最终主张，可作为早期诊断或补跑。

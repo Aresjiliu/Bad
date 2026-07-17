@@ -157,6 +157,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Hard export threshold. Defaults to an automatic target-resource projection.",
     )
+    parser.add_argument(
+        "--compact-export-strategy",
+        choices=("learned_threshold", "uniform_width"),
+        default="learned_threshold",
+        help="Compact export strategy: learned thresholded gates or uniform width scaling.",
+    )
     parser.add_argument("--compact-finetune-epochs", type=int, default=10)
     parser.add_argument("--compact-val-fraction", type=float, default=0.1)
     parser.add_argument(
@@ -424,6 +430,53 @@ def _resource_payload(stats, baseline=None) -> dict[str, float | int]:
     return payload
 
 
+def find_uniform_width_ratio_for_budget(
+    model: torch.nn.Module,
+    target_budget: float,
+    patch_size: int,
+    metric: str = "macs",
+) -> tuple[float, torch.nn.Module, dict[str, object], object]:
+    if not 0.0 < target_budget <= 1.0:
+        raise ValueError(f"target_budget must be in (0, 1], got {target_budget}")
+    if metric not in {"params", "macs"}:
+        raise ValueError(f"Unsupported budget metric: {metric}")
+    baseline = estimate_brmnet_resources(model, patch_size=patch_size, mode="baseline")
+
+    candidate_ratios = sorted(
+        {
+            1.0,
+            *(
+                count / gate.channels
+                for gate in iter_hard_concrete_gates(model)
+                for count in range(1, gate.channels + 1)
+            ),
+        }
+    )
+    best = None
+    best_error = float("inf")
+    for ratio in candidate_ratios:
+        compact, metadata = export_compact_brmnet(
+            model,
+            threshold=0.0,
+            selection_strategy="uniform_width",
+            uniform_width_ratio=ratio,
+        )
+        compact.eval()
+        stats = estimate_compact_resources(compact, patch_size=patch_size)
+        observed = (
+            int(stats.params) / int(baseline.params)
+            if metric == "params"
+            else int(stats.macs) / int(baseline.macs)
+        )
+        error = abs(float(observed) - target_budget)
+        if error < best_error:
+            best = (ratio, compact, metadata, stats)
+            best_error = error
+    if best is None:
+        raise RuntimeError("Unable to determine a uniform-width compact export ratio.")
+    return best
+
+
 def write_structured_pruning_artifacts(
     model: torch.nn.Module,
     run_dir: str | Path,
@@ -436,11 +489,14 @@ def write_structured_pruning_artifacts(
     min_active_ratio: float = 0.0,
     latency_warmup: int = 5,
     latency_iterations: int = 20,
+    export_strategy: str = "learned_threshold",
 ) -> tuple[torch.nn.Module, dict[str, object]]:
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     baseline = estimate_brmnet_resources(model, patch_size=patch_size, mode="baseline")
     expected = estimate_brmnet_resources(model, patch_size=patch_size, mode="expected")
+    if export_strategy not in {"learned_threshold", "uniform_width"}:
+        raise ValueError(f"Unsupported compact export strategy: {export_strategy}")
     if threshold is None:
         if target_budget is None:
             raise ValueError("target_budget is required for automatic threshold projection")
@@ -457,19 +513,33 @@ def write_structured_pruning_artifacts(
         hard = estimate_brmnet_resources(model, patch_size=patch_size, mode="hard")
     set_hard_concrete_inference_mode(model, "hard")
     model.eval()
-    compact, metadata = export_compact_brmnet(model, threshold=threshold)
+    if export_strategy == "uniform_width":
+        if target_budget is None:
+            raise ValueError("target_budget is required for uniform-width export.")
+        uniform_ratio, compact, metadata, compact_resources = find_uniform_width_ratio_for_budget(
+            model,
+            target_budget=target_budget,
+            patch_size=patch_size,
+            metric=budget_metric,
+        )
+        metadata["uniform_width_ratio"] = uniform_ratio
+        hard = compact_resources
+    else:
+        compact, metadata = export_compact_brmnet(model, threshold=threshold)
+        compact_resources = estimate_compact_resources(compact, patch_size=patch_size)
     compact.eval()
-    compact_resources = estimate_compact_resources(compact, patch_size=patch_size)
     modality_states = ("full", "main_only", "aux_only")
     state_dependent = {
         "hard": {
             state: _resource_payload(
-                estimate_brmnet_resources(
-                    model,
-                    patch_size=patch_size,
-                    mode="hard",
-                    modality_state=state,
-                ),
+                estimate_compact_resources(compact, patch_size=patch_size, modality_state=state)
+                if export_strategy == "uniform_width"
+                else estimate_brmnet_resources(
+                        model,
+                        patch_size=patch_size,
+                        mode="hard",
+                        modality_state=state,
+                    ),
                 baseline=baseline,
             )
             for state in modality_states
@@ -486,40 +556,58 @@ def write_structured_pruning_artifacts(
             for state in modality_states
         },
     }
+    compact_latency = profile_modality_state_latency(
+        compact,
+        sample_main,
+        sample_aux,
+        warmup=latency_warmup,
+        iterations=latency_iterations,
+    )
     latency_ms = {
-        "hard": profile_modality_state_latency(
-            model,
-            sample_main,
-            sample_aux,
-            warmup=latency_warmup,
-            iterations=latency_iterations,
-        ),
-        "compact": profile_modality_state_latency(
-            compact,
-            sample_main,
-            sample_aux,
-            warmup=latency_warmup,
-            iterations=latency_iterations,
-        ),
+        "hard": compact_latency
+        if export_strategy == "uniform_width"
+        else profile_modality_state_latency(
+                model,
+                sample_main,
+                sample_aux,
+                warmup=latency_warmup,
+                iterations=latency_iterations,
+            ),
+        "compact": compact_latency,
     }
 
-    with torch.no_grad():
-        source_logits = model(sample_main, sample_aux)["logits"]
-        compact_logits = compact(sample_main, sample_aux)["logits"]
-    logit_delta = source_logits - compact_logits
-    equivalence_error = float(logit_delta.abs().max().detach().cpu())
-    equivalence_l2_relative = float(
-        (logit_delta.norm() / source_logits.norm().clamp_min(1e-12)).detach().cpu()
-    )
+    equivalence_error = None
+    equivalence_l2_relative = None
+    if export_strategy == "learned_threshold":
+        with torch.no_grad():
+            source_logits = model(sample_main, sample_aux)["logits"]
+            compact_logits = compact(sample_main, sample_aux)["logits"]
+        logit_delta = source_logits - compact_logits
+        equivalence_error = float(logit_delta.abs().max().detach().cpu())
+        equivalence_l2_relative = float(
+            (logit_delta.norm() / source_logits.norm().clamp_min(1e-12)).detach().cpu()
+        )
 
     gate_records = []
     seen = set()
+    metadata_keys_by_module = {
+        "shared_fusion_gate": "shared",
+        "main_encoder.net.0.gate": "main_1",
+        "main_encoder.net.1.gate": "main_2",
+        "aux_encoder.net.0.gate": "aux_1",
+        "aux_encoder.net.1.gate": "aux_2",
+        "classifier.net.0.gate": "head_1",
+        "classifier.net.1.gate": "head_2",
+    }
     for name, module in model.named_modules():
         if id(module) in seen or not hasattr(module, "expected_active_probability"):
             continue
         seen.add(id(module))
         probabilities = module.expected_active_probability()
-        active = int(module.hard_mask(threshold).sum().detach().cpu())
+        if export_strategy == "uniform_width":
+            active = len(metadata["indices"][metadata_keys_by_module[name]])
+        else:
+            active = int(module.hard_mask(threshold).sum().detach().cpu())
         gate_records.append(
             {
                 "name": name,
@@ -531,6 +619,8 @@ def write_structured_pruning_artifacts(
 
     stats: dict[str, object] = {
         "threshold": float(threshold),
+        "export_strategy": export_strategy,
+        "uniform_width_ratio": metadata.get("uniform_width_ratio"),
         "min_active_ratio": float(min_active_ratio),
         "baseline": {
             "params": int(baseline.params),
@@ -677,6 +767,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             "gate_type": cli_args.gate_type,
             "fusion_mode": cli_args.fusion_mode,
             "fusion_use_availability_mask": not cli_args.disable_fusion_availability_mask,
+            "compact_export_strategy": cli_args.compact_export_strategy,
             "budget_metric": cli_args.budget_metric,
             "lambda_pre_quality": cli_args.lambda_pre_quality,
             "pre_encoder_quality_probe": cli_args.lambda_pre_quality > 0.0,
@@ -902,6 +993,7 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
             min_active_ratio=cli_args.min_active_ratio,
             latency_warmup=cli_args.latency_warmup,
             latency_iterations=cli_args.latency_iterations,
+            export_strategy=cli_args.compact_export_strategy,
         )
         compact_optimizer = torch.optim.AdamW(
             compact_model.parameters(),

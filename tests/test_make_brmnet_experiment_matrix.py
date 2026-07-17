@@ -91,6 +91,21 @@ class BRMNetExperimentMatrixTest(unittest.TestCase):
 
         self.assertIn("--disable-fusion-availability-mask", command)
 
+    def test_core_matrix_includes_uniform_width_export_ablation(self):
+        args = build_parser().parse_args(["--ablation", "core", "--seeds", "0"])
+
+        rows = experiment_rows(args)
+        ablation = next(row for row in rows if row["variant"] == "uniform_width_export")
+
+        self.assertEqual(ablation["compact_export_strategy"], "uniform_width")
+        self.assertEqual(ablation["fusion_mode"], "reliability")
+        self.assertEqual(ablation["lambda_quality"], 1.0)
+        self.assertEqual(ablation["aux_quality_degradation_prob"], 0.25)
+
+        command = command_for_row(ablation, args)
+
+        self.assertIn("--compact-export-strategy uniform_width", command)
+
     def test_routing_profile_matrix_generates_fixed_budget_profiles(self):
         args = build_parser().parse_args(
             [

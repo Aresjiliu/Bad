@@ -355,3 +355,13 @@
 - Verified with targeted unit tests and a seed0 dry-run using `conda run -n hslinets`.
 - Ran Houston2013 seed0/1/2 for the new ablation on CUDA and refreshed `docs/generated/brmnet_priority_summary.csv/.md`.
 - Added `docs/generated/fusion_availability_mask_ablation_seed0_seed1_seed2_summary.md`. The three-seed result shows main-only compact OA drops from 80.04 +/- 1.93 to 76.72 +/- 2.97 when fusion masking is disabled, while full and degraded-but-available states remain close.
+
+## 2026-07-18 uniform-width export ablation
+
+- Added a strict `uniform_width_export` compact-export strategy. It keeps a target-matched uniform width ratio in every gated block, instead of using the learned nonuniform hard-concrete channel pattern.
+- Wired the strategy through `export_compact_brmnet`, `scripts/run_brmnet_houston.py --compact-export-strategy uniform_width`, and the generated priority experiment matrix.
+- Ran Houston2013 seed0/seed1/seed2 on CUDA under the 80% p=0.25 multi-degradation setting.
+- Refreshed `docs/generated/brmnet_priority_summary.csv/.md` and generated `docs/generated/uniform_width_export_ablation.csv/.md`.
+- Updated `scripts/make_paper_submission_evidence.py` so the uniform-width evidence and LaTeX table are generated from the canonical summary.
+- Inserted `tables/uniform_width_export_ablation.tex` into the external submission manuscript after the source-vs-compact table.
+- Verified related unit tests and compiled `D:\Academic\paper_submission\brmnet_pricai2026\paper.pdf` with TeX Live 2026; the final log scan found no undefined references, LaTeX errors, fatal errors, or overfull boxes.
