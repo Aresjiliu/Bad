@@ -206,3 +206,16 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Stabilize the routing label rule at state level; patch-level remains future work.
 - [completed] Add a paper-ready routing table comparing static 80%, static 100%, Pareto oracle, LOO router, validation-derived router, and stable-label router.
 - [pending] Prepare a lightweight demonstration-system MVP driven by existing JSON metrics and generated figures.
+
+### 2026-07-17 review-guided concrete action plan
+
+- [completed] Translate the external review guidance into a concrete local action plan: `docs/REVIEW_GUIDANCE_CONCRETE_ACTION_PLAN_20260717_ZH.md`.
+- [pending] Add an experiment-manifest freezer that records git commit, environment, config, metrics hashes, and compact-export evidence.
+- [pending] Add a manuscript internal-term scanner and use it before each paper build.
+- [pending] Implement reviewer-critical ablations: `soft-mask-only`, `w/o availability mask`, `w/o degradation quality`, and `uniform width scaling`.
+- [pending] Add `quality_target_mode=fixed|continuous|rank` and run a Houston2013 seed0 calibration check.
+- [pending] Generate continuous degradation curves and predicted-quality calibration plots.
+- [pending] Dump patch-level routing samples with quality, uncertainty, confidence, correctness, profile oracle label, and regret.
+- [pending] Compare static profiles, Pareto oracle, stable-label state router, and patch-level router in one policy table.
+- [pending] Rebuild Figure 1/Figure 2 around Training, Export, Inference, AER Pareto, degradation curve, quality calibration, and failure analysis.
+- [pending] Build a JSON-backed demonstration MVP from existing metrics and generated figures.
