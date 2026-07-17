@@ -1,0 +1,64 @@
+variant,method,family,mode,severity,severity_label,metric,metric_label,mean,std,runs
+full,Compact baseline,Noise,aux_noise_low,0.1,low,oa,Compact OA (%),86.5076111612145,0.6756044838153848,3
+full,Compact baseline,Noise,aux_noise_low,0.1,low,q_aux,Aux reliability,0.30680241936401415,0.02426214137556994,3
+full,Compact baseline,Noise,aux_noise_low,0.1,low,fusion_aux,Aux fusion weight,0.43563258582923886,0.004561232026409872,3
+full,Compact baseline,Noise,aux_noise_mid,0.25,mid,oa,Compact OA (%),83.88674810745812,0.7379470943887934,3
+full,Compact baseline,Noise,aux_noise_mid,0.25,mid,q_aux,Aux reliability,0.42994988698794634,0.041043227077405466,3
+full,Compact baseline,Noise,aux_noise_mid,0.25,mid,fusion_aux,Aux fusion weight,0.4652697058863738,0.00901468255152313,3
+full,Compact baseline,Noise,aux_noise_high,0.5,high,oa,Compact OA (%),72.07783334699789,1.4486575827485182,3
+full,Compact baseline,Noise,aux_noise_high,0.5,high,q_aux,Aux reliability,0.5377682965225509,0.018828091045543456,3
+full,Compact baseline,Noise,aux_noise_high,0.5,high,fusion_aux,Aux fusion weight,0.4916014116915013,0.005002674125339533,3
+full,Compact baseline,Resolution loss,aux_downsample_2,0.5,2x,oa,Compact OA (%),85.48823481183898,1.0495985058630055,3
+full,Compact baseline,Resolution loss,aux_downsample_2,0.5,2x,q_aux,Aux reliability,0.23753489173610962,0.015876919174895778,3
+full,Compact baseline,Resolution loss,aux_downsample_2,0.5,2x,fusion_aux,Aux fusion weight,0.4190976395325448,0.004228339923428366,3
+full,Compact baseline,Resolution loss,aux_downsample_4,0.75,4x,oa,Compact OA (%),78.37173075346396,1.9103585937468675,3
+full,Compact baseline,Resolution loss,aux_downsample_4,0.75,4x,q_aux,Aux reliability,0.181313805162185,0.01941686036412707,3
+full,Compact baseline,Resolution loss,aux_downsample_4,0.75,4x,fusion_aux,Aux fusion weight,0.4056304485564422,0.006262041121143423,3
+full,Compact baseline,Occlusion,aux_occlusion_25,0.25,25%,oa,Compact OA (%),84.16550517886913,1.8734129896579326,3
+full,Compact baseline,Occlusion,aux_occlusion_25,0.25,25%,q_aux,Aux reliability,0.28694254083774295,0.020811328711607735,3
+full,Compact baseline,Occlusion,aux_occlusion_25,0.25,25%,fusion_aux,Aux fusion weight,0.4308703766712672,0.0024258054540928433,3
+full,Compact baseline,Occlusion,aux_occlusion_50,0.5,50%,oa,Compact OA (%),74.21223798201744,5.638361378513485,3
+full,Compact baseline,Occlusion,aux_occlusion_50,0.5,50%,q_aux,Aux reliability,0.33573206371974484,0.06270787052936257,3
+full,Compact baseline,Occlusion,aux_occlusion_50,0.5,50%,fusion_aux,Aux fusion weight,0.44241352465370953,0.012772266067577703,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_low,0.1,low,oa,Compact OA (%),87.18810636495313,0.8821678882506928,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_low,0.1,low,q_aux,Aux reliability,0.8263521461734937,0.030145464582090952,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_low,0.1,low,fusion_aux,Aux fusion weight,0.4571937173763787,0.0075337686075679245,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_mid,0.25,mid,oa,Compact OA (%),86.52947446093302,1.1424522083461774,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_mid,0.25,mid,q_aux,Aux reliability,0.6201004873083515,0.012827815070995612,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_mid,0.25,mid,fusion_aux,Aux fusion weight,0.40659465910027187,0.0031120605794520487,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_high,0.5,high,oa,Compact OA (%),85.14935366620206,1.4485879794372805,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_high,0.5,high,q_aux,Aux reliability,0.5788770259275345,0.017872889268349273,3
+quality_degradation_supervised,Noise-only quality,Noise,aux_noise_high,0.5,high,fusion_aux,Aux fusion weight,0.39663128869573483,0.004320176120797516,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_2,0.5,2x,oa,Compact OA (%),86.1277363286054,1.0063762296978984,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_2,0.5,2x,q_aux,Aux reliability,0.9277438482681513,0.02158471378795908,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_2,0.5,2x,fusion_aux,Aux fusion weight,0.4823548546283016,0.005261417177121759,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_4,0.75,4x,oa,Compact OA (%),80.14265803066327,2.97627718741757,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_4,0.75,4x,q_aux,Aux reliability,0.9360708247764631,0.017850808900157316,3
+quality_degradation_supervised,Noise-only quality,Resolution loss,aux_downsample_4,0.75,4x,fusion_aux,Aux fusion weight,0.48469883048186774,0.004350743873308575,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_25,0.25,25%,oa,Compact OA (%),84.58910661091525,0.09323998857222604,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_25,0.25,25%,q_aux,Aux reliability,0.8906166579641847,0.036731171644641125,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_25,0.25,25%,fusion_aux,Aux fusion weight,0.4731540061438362,0.009074380133814744,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_50,0.5,50%,oa,Compact OA (%),73.32404143095297,2.3956639584539743,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_50,0.5,50%,q_aux,Aux reliability,0.796707009603579,0.0660193725352859,3
+quality_degradation_supervised,Noise-only quality,Occlusion,aux_occlusion_50,0.5,50%,fusion_aux,Aux fusion weight,0.44991334929977994,0.01628217556433984,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_low,0.1,low,oa,Compact OA (%),86.82189609466808,1.7064472625596068,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_low,0.1,low,q_aux,Aux reliability,0.8853078589911525,0.002895806018119807,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_low,0.1,low,fusion_aux,Aux fusion weight,0.4715727911925349,0.0007999855042396433,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_mid,0.25,mid,oa,Compact OA (%),86.74537454565329,1.9424318333193389,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_mid,0.25,mid,q_aux,Aux reliability,0.8930673248124551,0.00942075513404614,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_mid,0.25,mid,fusion_aux,Aux fusion weight,0.4733939601163358,0.002410535797964045,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_high,0.5,high,oa,Compact OA (%),84.55357874887267,2.819185656660031,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_high,0.5,high,q_aux,Aux reliability,0.9085535711743801,0.008873206135856342,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Noise,aux_noise_high,0.5,high,fusion_aux,Aux fusion weight,0.4772262667199606,0.0022492554795008886,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_2,0.5,2x,oa,Compact OA (%),86.04028312973135,1.3881150866119791,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_2,0.5,2x,q_aux,Aux reliability,0.8722319528100099,0.0031816829497620124,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_2,0.5,2x,fusion_aux,Aux fusion weight,0.4684032352061372,0.0008491726148885034,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_4,0.75,4x,oa,Compact OA (%),84.14910770408024,1.4593829329107562,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_4,0.75,4x,q_aux,Aux reliability,0.8255326690164555,0.007102430395269836,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Resolution loss,aux_downsample_4,0.75,4x,fusion_aux,Aux fusion weight,0.4571828616236869,0.0017047552567150375,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_25,0.25,25%,oa,Compact OA (%),86.72351124593479,1.8271660858000447,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_25,0.25,25%,q_aux,Aux reliability,0.8235151629547498,0.026918582802018406,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_25,0.25,25%,fusion_aux,Aux fusion weight,0.456291923706922,0.006736575084334966,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_50,0.5,50%,oa,Compact OA (%),85.57022218578338,1.6408334519835068,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_50,0.5,50%,q_aux,Aux reliability,0.5280066046651319,0.030497888663127564,3
+quality_multi_degradation_p025,Multi-deg. p=0.25,Occlusion,aux_occlusion_50,0.5,50%,fusion_aux,Aux fusion weight,0.38445265771672144,0.007328029018088906,3

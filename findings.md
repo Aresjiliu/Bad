@@ -242,3 +242,11 @@
 - The more useful evidence is robustness under structural allocation: learned export is better on main-only by 0.82 points, downsample-4 by 1.27 points, and occlusion-50 by 0.57 points. Uniform-width is slightly higher on noise-high by 0.38 points, so the honest claim is "learned nonuniform allocation is generally preferable and especially helpful for downsample/occlusion diagnostics", not "uniform width always fails".
 - The paper should describe `uniform_width_export` as a target-matched export diagnostic. It is different from `without_reliability_uniform_fusion`: the former tests fixed-width structural compression, while the latter tests reliability weighting versus average fusion.
 - Because uniform-width export is not derived from the learned source hard mask, source/compact logit equivalence is intentionally not reported for this baseline. This should remain explicit in code comments and paper wording if equivalence is discussed.
+
+## 2026-07-18 controlled-corruption reliability-curve findings
+
+- The new reliability-curve figure is more appropriate for the submission than the previous three-panel diagnostic because it directly plots corruption severity against compact OA, auxiliary reliability, and auxiliary fusion weight.
+- The selected `quality_multi_degradation_p025` setting improves downsample-4 compact OA from 78.37% for the compact baseline to 84.15%, supporting the claim that degradation-aware supervision improves robust compact inference.
+- The reliability signal is not uniformly monotonic across corruption families. Under p=0.25 multi-degradation supervision, q_aux changes by +0.023 from low to high noise but by -0.296 from 25% to 50% occlusion.
+- This strengthens the conservative paper wording: reliability and fusion weights are useful diagnostic signals shaped by degradation supervision, but they should not be described as fully calibrated physical sensor-quality measurements.
+- The next submission-readiness check should verify that the paper consistently uses this conservative calibration language in abstract, method, experiments, and discussion.

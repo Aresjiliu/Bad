@@ -244,3 +244,11 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Insert the uniform-width export ablation into the submission experiment section and compile the paper successfully.
 - [pending] Generate or refresh controlled-corruption reliability curves for the submission.
 - [pending] Run the final submission readiness scan after the reliability-curve pass.
+
+### 2026-07-18 reliability-curve update
+
+- [completed] Implement `scripts/plot_brmnet_reliability_curves.py` for controlled-corruption reliability curves.
+- [completed] Generate tidy curve data, Markdown readout, repo figures, and paper figure copies.
+- [completed] Replace the submission reliability diagnostic figure with the new controlled-corruption curve figure.
+- [completed] Verify the paper build with TeX Live 2026 and scan for undefined references, LaTeX errors, fatal errors, and overfull boxes.
+- [pending] Run one final submission readiness scan covering internal terms, table/figure references, and claim-evidence consistency.

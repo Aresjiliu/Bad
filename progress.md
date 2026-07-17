@@ -365,3 +365,17 @@
 - Updated `scripts/make_paper_submission_evidence.py` so the uniform-width evidence and LaTeX table are generated from the canonical summary.
 - Inserted `tables/uniform_width_export_ablation.tex` into the external submission manuscript after the source-vs-compact table.
 - Verified related unit tests and compiled `D:\Academic\paper_submission\brmnet_pricai2026\paper.pdf` with TeX Live 2026; the final log scan found no undefined references, LaTeX errors, fatal errors, or overfull boxes.
+
+## 2026-07-18 controlled-corruption reliability curves
+
+- Added `scripts/plot_brmnet_reliability_curves.py` and `tests/test_plot_brmnet_reliability_curves.py`.
+- Generated controlled-corruption reliability curve data and notes:
+  - `docs/generated/brmnet_controlled_corruption_reliability_curves.csv`
+  - `docs/generated/brmnet_controlled_corruption_reliability_curves.md`
+  - `docs/generated/brmnet_controlled_corruption_reliability_curves.pdf`
+  - `docs/generated/brmnet_controlled_corruption_reliability_curves.png`
+- Synced the paper figure copies to:
+  - `D:\Academic\paper_submission\brmnet_pricai2026\figures\generated\fig_controlled_corruption_reliability_curves.pdf`
+  - `D:\Academic\paper_submission\brmnet_pricai2026\figures\generated\fig_controlled_corruption_reliability_curves.png`
+- Updated the external submission experiment section so Figure 3 now reports compact OA, auxiliary reliability, and auxiliary fusion weight across noise, resolution-loss, and occlusion severity.
+- Verified targeted tests and recompiled the external paper with TeX Live 2026; the final log scan found no undefined references, LaTeX errors, fatal errors, citation warnings, or overfull boxes.
