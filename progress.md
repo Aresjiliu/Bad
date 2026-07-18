@@ -379,3 +379,14 @@
   - `D:\Academic\paper_submission\brmnet_pricai2026\figures\generated\fig_controlled_corruption_reliability_curves.png`
 - Updated the external submission experiment section so Figure 3 now reports compact OA, auxiliary reliability, and auxiliary fusion weight across noise, resolution-loss, and occlusion severity.
 - Verified targeted tests and recompiled the external paper with TeX Live 2026; the final log scan found no undefined references, LaTeX errors, fatal errors, citation warnings, or overfull boxes.
+
+## 2026-07-19 long-term plan and submission readiness gate
+
+- Added `docs/BRMNET_LONG_TERM_DUAL_TRACK_PLAN_20260719_ZH.md`.
+- The long-term route now has two explicit tracks: paper submission first, then thesis extension with routing, diagnostics, and demo-system work.
+- Added `scripts/scan_paper_submission_readiness.py` and `tests/test_scan_paper_submission_readiness.py`.
+- The readiness scanner checks manuscript scope terms, internal process wording, over-strong reliability claims, missing table/figure files, undefined references, LaTeX log warnings/errors, and canonical evidence row status.
+- Generated:
+  - `docs/PAPER_SUBMISSION_READINESS_CHECK_20260719_ZH.md`
+  - `docs/generated/paper_submission_readiness_findings.csv`
+- Re-ran the scanner against the current external submission paper after confirming `paper.pdf` is up to date. Current status is PASS with 0 P0, 0 P1, and 0 P2 findings.

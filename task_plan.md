@@ -252,3 +252,13 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Replace the submission reliability diagnostic figure with the new controlled-corruption curve figure.
 - [completed] Verify the paper build with TeX Live 2026 and scan for undefined references, LaTeX errors, fatal errors, and overfull boxes.
 - [pending] Run one final submission readiness scan covering internal terms, table/figure references, and claim-evidence consistency.
+
+### 2026-07-19 long-term dual-track plan
+
+- [completed] Create `docs/BRMNET_LONG_TERM_DUAL_TRACK_PLAN_20260719_ZH.md` to separate the paper-submission track from the thesis-extension track.
+- [completed] Implement `scripts/scan_paper_submission_readiness.py` as the first long-term quality gate.
+- [completed] Add unit tests for manuscript scope scanning, reference checking, LaTeX log checking, and claims-evidence status checking.
+- [completed] Generate `docs/PAPER_SUBMISSION_READINESS_CHECK_20260719_ZH.md` and `docs/generated/paper_submission_readiness_findings.csv`.
+- [completed] Re-run the scanner after the latest TeX Live build; current submission readiness status is PASS with 0 findings.
+- [pending] Use the readiness report as the gate before any future manuscript change.
+- [pending] Next long-term task: generate an advisor-facing Chinese submission status report from the canonical evidence files.

@@ -250,3 +250,10 @@
 - The reliability signal is not uniformly monotonic across corruption families. Under p=0.25 multi-degradation supervision, q_aux changes by +0.023 from low to high noise but by -0.296 from 25% to 50% occlusion.
 - This strengthens the conservative paper wording: reliability and fusion weights are useful diagnostic signals shaped by degradation supervision, but they should not be described as fully calibrated physical sensor-quality measurements.
 - The next submission-readiness check should verify that the paper consistently uses this conservative calibration language in abstract, method, experiments, and discussion.
+
+## 2026-07-19 long-term planning and readiness findings
+
+- The correct long-term strategy is now explicit: do not merge the submission paper and thesis workload into one narrative. The submission paper should stay focused on compact export and degradation-supervised reliability; routing, weighted CE, class-imbalance diagnostics, and demo-system work move to the thesis track.
+- A scanner-based readiness gate is more useful than another manual note because the manuscript has repeatedly risked scope creep. The new scanner turns scope control into a repeatable command.
+- The current submission manuscript passes the first readiness gate with 0 findings after checking scope terms, table/figure existence, references, LaTeX log patterns, and canonical evidence status.
+- This does not mean the paper is scientifically final. It means the current version is structurally coherent enough for advisor review, and future work should first produce an advisor-facing status report rather than adding new experiments immediately.
