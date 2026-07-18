@@ -1,0 +1,19 @@
+category,item,status,detail
+required file,paper.tex,PASS,D:\Academic\paper_submission\brmnet_pricai2026\paper.tex
+required file,paper.pdf,PASS,D:\Academic\paper_submission\brmnet_pricai2026\paper.pdf
+required file,bib/references.bib,PASS,D:\Academic\paper_submission\brmnet_pricai2026\bib\references.bib
+required file,README.md,PASS,D:\Academic\paper_submission\brmnet_pricai2026\README.md
+required file,AGENTS.md,PASS,D:\Academic\paper_submission\brmnet_pricai2026\AGENTS.md
+required directory,sections,PASS,D:\Academic\paper_submission\brmnet_pricai2026\sections
+required directory,tables,PASS,D:\Academic\paper_submission\brmnet_pricai2026\tables
+required directory,figures/generated,PASS,D:\Academic\paper_submission\brmnet_pricai2026\figures\generated
+required directory,code,PASS,D:\Academic\paper_submission\brmnet_pricai2026\code
+compiled pdf,paper.pdf size,PASS,398.1 KB
+content inventory,section tex files,PASS,7
+content inventory,table tex files,PASS,14
+content inventory,generated figure files,PASS,13
+latex references,input files,PASS,All referenced input files exist.
+latex references,graphics files,PASS,All referenced graphics exist.
+anonymity,anonymous author block,PASS,Anonymous Authors found.
+anonymity,local path or identity tokens in manuscript tex,PASS,None.
+build log,hard-error pattern scan,PASS,None.

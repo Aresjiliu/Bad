@@ -282,4 +282,6 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Generate `docs/PAPER_SUBMISSION_WRITING_POLISH_20260719_ZH.md`.
 - [completed] Align Method, Related Work, Experiments, Discussion, and Conclusion terminology with the revised title/abstract/introduction.
 - [completed] Prepare `docs/ADVISOR_REVIEW_BRIEF_20260719_ZH.md` for advisor review.
-- [pending] Next long-running task: final language polish pass and submission package checklist.
+- [completed] Implement `scripts/check_submission_package.py` and `tests/test_check_submission_package.py`.
+- [completed] Generate `docs/SUBMISSION_PACKAGE_CHECKLIST_20260719_ZH.md` and `docs/generated/submission_package_checklist.csv`.
+- [pending] Next long-running task: final language polish pass and source-package cleanup for Overleaf submission.

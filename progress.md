@@ -425,3 +425,12 @@
 - Added `docs/ADVISOR_REVIEW_BRIEF_20260719_ZH.md`.
 - The brief summarizes the current submission track, compact-export evidence, fusion-compatibility evidence, availability-mask ablation, degradation-supervised reliability evidence, multi-dataset role assignment, and advisor decision questions.
 - The brief also proposes the next decision: either enter final language/package polishing if the advisor accepts the current scope, or add a larger-backbone transfer / stronger lightweight baseline if innovation is still judged insufficient.
+
+## 2026-07-19 submission package checklist
+
+- Added `scripts/check_submission_package.py` and `tests/test_check_submission_package.py`.
+- Generated:
+  - `docs/SUBMISSION_PACKAGE_CHECKLIST_20260719_ZH.md`
+  - `docs/generated/submission_package_checklist.csv`
+- The checklist verifies required files, required directories, PDF size, section/table/figure inventory, LaTeX input references, graphics references, anonymous author block, local-path/identity tokens in manuscript TeX, and build-log hard-error patterns.
+- Current package status is PASS with 0 findings: all referenced inputs and graphics exist, `Anonymous Authors` is present, no local path or identity token is detected in manuscript TeX, and the build log has no hard-error pattern matches.

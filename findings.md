@@ -278,3 +278,9 @@
 - The paper should repeatedly distinguish source soft gates from exported compact models. This distinction is the main way to make a lightweight method feel like a complete deployable-system contribution rather than a minor pruning variant.
 - The main-text terminology is now more coherent: dynamic routing remains a thesis extension, while the submission method is described as availability-aware reliability fusion plus compact export.
 - For advisor communication, the key decision is not another small ablation. The key decision is whether the current compact-export/reliability paper is acceptable as a focused submission, or whether one larger-backbone/stronger-baseline experiment is required before final polishing.
+
+## 2026-07-19 submission-package findings
+
+- The current external submission package is structurally ready for advisor review: PDF, LaTeX source, sections, tables, generated figures, bibliography, code folder, and README are present.
+- The package checklist did not find manuscript-level anonymity leaks such as local absolute paths, user identity tokens, or repository owner names.
+- The next packaging risk is not missing files, but cleanup quality: source archives should avoid unnecessary build artifacts and preview PNGs unless the target submission system requires them.
