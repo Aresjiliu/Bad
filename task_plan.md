@@ -262,3 +262,11 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Re-run the scanner after the latest TeX Live build; current submission readiness status is PASS with 0 findings.
 - [pending] Use the readiness report as the gate before any future manuscript change.
 - [pending] Next long-term task: generate an advisor-facing Chinese submission status report from the canonical evidence files.
+
+### 2026-07-19 advisor report generator
+
+- [completed] Implement `scripts/make_advisor_submission_report.py` to build an advisor-facing Chinese report from canonical evidence, priority summaries, reliability notes, readiness status, and the current paper PDF path.
+- [completed] Add `tests/test_make_advisor_submission_report.py`.
+- [completed] Generate `docs/ADVISOR_SUBMISSION_STATUS_REPORT_20260719_ZH.md`.
+- [completed] Re-run submission readiness scanner; current status remains PASS with 0 findings.
+- [pending] Next long-running task: related-work citation density audit and targeted bibliography/writing patch.

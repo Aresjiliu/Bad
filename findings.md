@@ -257,3 +257,9 @@
 - A scanner-based readiness gate is more useful than another manual note because the manuscript has repeatedly risked scope creep. The new scanner turns scope control into a repeatable command.
 - The current submission manuscript passes the first readiness gate with 0 findings after checking scope terms, table/figure existence, references, LaTeX log patterns, and canonical evidence status.
 - This does not mean the paper is scientifically final. It means the current version is structurally coherent enough for advisor review, and future work should first produce an advisor-facing status report rather than adding new experiments immediately.
+
+## 2026-07-19 advisor report findings
+
+- The current evidence is now organized well enough for advisor review. The most important discussion points are not new experiments, but scope decisions: whether MUUFL stays in the main paper, whether the current title is acceptable, and whether to move next into language/related-work polishing.
+- The report makes the innovation risk explicit: the paper should not be sold as a large model architecture paper. It should be sold as a focused compact-export and degradation-reliability paper with deployable-model evidence.
+- The next technical-writing task should be a related-work citation density audit. If the paper is rejected at this stage, the likely reason is framing/positioning more than missing another small ablation.

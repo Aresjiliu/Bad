@@ -390,3 +390,10 @@
   - `docs/PAPER_SUBMISSION_READINESS_CHECK_20260719_ZH.md`
   - `docs/generated/paper_submission_readiness_findings.csv`
 - Re-ran the scanner against the current external submission paper after confirming `paper.pdf` is up to date. Current status is PASS with 0 P0, 0 P1, and 0 P2 findings.
+
+## 2026-07-19 advisor-facing submission report
+
+- Added `scripts/make_advisor_submission_report.py` and `tests/test_make_advisor_submission_report.py`.
+- Generated `docs/ADVISOR_SUBMISSION_STATUS_REPORT_20260719_ZH.md`.
+- The report summarizes the paper track positioning, current PDF/readiness status, budget/export/fusion/reliability evidence, multi-dataset evidence, reliability-curve interpretation, risks, and questions for advisor decision.
+- Re-ran `scripts/scan_paper_submission_readiness.py`; the current submission remains PASS with 0 findings.
