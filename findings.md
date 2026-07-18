@@ -270,3 +270,11 @@
 - Adding DMCP and DepGraph closes a concrete bibliography hygiene gap and improves the grounding for differentiable channel selection and dependency-aware structural pruning.
 - The related-work narrative should keep emphasizing a precise distinction: BRM-Net is not just another pruning method, but a physically exported compact multimodal model whose fusion behavior is tested under missing and degraded modality states.
 - The next likely paper risk is wording clarity in the title, abstract, and introduction, not another small citation patch.
+
+## 2026-07-19 writing-positioning findings
+
+- The strongest defensible submission title is centered on `fusion-compatible compact export`, not simply `compact fusion`; this better matches the code evidence and reduces the risk of being judged as a small architecture tweak.
+- `Degradation-calibrated reliability` is potentially too strong because current reliability curves are diagnostic and not strictly monotonic for every corruption family. `Degradation-supervised reliability` is more accurate and safer.
+- The paper should repeatedly distinguish source soft gates from exported compact models. This distinction is the main way to make a lightweight method feel like a complete deployable-system contribution rather than a minor pruning variant.
+- The main-text terminology is now more coherent: dynamic routing remains a thesis extension, while the submission method is described as availability-aware reliability fusion plus compact export.
+- For advisor communication, the key decision is not another small ablation. The key decision is whether the current compact-export/reliability paper is acceptable as a focused submission, or whether one larger-backbone/stronger-baseline experiment is required before final polishing.

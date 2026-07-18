@@ -278,4 +278,8 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Generate `docs/RELATED_WORK_CITATION_AUDIT_20260719_ZH.md`.
 - [completed] Use the audit to identify uncited `guo2020dmcp` and `fang2023depgraph`, then cite them in the external submission related-work section.
 - [completed] Recompile the external submission paper with TeX Live 2026 and re-run the readiness scanner; current status remains PASS with 0 findings.
-- [pending] Next long-running task: prepare an advisor-review package and polish the submission title/abstract/introduction positioning.
+- [completed] Polish the submission title, abstract, and introduction positioning around fusion-compatible compact export and degradation-supervised reliability.
+- [completed] Generate `docs/PAPER_SUBMISSION_WRITING_POLISH_20260719_ZH.md`.
+- [completed] Align Method, Related Work, Experiments, Discussion, and Conclusion terminology with the revised title/abstract/introduction.
+- [completed] Prepare `docs/ADVISOR_REVIEW_BRIEF_20260719_ZH.md` for advisor review.
+- [pending] Next long-running task: final language polish pass and submission package checklist.

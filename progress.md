@@ -407,3 +407,21 @@
 - Updated the external submission related-work section at `D:\Academic\paper_submission\brmnet_pricai2026\sections\02_related_work.tex` so DMCP and DepGraph are explicitly used in the compact-export / structured-pruning positioning.
 - Re-ran the audit after the writing patch. The paper now uses all 26 BibTeX entries, with 41 citation mentions and 26 unique cited keys in `02_related_work.tex`.
 - Recompiled `D:\Academic\paper_submission\brmnet_pricai2026\paper.pdf` with TeX Live 2026 and re-ran the readiness scanner. Current submission status remains PASS with 0 findings.
+
+## 2026-07-19 submission title/abstract/introduction polish
+
+- Updated the external submission title to `Fusion-Compatible Budgeted Compact Export with Degradation-Supervised Reliability for Multimodal Remote Sensing Classification`.
+- Revised `sections/00_abstract.tex` to state that the final model is physically compact, that export preserves terminal fusion dimensions, and that reliability estimates are diagnostic fusion signals rather than guaranteed physical quality calibration.
+- Revised `sections/01_intro.tex` to add the concrete gap between soft training-time compression and deployable compact export, plus the multimodal constraint that branch pruning must preserve fusion compatibility.
+- Generated `docs/PAPER_SUBMISSION_WRITING_POLISH_20260719_ZH.md` to track these external-paper edits from the main code repository.
+- Recompiled the external paper with TeX Live 2026; the PDF remains 10 pages and the final hard-error log scan is clean.
+- Re-ran `scripts/scan_paper_submission_readiness.py`; current status remains PASS with 0 findings.
+- Completed a follow-up terminology pass across related work, method, experiments, discussion, and conclusion so the paper consistently says `fusion-compatible compact export` and `degradation-supervised reliability`.
+- Replaced potentially confusing `routing` language in the submission main text with `availability-aware fusion` or `fusion weights`, while keeping dynamic profile routing explicitly outside the submission scope.
+- Recompiled the external paper again; the latest PDF is `407697` bytes and the hard-error log scan remains clean.
+
+## 2026-07-19 advisor review brief
+
+- Added `docs/ADVISOR_REVIEW_BRIEF_20260719_ZH.md`.
+- The brief summarizes the current submission track, compact-export evidence, fusion-compatibility evidence, availability-mask ablation, degradation-supervised reliability evidence, multi-dataset role assignment, and advisor decision questions.
+- The brief also proposes the next decision: either enter final language/package polishing if the advisor accepts the current scope, or add a larger-backbone transfer / stronger lightweight baseline if innovation is still judged insufficient.
