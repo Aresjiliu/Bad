@@ -397,3 +397,13 @@
 - Generated `docs/ADVISOR_SUBMISSION_STATUS_REPORT_20260719_ZH.md`.
 - The report summarizes the paper track positioning, current PDF/readiness status, budget/export/fusion/reliability evidence, multi-dataset evidence, reliability-curve interpretation, risks, and questions for advisor decision.
 - Re-ran `scripts/scan_paper_submission_readiness.py`; the current submission remains PASS with 0 findings.
+
+## 2026-07-19 related-work citation audit
+
+- Added `scripts/audit_paper_related_work.py` and `tests/test_audit_paper_related_work.py`.
+- Generated `docs/RELATED_WORK_CITATION_AUDIT_20260719_ZH.md`.
+- The audit checks citation density by section, topic keyword coverage in related work, cited keys missing from BibTeX, and unused BibTeX entries.
+- Initial audit exposed two unused structural-pruning references: `guo2020dmcp` and `fang2023depgraph`.
+- Updated the external submission related-work section at `D:\Academic\paper_submission\brmnet_pricai2026\sections\02_related_work.tex` so DMCP and DepGraph are explicitly used in the compact-export / structured-pruning positioning.
+- Re-ran the audit after the writing patch. The paper now uses all 26 BibTeX entries, with 41 citation mentions and 26 unique cited keys in `02_related_work.tex`.
+- Recompiled `D:\Academic\paper_submission\brmnet_pricai2026\paper.pdf` with TeX Live 2026 and re-ran the readiness scanner. Current submission status remains PASS with 0 findings.

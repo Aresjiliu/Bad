@@ -263,3 +263,10 @@
 - The current evidence is now organized well enough for advisor review. The most important discussion points are not new experiments, but scope decisions: whether MUUFL stays in the main paper, whether the current title is acceptable, and whether to move next into language/related-work polishing.
 - The report makes the innovation risk explicit: the paper should not be sold as a large model architecture paper. It should be sold as a focused compact-export and degradation-reliability paper with deployable-model evidence.
 - The next technical-writing task should be a related-work citation density audit. If the paper is rejected at this stage, the likely reason is framing/positioning more than missing another small ablation.
+
+## 2026-07-19 related-work audit findings
+
+- The current related work now has enough citation density for advisor review; the weak point is no longer the number of papers cited, but how sharply the method is positioned against adjacent work.
+- Adding DMCP and DepGraph closes a concrete bibliography hygiene gap and improves the grounding for differentiable channel selection and dependency-aware structural pruning.
+- The related-work narrative should keep emphasizing a precise distinction: BRM-Net is not just another pruning method, but a physically exported compact multimodal model whose fusion behavior is tested under missing and degraded modality states.
+- The next likely paper risk is wording clarity in the title, abstract, and introduction, not another small citation patch.

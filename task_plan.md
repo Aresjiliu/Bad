@@ -269,4 +269,13 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Add `tests/test_make_advisor_submission_report.py`.
 - [completed] Generate `docs/ADVISOR_SUBMISSION_STATUS_REPORT_20260719_ZH.md`.
 - [completed] Re-run submission readiness scanner; current status remains PASS with 0 findings.
-- [pending] Next long-running task: related-work citation density audit and targeted bibliography/writing patch.
+- [completed] Next long-running task: related-work citation density audit and targeted bibliography/writing patch.
+
+### 2026-07-19 related-work citation audit
+
+- [completed] Implement `scripts/audit_paper_related_work.py` for manuscript-wide citation density, missing-BibTeX, unused-BibTeX, and topic-coverage checks.
+- [completed] Add `tests/test_audit_paper_related_work.py`.
+- [completed] Generate `docs/RELATED_WORK_CITATION_AUDIT_20260719_ZH.md`.
+- [completed] Use the audit to identify uncited `guo2020dmcp` and `fang2023depgraph`, then cite them in the external submission related-work section.
+- [completed] Recompile the external submission paper with TeX Live 2026 and re-run the readiness scanner; current status remains PASS with 0 findings.
+- [pending] Next long-running task: prepare an advisor-review package and polish the submission title/abstract/introduction positioning.
