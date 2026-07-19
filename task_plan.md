@@ -284,4 +284,8 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Prepare `docs/ADVISOR_REVIEW_BRIEF_20260719_ZH.md` for advisor review.
 - [completed] Implement `scripts/check_submission_package.py` and `tests/test_check_submission_package.py`.
 - [completed] Generate `docs/SUBMISSION_PACKAGE_CHECKLIST_20260719_ZH.md` and `docs/generated/submission_package_checklist.csv`.
-- [pending] Next long-running task: final language polish pass and source-package cleanup for Overleaf submission.
+- [completed] Implement `scripts/make_submission_source_package.py` and `tests/test_make_submission_source_package.py`.
+- [completed] Generate the clean source package candidate `D:\Academic\paper_submission\brmnet_pricai2026_submission_source_20260719.zip`.
+- [completed] Generate `docs/SUBMISSION_SOURCE_PACKAGE_MANIFEST_20260719_ZH.md` and `docs/generated/submission_source_package_manifest.csv`.
+- [completed] Update external submission `README.md` and `AGENTS.md` so they match the current IEEEtran compact-export/reliability scope.
+- [pending] Next long-running task: final language polish pass and visual page-level review.

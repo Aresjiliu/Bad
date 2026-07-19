@@ -1,0 +1,21 @@
+path,kind,bytes
+.latexmkrc,latexmk config,255
+bib/references.bib,bibliography,9203
+figures/generated/fig_brmnet_results_overview.pdf,referenced figure,76126
+figures/generated/fig_controlled_corruption_reliability_curves.pdf,referenced figure,41011
+paper.tex,root tex,918
+sections/00_abstract.tex,tex input,2342
+sections/01_intro.tex,tex input,3808
+sections/02_related_work.tex,tex input,7015
+sections/03_method.tex,tex input,13255
+sections/04_experiments.tex,tex input,11508
+sections/05_discussion.tex,tex input,3446
+sections/06_conclusion.tex,tex input,1293
+tables/fusion_availability_mask_ablation.tex,tex input,922
+tables/multidataset_detailed_proposed.tex,tex input,991
+tables/multidataset_formal_evidence.tex,tex input,904
+tables/prototype_hslidar_structured.tex,tex input,852
+tables/prototype_modality_dropout.tex,tex input,788
+tables/robustness_ablation.tex,tex input,817
+tables/source_vs_compact_export.tex,tex input,1020
+tables/uniform_width_export_ablation.tex,tex input,1089

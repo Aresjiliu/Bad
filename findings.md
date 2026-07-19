@@ -284,3 +284,5 @@
 - The current external submission package is structurally ready for advisor review: PDF, LaTeX source, sections, tables, generated figures, bibliography, code folder, and README are present.
 - The package checklist did not find manuscript-level anonymity leaks such as local absolute paths, user identity tokens, or repository owner names.
 - The next packaging risk is not missing files, but cleanup quality: source archives should avoid unnecessary build artifacts and preview PNGs unless the target submission system requires them.
+- A clean source-package route is now available. It is better than manually uploading the whole external paper folder because the full folder contains preview PNGs, build products, notes, review pages, pycache files, and thesis-only tables/figures.
+- The external paper README/AGENTS files had stale target and dataset descriptions; those have been corrected so the folder-level instructions match the current compact-export/reliability submission scope.

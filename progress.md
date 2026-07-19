@@ -434,3 +434,16 @@
   - `docs/generated/submission_package_checklist.csv`
 - The checklist verifies required files, required directories, PDF size, section/table/figure inventory, LaTeX input references, graphics references, anonymous author block, local-path/identity tokens in manuscript TeX, and build-log hard-error patterns.
 - Current package status is PASS with 0 findings: all referenced inputs and graphics exist, `Anonymous Authors` is present, no local path or identity token is detected in manuscript TeX, and the build log has no hard-error pattern matches.
+
+## 2026-07-19 clean source package
+
+- Added `scripts/make_submission_source_package.py` and `tests/test_make_submission_source_package.py`.
+- Generated the current clean LaTeX source package candidate:
+  - `D:\Academic\paper_submission\brmnet_pricai2026_submission_source_20260719.zip`
+- Generated:
+  - `docs/SUBMISSION_SOURCE_PACKAGE_MANIFEST_20260719_ZH.md`
+  - `docs/generated/submission_source_package_manifest.csv`
+- The source package contains 20 compile-essential files: `paper.tex`, `.latexmkrc`, bibliography, 7 section files, 8 referenced table files, and 2 referenced PDF figures.
+- The package intentionally excludes build artifacts, preview images, notes, review pages, sources metadata, pycache files, and thesis-only tables/figures that are not referenced by the main manuscript.
+- Verified that the package can be extracted and compiled independently with TeX Live 2026.
+- Updated external submission `README.md` and `AGENTS.md` to remove stale PRICAI/LNAI, ICTAI, old title, and old dataset descriptions.
