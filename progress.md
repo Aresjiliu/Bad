@@ -447,3 +447,12 @@
 - The package intentionally excludes build artifacts, preview images, notes, review pages, sources metadata, pycache files, and thesis-only tables/figures that are not referenced by the main manuscript.
 - Verified that the package can be extracted and compiled independently with TeX Live 2026.
 - Updated external submission `README.md` and `AGENTS.md` to remove stale PRICAI/LNAI, ICTAI, old title, and old dataset descriptions.
+
+## 2026-07-19 PDF visual review
+
+- Rendered the current 10-page submission PDF to local PNG pages and a contact sheet under `docs/generated/submission_pdf_pages/`.
+- Added the render directory to `.gitignore` because these are large local inspection artifacts.
+- Added `docs/PAPER_VISUAL_REVIEW_20260719_ZH.md`.
+- Visual review found no blocking page-level problem: figures render, tables fit, references stay within the page, and no obvious figure legend overlap remains.
+- Shortened Figure 2 and Figure 3 captions in the external submission `sections/04_experiments.tex` to reduce page pressure and improve scanability.
+- Recompiled the paper and regenerated the clean source package after caption edits.

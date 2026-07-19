@@ -2,7 +2,7 @@
 
 - Zip path: `D:\Academic\paper_submission\brmnet_pricai2026_submission_source_20260719.zip`
 - File count: 20
-- Source bytes before compression: 177563
+- Source bytes before compression: 177265
 
 ## 打包原则
 
@@ -23,7 +23,7 @@
 | `sections/01_intro.tex` | tex input | 3808 |
 | `sections/02_related_work.tex` | tex input | 7015 |
 | `sections/03_method.tex` | tex input | 13255 |
-| `sections/04_experiments.tex` | tex input | 11508 |
+| `sections/04_experiments.tex` | tex input | 11210 |
 | `sections/05_discussion.tex` | tex input | 3446 |
 | `sections/06_conclusion.tex` | tex input | 1293 |
 | `tables/fusion_availability_mask_ablation.tex` | tex input | 922 |

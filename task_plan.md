@@ -288,4 +288,7 @@ Upgrade BRM-Net from a small static budget and robustness prototype into a thesi
 - [completed] Generate the clean source package candidate `D:\Academic\paper_submission\brmnet_pricai2026_submission_source_20260719.zip`.
 - [completed] Generate `docs/SUBMISSION_SOURCE_PACKAGE_MANIFEST_20260719_ZH.md` and `docs/generated/submission_source_package_manifest.csv`.
 - [completed] Update external submission `README.md` and `AGENTS.md` so they match the current IEEEtran compact-export/reliability scope.
-- [pending] Next long-running task: final language polish pass and visual page-level review.
+- [completed] Render and inspect the current 10-page PDF for page-level visual issues.
+- [completed] Shorten Figure 2 and Figure 3 captions in the external submission paper.
+- [completed] Generate `docs/PAPER_VISUAL_REVIEW_20260719_ZH.md`.
+- [pending] Next long-running task: final language polish pass.

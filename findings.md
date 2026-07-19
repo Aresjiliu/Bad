@@ -286,3 +286,9 @@
 - The next packaging risk is not missing files, but cleanup quality: source archives should avoid unnecessary build artifacts and preview PNGs unless the target submission system requires them.
 - A clean source-package route is now available. It is better than manually uploading the whole external paper folder because the full folder contains preview PNGs, build products, notes, review pages, pycache files, and thesis-only tables/figures.
 - The external paper README/AGENTS files had stale target and dataset descriptions; those have been corrected so the folder-level instructions match the current compact-export/reliability submission scope.
+
+## 2026-07-19 visual-review findings
+
+- The current PDF is visually stable enough for advisor review. The remaining visual issues are polish-level rather than structural.
+- Caption length was the most useful immediate fix; shortening Figure 2 and Figure 3 captions improved page 8 and page 9 without changing claims or numbers.
+- Figure 2 Panel A remains inherently dense around the 80% MAC region because multiple ablations share nearly identical budgets, but the current offset/shaded-target presentation is acceptable for the submission draft.

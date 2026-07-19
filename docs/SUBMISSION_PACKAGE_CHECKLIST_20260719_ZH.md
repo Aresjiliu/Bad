@@ -13,7 +13,7 @@
 | required directory | tables | PASS | D:\Academic\paper_submission\brmnet_pricai2026\tables |
 | required directory | figures/generated | PASS | D:\Academic\paper_submission\brmnet_pricai2026\figures\generated |
 | required directory | code | PASS | D:\Academic\paper_submission\brmnet_pricai2026\code |
-| compiled pdf | paper.pdf size | PASS | 398.1 KB |
+| compiled pdf | paper.pdf size | PASS | 398.0 KB |
 | content inventory | section tex files | PASS | 7 |
 | content inventory | table tex files | PASS | 14 |
 | content inventory | generated figure files | PASS | 13 |
