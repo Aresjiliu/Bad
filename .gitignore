@@ -32,3 +32,7 @@ output/routing_profiles/
 output/experiments_smoke/
 output/experiments/
 docs/generated/submission_pdf_pages/
+docs/slides/*_pages/
+docs/slides/*_pages_v*/
+docs/slides/*_contact_sheet.png
+output/ppt_deps/
